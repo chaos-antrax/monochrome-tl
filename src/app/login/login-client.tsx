@@ -4,19 +4,41 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WorkspaceProvider, useWorkspace } from "../workspace/state";
-import { Input } from "../workspace/ui";
+import { Input, LoadingButton } from "../workspace/ui";
 
 function LoginForm() {
   const router = useRouter();
-  const { submitAuth, message } = useWorkspace();
+  const { submitAuth, message, setMessage } = useWorkspace();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function updateEmail(value: string) {
+    setEmail(value);
+    if (message) setMessage("");
+  }
+
+  function updatePassword(value: string) {
+    setPassword(value);
+    if (message) setMessage("");
+  }
+
+  function toggleMode() {
+    setMode((current) => current === "login" ? "signup" : "login");
+    if (message) setMessage("");
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const ok = await submitAuth(mode, email, password);
-    if (ok) router.push("/app/library");
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const ok = await submitAuth(mode, email, password);
+      if (ok) router.push("/app/library");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -24,12 +46,12 @@ function LoginForm() {
       <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Account</p>
       <h1 className="mt-2 font-serif text-4xl font-semibold">{mode === "login" ? "Log in" : "Create account"}</h1>
       <div className="mt-6 space-y-4">
-        <Input label="Email" value={email} onChange={setEmail} />
-        <Input label="Password" type="password" value={password} onChange={setPassword} />
+        <Input label="Email" value={email} onChange={updateEmail} />
+        <Input label="Password" type="password" value={password} onChange={updatePassword} />
       </div>
       {message ? <p className="mt-4 rounded-lg bg-neutral-100 p-3 text-sm text-neutral-600">{message}</p> : null}
-      <button type="submit" className="mt-6 w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800">{mode === "login" ? "Log in" : "Sign up"}</button>
-      <button type="button" onClick={() => setMode(mode === "login" ? "signup" : "login")} className="mt-3 w-full rounded-lg px-4 py-3 text-sm font-semibold text-neutral-600 transition hover:bg-neutral-100">
+      <LoadingButton type="submit" loading={isSubmitting} loadingLabel={mode === "login" ? "Logging in ..." : "Creating account ..."} className="mt-6 w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500">{mode === "login" ? "Log in" : "Sign up"}</LoadingButton>
+      <button type="button" onClick={toggleMode} disabled={isSubmitting} className="mt-3 w-full rounded-lg px-4 py-3 text-sm font-semibold text-neutral-600 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-300">
         {mode === "login" ? "Need an account? Sign up" : "Already have an account? Log in"}
       </button>
     </form>
