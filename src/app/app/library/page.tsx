@@ -6,6 +6,7 @@ import { useWorkspace } from "../../workspace/state";
 import {
   Card,
   ConfirmDialog,
+  CustomSelect,
   Empty,
   Input,
   Modal,
@@ -25,21 +26,12 @@ function StyleSelect({
   styles: { id: string; name: string }[];
 }) {
   return (
-    <label className="block text-sm font-medium text-neutral-700">
-      {label}
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
-      >
-        <option value="">Plain</option>
-        {styles.map((style) => (
-          <option key={style.id} value={style.id}>
-            {style.name}
-          </option>
-        ))}
-      </select>
-    </label>
+    <CustomSelect
+      label={label}
+      value={value}
+      onChange={onChange}
+      options={[{ value: "", label: "Plain" }, ...styles.map((style) => ({ value: style.id, label: style.name }))]}
+    />
   );
 }
 

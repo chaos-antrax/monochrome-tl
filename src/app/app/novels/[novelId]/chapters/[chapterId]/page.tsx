@@ -9,6 +9,7 @@ import { ChapterPanel } from "../../../../../workspace/chapter-panel";
 import {
   Card,
   ConfirmDialog,
+  CustomSelect,
   Empty,
   formatChangedFields,
   Input,
@@ -206,34 +207,18 @@ export default function ReaderPage() {
             Reader
           </p>
           <div className="mt-3 grid gap-3">
-            <label className="block text-sm font-medium text-neutral-700">
-              Font size
-              <select
-                value={fontSize}
-                onChange={(event) => setFontSize(Number(event.target.value))}
-                className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
-              >
-                {FONT_SIZE_OPTIONS.map((value) => (
-                  <option key={value} value={value}>
-                    {value}px
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm font-medium text-neutral-700">
-              Line height
-              <select
-                value={lineHeight}
-                onChange={(event) => setLineHeight(Number(event.target.value))}
-                className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
-              >
-                {LINE_HEIGHT_OPTIONS.map((value) => (
-                  <option key={value} value={value}>
-                    {value.toFixed(2)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <CustomSelect
+              label="Font size"
+              value={String(fontSize)}
+              onChange={(value) => setFontSize(Number(value))}
+              options={FONT_SIZE_OPTIONS.map((value) => ({ value: String(value), label: `${value}px` }))}
+            />
+            <CustomSelect
+              label="Line height"
+              value={String(lineHeight)}
+              onChange={(value) => setLineHeight(Number(value))}
+              options={LINE_HEIGHT_OPTIONS.map((value) => ({ value: String(value), label: value.toFixed(2) }))}
+            />
           </div>
         </div>
       </aside>

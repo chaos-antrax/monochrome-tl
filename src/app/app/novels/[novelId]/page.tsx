@@ -17,6 +17,7 @@ import {
 import {
   Card,
   ConfirmDialog,
+  CustomSelect,
   Empty,
   formatChangedFields,
   Input,
@@ -49,21 +50,12 @@ function StyleSelect({
   styles: { id: string; name: string }[];
 }) {
   return (
-    <label className="block text-sm font-medium text-neutral-700">
-      {label}
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
-      >
-        <option value="">Plain</option>
-        {styles.map((style) => (
-          <option key={style.id} value={style.id}>
-            {style.name}
-          </option>
-        ))}
-      </select>
-    </label>
+    <CustomSelect
+      label={label}
+      value={value}
+      onChange={onChange}
+      options={[{ value: "", label: "Plain" }, ...styles.map((style) => ({ value: style.id, label: style.name }))]}
+    />
   );
 }
 
@@ -577,25 +569,13 @@ export default function NovelPage() {
                 value={glossaryTab}
                 onChange={(value) => setGlossaryTab(value as GlossaryStatus)}
               />
-              <label className="block text-sm font-medium text-neutral-700">
-                Category
-                <select
-                  value={categoryFilter}
-                  onChange={(event) =>
-                    setCategoryFilter(
-                      event.target.value as "all" | GlossaryCategory,
-                    )
-                  }
-                  className="mt-1.5 w-full min-w-44 rounded-lg border border-neutral-200 bg-white px-3 py-2.5 outline-none transition focus:border-neutral-950"
-                >
-                  <option value="all">All categories</option>
-                  {GlossaryCategorySchema.options.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <CustomSelect
+                label="Category"
+                value={categoryFilter}
+                onChange={(value) => setCategoryFilter(value as "all" | GlossaryCategory)}
+                className="min-w-44"
+                options={[{ value: "all", label: "All categories" }, ...GlossaryCategorySchema.options.map((option) => ({ value: option, label: option }))]}
+              />
             </div>
             <div className="grid gap-3">
               {terms.map((term) => (
@@ -808,22 +788,12 @@ export default function NovelPage() {
             value={translation}
             onChange={setTranslation}
           />
-          <label className="block text-sm font-medium text-neutral-700">
-            Category
-            <select
-              value={category}
-              onChange={(event) =>
-                setCategory(event.target.value as GlossaryCategory)
-              }
-              className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 outline-none transition focus:border-neutral-950"
-            >
-              {GlossaryCategorySchema.options.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CustomSelect
+            label="Category"
+            value={category}
+            onChange={(value) => setCategory(value as GlossaryCategory)}
+            options={GlossaryCategorySchema.options.map((option) => ({ value: option, label: option }))}
+          />
           <Input label="Pinyin" value={pinyin} onChange={setPinyin} />
           <Textarea label="Notes" value={notes} onChange={setNotes} rows={4} />
           <div className="flex justify-end gap-2">

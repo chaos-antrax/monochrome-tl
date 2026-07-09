@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { PROVIDER_DEFAULTS } from "@/lib/constants";
 import { type Provider } from "@/lib/schemas/translation";
 import { useWorkspace, labelDate } from "../../workspace/state";
-import { Card, Input, LoadingButton } from "../../workspace/ui";
+import { Card, CustomSelect, Input, LoadingButton } from "../../workspace/ui";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -81,21 +81,19 @@ export default function AccountPage() {
         >
           <h2 className="font-serif text-2xl font-semibold">Provider</h2>
           <div className="mt-4 space-y-3">
-            <label className="block text-sm font-medium text-neutral-700">
-              Provider
-              <select
-                value={provider}
-                onChange={(event) => {
-                  const next = event.target.value as Provider;
-                  setProvider(next);
-                  setModel(PROVIDER_DEFAULTS[next].defaultModel);
-                }}
-                className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 outline-none focus:border-neutral-950"
-              >
-                <option value="deepseek">DeepSeek</option>
-                <option value="openrouter">OpenRouter</option>
-              </select>
-            </label>
+            <CustomSelect
+              label="Provider"
+              value={provider}
+              onChange={(value) => {
+                const next = value as Provider;
+                setProvider(next);
+                setModel(PROVIDER_DEFAULTS[next].defaultModel);
+              }}
+              options={[
+                { value: "deepseek", label: "DeepSeek" },
+                { value: "openrouter", label: "OpenRouter" },
+              ]}
+            />
             <Input label="Model" value={model} onChange={setModel} />
             <Input
               label="API key"
