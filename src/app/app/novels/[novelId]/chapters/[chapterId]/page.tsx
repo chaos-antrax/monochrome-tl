@@ -6,14 +6,38 @@ import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useWorkspace, type ReaderMode } from "../../../../../workspace/state";
 import { ChapterPanel } from "../../../../../workspace/chapter-panel";
-import { Card, ConfirmDialog, Empty, formatChangedFields, Input, Modal, Textarea } from "../../../../../workspace/ui";
+import {
+  Card,
+  ConfirmDialog,
+  Empty,
+  formatChangedFields,
+  Input,
+  Modal,
+  Textarea,
+} from "../../../../../workspace/ui";
 
-type ConfirmAction = { title: string; body: string; confirmLabel?: string; destructive?: boolean; onConfirm: () => void };
+type ConfirmAction = {
+  title: string;
+  body: string;
+  confirmLabel?: string;
+  destructive?: boolean;
+  onConfirm: () => void;
+};
 
 export default function ReaderPage() {
-  const { novelId, chapterId } = useParams<{ novelId: string; chapterId: string }>();
+  const { novelId, chapterId } = useParams<{
+    novelId: string;
+    chapterId: string;
+  }>();
   const router = useRouter();
-  const { getNovel, getChapter, translateChapter, deleteChapter, editChapter, revertVersion } = useWorkspace();
+  const {
+    getNovel,
+    getChapter,
+    translateChapter,
+    deleteChapter,
+    editChapter,
+    revertVersion,
+  } = useWorkspace();
   const novel = getNovel(novelId);
   const chapter = getChapter(novelId, chapterId);
   const [mode, setMode] = useState<ReaderMode>("translated");
@@ -24,14 +48,28 @@ export default function ReaderPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editVolume, setEditVolume] = useState("");
   const [editRawText, setEditRawText] = useState("");
-  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
+    null,
+  );
 
-  if (!novel || !chapter) return <Empty title="Chapter not found" body="Return to the chapter list and choose an existing chapter." />;
+  if (!novel || !chapter)
+    return (
+      <Empty
+        title="Chapter not found"
+        body="Return to the chapter list and choose an existing chapter."
+      />
+    );
   const currentNovel = novel;
   const currentChapter = chapter;
-  const chapterIndex = currentNovel.chapters.findIndex((item) => item.id === currentChapter.id);
-  const previousChapter = chapterIndex > 0 ? currentNovel.chapters[chapterIndex - 1] : undefined;
-  const nextChapter = chapterIndex >= 0 && chapterIndex < currentNovel.chapters.length - 1 ? currentNovel.chapters[chapterIndex + 1] : undefined;
+  const chapterIndex = currentNovel.chapters.findIndex(
+    (item) => item.id === currentChapter.id,
+  );
+  const previousChapter =
+    chapterIndex > 0 ? currentNovel.chapters[chapterIndex - 1] : undefined;
+  const nextChapter =
+    chapterIndex >= 0 && chapterIndex < currentNovel.chapters.length - 1
+      ? currentNovel.chapters[chapterIndex + 1]
+      : undefined;
 
   function editMeta() {
     setEditTitle(currentChapter.title);
@@ -64,7 +102,10 @@ export default function ReaderPage() {
       body: `Update ${formatChangedFields(changes)} for "${currentChapter.title}".`,
       confirmLabel: "Save changes",
       onConfirm: () => {
-        editChapter(currentNovel.id, currentChapter.id, { title: editTitle, volume: editVolume });
+        editChapter(currentNovel.id, currentChapter.id, {
+          title: editTitle,
+          volume: editVolume,
+        });
         setIsMetaOpen(false);
         setConfirmAction(null);
       },
@@ -88,7 +129,9 @@ export default function ReaderPage() {
       body: `Replace raw source text for "${currentChapter.title}".`,
       confirmLabel: "Save raw text",
       onConfirm: () => {
-        editChapter(currentNovel.id, currentChapter.id, { rawText: editRawText });
+        editChapter(currentNovel.id, currentChapter.id, {
+          rawText: editRawText,
+        });
         setIsRawOpen(false);
         setConfirmAction(null);
       },
@@ -112,11 +155,22 @@ export default function ReaderPage() {
   return (
     <div className="grid min-h-[calc(100vh-2rem)] gap-5 xl:grid-cols-[260px_minmax(0,1fr)_260px]">
       <aside className="rounded-lg border border-neutral-200 bg-white/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.05)] xl:sticky xl:top-4 xl:h-[calc(100vh-2rem)] xl:overflow-y-auto">
-        <Link href={`/app/novels/${currentNovel.id}/chapters`} className="text-sm font-semibold text-neutral-500 hover:text-neutral-950">Back to chapters</Link>
-        <h1 className="mt-4 font-serif text-2xl font-semibold">{currentNovel.title}</h1>
+        <Link
+          href={`/app/novels/${currentNovel.id}/chapters`}
+          className="text-sm font-semibold text-neutral-500 hover:text-neutral-950"
+        >
+          Back to chapters
+        </Link>
+        <h1 className="mt-4 font-serif text-2xl font-semibold">
+          {currentNovel.title}
+        </h1>
         <div className="mt-4 grid gap-1">
           {currentNovel.chapters.map((item) => (
-            <Link key={item.id} href={`/app/novels/${currentNovel.id}/chapters/${item.id}`} className={`rounded-lg px-3 py-2 text-sm ${item.id === currentChapter.id ? "bg-neutral-950 text-white" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"}`}>
+            <Link
+              key={item.id}
+              href={`/app/novels/${currentNovel.id}/chapters/${item.id}`}
+              className={`rounded-lg px-3 py-2 text-sm ${item.id === currentChapter.id ? "bg-neutral-950 text-white" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"}`}
+            >
               <span className="block truncate font-medium">{item.title}</span>
               <span className="text-xs opacity-60">{item.status}</span>
             </Link>
@@ -125,58 +179,177 @@ export default function ReaderPage() {
       </aside>
 
       <Card className="min-h-[calc(100vh-2rem)]">
-        <ChapterNavigation novelId={currentNovel.id} previousChapter={previousChapter} nextChapter={nextChapter} />
+        <ChapterNavigation
+          novelId={currentNovel.id}
+          previousChapter={previousChapter}
+          nextChapter={nextChapter}
+        />
         <div className="mt-5 border-t border-neutral-200 pt-5">
-          <ChapterPanel chapter={currentChapter} readerMode={mode} fontSize={fontSize} lineHeight={lineHeight} onMode={setMode} onTranslate={() => translateChapter(currentNovel.id, currentChapter.id, false)} onRegenerate={() => translateChapter(currentNovel.id, currentChapter.id, true)} onDelete={requestDeleteChapter} onEdit={editMeta} onEditRaw={editRaw} onRevert={(version) => revertVersion(currentNovel.id, currentChapter.id, version)} />
+          <ChapterPanel
+            chapter={currentChapter}
+            readerMode={mode}
+            fontSize={fontSize}
+            lineHeight={lineHeight}
+            onMode={setMode}
+            onTranslate={() =>
+              translateChapter(currentNovel.id, currentChapter.id, false)
+            }
+            onRegenerate={() =>
+              translateChapter(currentNovel.id, currentChapter.id, true)
+            }
+            onDelete={requestDeleteChapter}
+            onEdit={editMeta}
+            onEditRaw={editRaw}
+            onRevert={(version) =>
+              revertVersion(currentNovel.id, currentChapter.id, version)
+            }
+          />
         </div>
         <div className="mt-6 border-t border-neutral-200 pt-5">
-          <ChapterNavigation novelId={currentNovel.id} previousChapter={previousChapter} nextChapter={nextChapter} />
+          <ChapterNavigation
+            novelId={currentNovel.id}
+            previousChapter={previousChapter}
+            nextChapter={nextChapter}
+          />
         </div>
       </Card>
 
       <aside className="rounded-lg border border-neutral-200 bg-white/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.05)] xl:sticky xl:top-4 xl:h-fit">
-        <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">Reader</p>
-        <label className="mt-4 block text-sm font-medium">Font size<input type="range" min="14" max="26" value={fontSize} onChange={(event) => setFontSize(Number(event.target.value))} className="mt-2 w-full" /></label>
-        <label className="mt-4 block text-sm font-medium">Line height<input type="range" min="1.4" max="2.2" step="0.05" value={lineHeight} onChange={(event) => setLineHeight(Number(event.target.value))} className="mt-2 w-full" /></label>
-        <div className="mt-5 rounded-lg bg-neutral-100 p-3 text-sm leading-6 text-neutral-600">Dedicated reading mode keeps the manuscript centered and the controls at the edges.</div>
+        <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+          Reader
+        </p>
+        <label className="mt-4 block text-sm font-medium">
+          Font size
+          <input
+            type="range"
+            min="14"
+            max="26"
+            value={fontSize}
+            onChange={(event) => setFontSize(Number(event.target.value))}
+            className="mt-2 w-full"
+          />
+        </label>
+        <label className="mt-4 block text-sm font-medium">
+          Line height
+          <input
+            type="range"
+            min="1.4"
+            max="2.2"
+            step="0.05"
+            value={lineHeight}
+            onChange={(event) => setLineHeight(Number(event.target.value))}
+            className="mt-2 w-full"
+          />
+        </label>
+        {/* <div className="mt-5 rounded-lg bg-neutral-100 p-3 text-sm leading-6 text-neutral-600">Dedicated reading mode keeps the manuscript centered and the controls at the edges.</div> */}
       </aside>
 
-      <Modal title="Edit chapter details" open={isMetaOpen} onClose={() => setIsMetaOpen(false)}>
+      <Modal
+        title="Edit chapter details"
+        open={isMetaOpen}
+        onClose={() => setIsMetaOpen(false)}
+      >
         <form onSubmit={submitMeta} className="space-y-4">
-          <Input label="Chapter title" value={editTitle} onChange={setEditTitle} />
-          <Input label="Volume / arc" value={editVolume} onChange={setEditVolume} />
+          <Input
+            label="Chapter title"
+            value={editTitle}
+            onChange={setEditTitle}
+          />
+          <Input
+            label="Volume / arc"
+            value={editVolume}
+            onChange={setEditVolume}
+          />
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setIsMetaOpen(false)} className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950">Cancel</button>
-            <button type="submit" className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800">Save changes</button>
+            <button
+              type="button"
+              onClick={() => setIsMetaOpen(false)}
+              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+            >
+              Save changes
+            </button>
           </div>
         </form>
       </Modal>
 
-      <Modal title="Edit raw chapter" open={isRawOpen} onClose={() => setIsRawOpen(false)}>
+      <Modal
+        title="Edit raw chapter"
+        open={isRawOpen}
+        onClose={() => setIsRawOpen(false)}
+      >
         <form onSubmit={submitRaw} className="space-y-4">
-          <Textarea label="Raw Chinese text" value={editRawText} onChange={setEditRawText} rows={16} className="font-serif leading-7" />
+          <Textarea
+            label="Raw Chinese text"
+            value={editRawText}
+            onChange={setEditRawText}
+            rows={16}
+            className="font-serif leading-7"
+          />
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setIsRawOpen(false)} className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950">Cancel</button>
-            <button type="submit" disabled={!editRawText.trim()} className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500">Save raw text</button>
+            <button
+              type="button"
+              onClick={() => setIsRawOpen(false)}
+              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!editRawText.trim()}
+              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+            >
+              Save raw text
+            </button>
           </div>
         </form>
       </Modal>
-      <ConfirmDialog title={confirmAction?.title ?? "Confirm action"} body={confirmAction?.body ?? "Continue with this change?"} confirmLabel={confirmAction?.confirmLabel} destructive={confirmAction?.destructive} open={Boolean(confirmAction)} onCancel={() => setConfirmAction(null)} onConfirm={() => confirmAction?.onConfirm()} />
+      <ConfirmDialog
+        title={confirmAction?.title ?? "Confirm action"}
+        body={confirmAction?.body ?? "Continue with this change?"}
+        confirmLabel={confirmAction?.confirmLabel}
+        destructive={confirmAction?.destructive}
+        open={Boolean(confirmAction)}
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={() => confirmAction?.onConfirm()}
+      />
     </div>
   );
 }
 
 type NavigationChapter = { id: string; title: string; order: number };
 
-function ChapterNavigation({ novelId, previousChapter, nextChapter }: { novelId: string; previousChapter?: NavigationChapter; nextChapter?: NavigationChapter }) {
-  const base = "inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition sm:px-4";
-  const enabled = "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-950";
-  const disabled = "cursor-not-allowed border-neutral-100 bg-neutral-50 text-neutral-300";
+function ChapterNavigation({
+  novelId,
+  previousChapter,
+  nextChapter,
+}: {
+  novelId: string;
+  previousChapter?: NavigationChapter;
+  nextChapter?: NavigationChapter;
+}) {
+  const base =
+    "inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition sm:px-4";
+  const enabled =
+    "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-950";
+  const disabled =
+    "cursor-not-allowed border-neutral-100 bg-neutral-50 text-neutral-300";
 
   return (
-    <nav aria-label="Chapter navigation" className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <nav
+      aria-label="Chapter navigation"
+      className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+    >
       {previousChapter ? (
-        <Link href={`/app/novels/${novelId}/chapters/${previousChapter.id}`} className={`${base} ${enabled}`}>
+        <Link
+          href={`/app/novels/${novelId}/chapters/${previousChapter.id}`}
+          className={`${base} ${enabled}`}
+        >
           <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           <span className="truncate">Previous: {previousChapter.title}</span>
         </Link>
@@ -187,7 +360,10 @@ function ChapterNavigation({ novelId, previousChapter, nextChapter }: { novelId:
         </span>
       )}
       {nextChapter ? (
-        <Link href={`/app/novels/${novelId}/chapters/${nextChapter.id}`} className={`${base} ${enabled} sm:ml-auto`}>
+        <Link
+          href={`/app/novels/${novelId}/chapters/${nextChapter.id}`}
+          className={`${base} ${enabled} sm:ml-auto`}
+        >
           <span className="truncate">Next: {nextChapter.title}</span>
           <ChevronRight aria-hidden="true" className="h-4 w-4" />
         </Link>
