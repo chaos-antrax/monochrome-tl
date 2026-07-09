@@ -1,4 +1,4 @@
-import { Delete, Edit, Edit2, Edit3, Trash } from "lucide-react";
+import { Edit3, Trash } from "lucide-react";
 import { Empty, Mode, Reader, Status } from "./ui";
 import type { Provider } from "@/lib/schemas/translation";
 
@@ -99,7 +99,7 @@ export function ChapterPanel({
             className={` ${secondaryButton} flex items-center gap-2`}
           >
             {" "}
-            <Edit3 size={16} /> 简
+            <Edit3 size={16} /> ç®€
           </button>
           <button type="button" onClick={onDelete} className={secondaryButton}>
             <Trash size={16} />

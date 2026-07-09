@@ -24,6 +24,9 @@ type ConfirmAction = {
   onConfirm: () => void;
 };
 
+const FONT_SIZE_OPTIONS = [16, 18, 19, 20, 22, 24, 26];
+const LINE_HEIGHT_OPTIONS = [1.5, 1.65, 1.8, 1.95, 2.1];
+
 export default function ReaderPage() {
   const { novelId, chapterId } = useParams<{
     novelId: string;
@@ -153,8 +156,8 @@ export default function ReaderPage() {
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-2rem)] gap-5 xl:grid-cols-[260px_minmax(0,1fr)_260px]">
-      <aside className="rounded-lg border border-neutral-200 bg-white/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.05)] xl:sticky xl:top-4 xl:h-[calc(100vh-2rem)] xl:overflow-y-auto">
+    <div className="grid min-h-[calc(100vh-2rem)] gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
+      <aside className="flex flex-col rounded-lg border border-neutral-200 bg-white/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.05)] xl:sticky xl:top-4 xl:h-[calc(100vh-2rem)]">
         <Link
           href={`/app/novels/${currentNovel.id}/chapters`}
           className="text-sm font-semibold text-neutral-500 hover:text-neutral-950"
@@ -164,7 +167,7 @@ export default function ReaderPage() {
         <h1 className="mt-4 font-serif text-2xl font-semibold">
           {currentNovel.title}
         </h1>
-        <div className="mt-4 grid gap-1">
+        <div className="mt-4 grid gap-1 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pr-1">
           {currentNovel.chapters.map((item) => (
             <Link
               key={item.id}
@@ -175,6 +178,23 @@ export default function ReaderPage() {
               <span className="text-xs opacity-60">{item.status}</span>
             </Link>
           ))}
+        </div>
+        <div className="mt-5 border-t border-neutral-200 pt-4 xl:mt-auto">
+          <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">Reader</p>
+          <div className="mt-3 grid gap-3">
+            <label className="block text-sm font-medium text-neutral-700">
+              Font size
+              <select value={fontSize} onChange={(event) => setFontSize(Number(event.target.value))} className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5">
+                {FONT_SIZE_OPTIONS.map((value) => <option key={value} value={value}>{value}px</option>)}
+              </select>
+            </label>
+            <label className="block text-sm font-medium text-neutral-700">
+              Line height
+              <select value={lineHeight} onChange={(event) => setLineHeight(Number(event.target.value))} className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5">
+                {LINE_HEIGHT_OPTIONS.map((value) => <option key={value} value={value}>{value.toFixed(2)}</option>)}
+              </select>
+            </label>
+          </div>
         </div>
       </aside>
 
@@ -214,35 +234,6 @@ export default function ReaderPage() {
         </div>
       </Card>
 
-      <aside className="rounded-lg border border-neutral-200 bg-white/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.05)] xl:sticky xl:top-4 xl:h-fit">
-        <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">
-          Reader
-        </p>
-        <label className="mt-4 block text-sm font-medium">
-          Font size
-          <input
-            type="range"
-            min="14"
-            max="26"
-            value={fontSize}
-            onChange={(event) => setFontSize(Number(event.target.value))}
-            className="mt-2 w-full"
-          />
-        </label>
-        <label className="mt-4 block text-sm font-medium">
-          Line height
-          <input
-            type="range"
-            min="1.4"
-            max="2.2"
-            step="0.05"
-            value={lineHeight}
-            onChange={(event) => setLineHeight(Number(event.target.value))}
-            className="mt-2 w-full"
-          />
-        </label>
-        {/* <div className="mt-5 rounded-lg bg-neutral-100 p-3 text-sm leading-6 text-neutral-600">Dedicated reading mode keeps the manuscript centered and the controls at the edges.</div> */}
-      </aside>
 
       <Modal
         title="Edit chapter details"

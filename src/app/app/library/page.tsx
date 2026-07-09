@@ -94,7 +94,7 @@ export default function LibraryPage() {
           </button>
         </div>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-500">
-          Your collection of novels. Click "New novel" to create a new project,
+          Your collection of novels. Click &quot;New novel&quot; to create a new project,
           or select an existing novel to view its chapters, glossary terms, and
           translations.
         </p>
