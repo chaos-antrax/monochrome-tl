@@ -37,6 +37,42 @@ button {
   cursor: pointer;
 }
 
+html {
+  scrollbar-color: #9f9f9f transparent;
+  scrollbar-width: thin;
+}
+
+* {
+  scrollbar-color: #a3a3a3 transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  min-height: 48px;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: #a3a3a3;
+  background-clip: content-box;
+  transition: background-color 160ms ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #525252;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
 ::selection {
   background: #0a0a0a;
   color: #ffffff;
