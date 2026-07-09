@@ -121,7 +121,9 @@ function ToastLayer() {
         <div className="flex items-start gap-3">
           <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-neutral-950" />
           <p className="min-w-0 flex-1 leading-6">{message}</p>
-          <button type="button" onClick={() => setMessage("")} className="-mr-1 rounded-md px-2 py-1 text-xs font-semibold text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label="Dismiss notification">Close</button>
+          <button type="button" onClick={() => setMessage("")} className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-md text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label="Dismiss notification">
+            <X aria-hidden="true" className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>
@@ -132,6 +134,15 @@ function ShellInner({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerClosing, setDrawerClosing] = useState(false);
   const drawerVisible = drawerOpen || drawerClosing;
+
+
+  useEffect(() => {
+    function collapseSidebar() {
+      setDesktopCollapsed(true);
+    }
+    window.addEventListener('monochrome:collapse-sidebar', collapseSidebar);
+    return () => window.removeEventListener('monochrome:collapse-sidebar', collapseSidebar);
+  }, []);
 
   useEffect(() => {
     if (!drawerClosing) return;

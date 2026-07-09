@@ -73,7 +73,7 @@ export default function ReaderPage() {
     return (
       <Empty
         title="Chapter not found"
-        body="Return to the chapter list and choose an existing chapter."
+        body="Return to the novel page and choose an existing chapter."
       />
     );
   const currentNovel = novel;
@@ -170,7 +170,7 @@ export default function ReaderPage() {
       onConfirm: () => {
         deleteChapter(currentNovel.id, currentChapter.id);
         setConfirmAction(null);
-        router.push(`/app/novels/${currentNovel.id}/chapters`);
+        router.push(`/app/novels/${currentNovel.id}`);
       },
     });
   }
@@ -179,10 +179,10 @@ export default function ReaderPage() {
     <div className="grid min-h-[calc(100vh-2rem)] gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
       <aside className="flex flex-col rounded-lg border border-neutral-200 bg-white/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.05)] xl:sticky xl:top-4 xl:h-[calc(100vh-2rem)]">
         <Link
-          href={`/app/novels/${currentNovel.id}/chapters`}
+          href={`/app/novels/${currentNovel.id}`}
           className="text-sm font-semibold text-neutral-500 hover:text-neutral-950"
         >
-          Back to chapters
+          Back to novel
         </Link>
         <h1 className="mt-4 font-serif text-2xl font-semibold">
           {currentNovel.title}
@@ -202,18 +202,36 @@ export default function ReaderPage() {
           ))}
         </div>
         <div className="mt-5 border-t border-neutral-200 pt-4 xl:mt-auto">
-          <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">Reader</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+            Reader
+          </p>
           <div className="mt-3 grid gap-3">
             <label className="block text-sm font-medium text-neutral-700">
               Font size
-              <select value={fontSize} onChange={(event) => setFontSize(Number(event.target.value))} className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5">
-                {FONT_SIZE_OPTIONS.map((value) => <option key={value} value={value}>{value}px</option>)}
+              <select
+                value={fontSize}
+                onChange={(event) => setFontSize(Number(event.target.value))}
+                className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
+              >
+                {FONT_SIZE_OPTIONS.map((value) => (
+                  <option key={value} value={value}>
+                    {value}px
+                  </option>
+                ))}
               </select>
             </label>
             <label className="block text-sm font-medium text-neutral-700">
               Line height
-              <select value={lineHeight} onChange={(event) => setLineHeight(Number(event.target.value))} className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5">
-                {LINE_HEIGHT_OPTIONS.map((value) => <option key={value} value={value}>{value.toFixed(2)}</option>)}
+              <select
+                value={lineHeight}
+                onChange={(event) => setLineHeight(Number(event.target.value))}
+                className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-neutral-950 outline-none transition focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
+              >
+                {LINE_HEIGHT_OPTIONS.map((value) => (
+                  <option key={value} value={value}>
+                    {value.toFixed(2)}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
@@ -255,7 +273,6 @@ export default function ReaderPage() {
           />
         </div>
       </Card>
-
 
       <Modal
         title="Edit chapter details"

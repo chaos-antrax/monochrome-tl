@@ -123,7 +123,7 @@ export default function GlossaryPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Glossary</p>
             <h1 className="mt-2 font-serif text-4xl font-semibold">{currentNovel.title}</h1>
-            <div className="mt-4 flex gap-2"><Link href={`/app/novels/${currentNovel.id}/chapters`} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold transition hover:border-neutral-950">Chapters</Link></div>
+            <div className="mt-4 flex gap-2"><Link href={`/app/novels/${currentNovel.id}`} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold transition hover:border-neutral-950">Novel</Link></div>
           </div>
           <button type="button" onClick={() => setIsAddOpen(true)} className="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 sm:w-auto">Add term</button>
         </div>

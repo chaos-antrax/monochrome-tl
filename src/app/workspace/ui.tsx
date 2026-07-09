@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { X } from "lucide-react";
 
 type ReaderProps = { text: string; fontSize: number; lineHeight: number };
 
@@ -132,7 +133,9 @@ export function Modal({ title, open, onClose, children }: { title: string; open:
       <div className="animate-scale-in max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-neutral-200 bg-white p-5 shadow-[0_32px_100px_rgba(0,0,0,0.22)] sm:p-6">
         <div className="flex items-start justify-between gap-4 border-b border-neutral-200 pb-4">
           <h2 className="font-serif text-2xl font-semibold">{title}</h2>
-          <button type="button" onClick={onClose} className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950">Close</button>
+          <button type="button" onClick={onClose} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label="Close dialog">
+            <X aria-hidden="true" className="h-4 w-4" />
+          </button>
         </div>
         <div className="pt-4">{children}</div>
       </div>
