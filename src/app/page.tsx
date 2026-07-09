@@ -11,7 +11,13 @@ export default async function Home() {
         <nav className="sm:flex items-center justify-between">
           <Link href="/" className="font-serif text-2xl font-semibold">
             <div className="flex space-x-2 items-center">
-              <Image src="/favicon.ico" alt="" width={40} height={40} />
+              <Image
+                src="/favicon.ico"
+                alt=""
+                loading="eager"
+                width={40}
+                height={40}
+              />
               Monochrome Translations
             </div>
           </Link>
