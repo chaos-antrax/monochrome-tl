@@ -1,65 +1,53 @@
-import Image from "next/image";
+import Link from "next/link";
+import { getSession } from "@/lib/session";
 
-export default function Home() {
+export default async function Home() {
+  const session = await getSession();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-[#f7f7f5] text-neutral-950">
+      <section className="animate-page mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-8">
+        <nav className="flex items-center justify-between">
+          <Link href="/" className="font-serif text-2xl font-semibold">Monochrome</Link>
+          <div className="flex items-center gap-2">
+            {session ? (
+              <Link href="/app/account" className="max-w-[220px] truncate rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-950 hover:text-neutral-950">{session.email}</Link>
+            ) : (
+              <Link href="/login" className="rounded-lg px-4 py-2 text-sm font-semibold text-neutral-600 transition hover:bg-white hover:text-neutral-950">Log in</Link>
+            )}
+            <Link href="/app/library" className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800">Open app</Link>
+          </div>
+        </nav>
+
+        <div className="grid flex-1 items-center gap-10 py-16 lg:grid-cols-[1.05fr_0.95fr]">
+          <div>
+            <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">Chinese web novel translation</p>
+            <h1 className="mt-4 max-w-3xl font-serif text-5xl font-semibold leading-tight sm:text-7xl">A quiet desk for long-form translation.</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-neutral-600">Manage novels, chapters, glossary terms, style guides, provider keys, translation versions, and exports from a focused monochrome workspace.</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href={session ? "/app/library" : "/login"} className="rounded-lg bg-neutral-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800">{session ? "Continue translating" : "Start translating"}</Link>
+              <Link href="/app/library" className="rounded-lg border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950">View library</Link>
+            </div>
+          </div>
+
+          <div className="animate-scale-in rounded-lg border border-neutral-200 bg-white p-5 shadow-[0_24px_80px_rgba(0,0,0,0.08)]">
+            <div className="border-b border-neutral-200 pb-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">Workspace preview</p>
+              <h2 className="mt-2 font-serif text-3xl font-semibold">Translation flow</h2>
+            </div>
+            <div className="mt-5 grid gap-3 text-sm text-neutral-600">
+              <div className="rounded-lg bg-neutral-100 p-4"><span className="font-semibold text-neutral-950">1.</span> Create a novel and paste source chapters.</div>
+              <div className="rounded-lg bg-neutral-100 p-4"><span className="font-semibold text-neutral-950">2.</span> Attach glossary terms and a style guide.</div>
+              <div className="rounded-lg bg-neutral-100 p-4"><span className="font-semibold text-neutral-950">3.</span> Translate, review versions, and export.</div>
+            </div>
+            <div className="mt-6 grid grid-cols-3 gap-2 text-center text-xs uppercase tracking-[0.14em] text-neutral-500">
+              <span className="rounded-lg bg-neutral-100 p-3">Glossary</span>
+              <span className="rounded-lg bg-neutral-100 p-3">Versions</span>
+              <span className="rounded-lg bg-neutral-100 p-3">Export</span>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
