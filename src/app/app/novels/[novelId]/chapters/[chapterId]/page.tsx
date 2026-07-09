@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useWorkspace, type ReaderMode } from "../../../../../workspace/state";
 import { ChapterPanel } from "../../../../../workspace/chapter-panel";
 import {
@@ -54,6 +54,20 @@ export default function ReaderPage() {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
+  const chapterListRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const list = chapterListRef.current;
+    if (!list) return;
+    const saved = window.sessionStorage.getItem(`reader-chapter-list:${novelId}`);
+    if (!saved) return;
+    const scrollTop = Number(saved);
+    if (!Number.isFinite(scrollTop)) return;
+    const frame = window.requestAnimationFrame(() => {
+      list.scrollTop = scrollTop;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [novelId, chapterId, novel?.chapters.length]);
 
   if (!novel || !chapter)
     return (
@@ -73,6 +87,12 @@ export default function ReaderPage() {
     chapterIndex >= 0 && chapterIndex < currentNovel.chapters.length - 1
       ? currentNovel.chapters[chapterIndex + 1]
       : undefined;
+
+  function saveChapterListScroll() {
+    const list = chapterListRef.current;
+    if (!list) return;
+    window.sessionStorage.setItem(`reader-chapter-list:${currentNovel.id}`, String(list.scrollTop));
+  }
 
   function editMeta() {
     setEditTitle(currentChapter.title);
@@ -167,12 +187,14 @@ export default function ReaderPage() {
         <h1 className="mt-4 font-serif text-2xl font-semibold">
           {currentNovel.title}
         </h1>
-        <div className="mt-4 grid gap-1 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pr-1">
+        <div ref={chapterListRef} onScroll={saveChapterListScroll} className="mt-4 flex max-h-[13rem] min-h-0 flex-col gap-1 overflow-y-auto overscroll-contain pr-1 xl:max-h-none xl:flex-1">
           {currentNovel.chapters.map((item) => (
             <Link
               key={item.id}
               href={`/app/novels/${currentNovel.id}/chapters/${item.id}`}
-              className={`rounded-lg px-3 py-2 text-sm ${item.id === currentChapter.id ? "bg-neutral-950 text-white" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"}`}
+              scroll={false}
+              onClick={saveChapterListScroll}
+              className={`min-h-16 shrink-0 rounded-lg px-3 py-2 text-sm transition ${item.id === currentChapter.id ? "bg-neutral-950 text-white" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"}`}
             >
               <span className="block truncate font-medium">{item.title}</span>
               <span className="text-xs opacity-60">{item.status}</span>

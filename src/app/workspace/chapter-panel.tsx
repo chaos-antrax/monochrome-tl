@@ -79,11 +79,7 @@ export function ChapterPanel({
           <h2 className="mt-2 font-serif text-2xl font-semibold">
             {chapter.title}
           </h2>
-          {chapter.error ? (
-            <p className="mt-2 text-sm text-neutral-600">
-              Last error: {chapter.error}
-            </p>
-          ) : null}
+
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -99,7 +95,7 @@ export function ChapterPanel({
             className={` ${secondaryButton} flex items-center gap-2`}
           >
             {" "}
-            <Edit3 size={16} /> ç®€
+            <Edit3 size={16} /> Ã§Â®â‚¬
           </button>
           <button type="button" onClick={onDelete} className={secondaryButton}>
             <Trash size={16} />
@@ -108,11 +104,20 @@ export function ChapterPanel({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Mode
-          modes={["raw", "translated", "diff"]}
-          value={readerMode}
-          onChange={(value) => onMode(value as ReaderMode)}
-        />
+        <div className="xl:hidden">
+          <Mode
+            modes={["raw", "translated"]}
+            value={readerMode === "diff" ? "translated" : readerMode}
+            onChange={(value) => onMode(value as ReaderMode)}
+          />
+        </div>
+        <div className="hidden xl:block">
+          <Mode
+            modes={["raw", "translated", "diff"]}
+            value={readerMode}
+            onChange={(value) => onMode(value as ReaderMode)}
+          />
+        </div>
         <button type="button" onClick={onTranslate} className={primaryButton}>
           Translate
         </button>
@@ -133,31 +138,33 @@ export function ChapterPanel({
             lineHeight={lineHeight}
           />
         ) : null}
-        {readerMode === "translated" ? (
-          translation ? (
-            <Reader
-              text={translation.text}
-              fontSize={fontSize}
-              lineHeight={lineHeight}
-            />
-          ) : (
-            <Empty
-              title="This chapter has not been translated yet"
-              body="Run a translation to create the first version."
-              action={
-                <button
-                  type="button"
-                  onClick={onTranslate}
-                  className={primaryButton}
-                >
-                  Translate this chapter
-                </button>
-              }
-            />
-          )
+        {readerMode === "translated" || readerMode === "diff" ? (
+          <div className={readerMode === "diff" ? "xl:hidden" : undefined}>
+            {translation ? (
+              <Reader
+                text={translation.text}
+                fontSize={fontSize}
+                lineHeight={lineHeight}
+              />
+            ) : (
+              <Empty
+                title="This chapter has not been translated yet"
+                body="Run a translation to create the first version."
+                action={
+                  <button
+                    type="button"
+                    onClick={onTranslate}
+                    className={primaryButton}
+                  >
+                    Translate this chapter
+                  </button>
+                }
+              />
+            )}
+          </div>
         ) : null}
         {readerMode === "diff" ? (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="hidden gap-4 xl:grid xl:grid-cols-2">
             <div>
               <p className="mb-2 text-xs uppercase tracking-[0.16em] text-neutral-500">
                 Raw
