@@ -19,6 +19,9 @@ type BootstrapResponse = {
   user: null | { email: string; provider?: Provider; selectedModel?: string; hasApiKey?: boolean };
   appState: null | { novels?: Novel[]; styles?: StyleGuide[]; jobs?: Job[] };
 };
+
+type FullChapterResponse = { error?: string; chapter?: Chapter };
+type FullNovelResponse = { error?: string; novel?: Novel };
 type WorkspaceMutation =
   | { type: "novel:upsert"; novel: Novel }
   | { type: "novel:delete"; novelId: string }
@@ -56,6 +59,7 @@ type WorkspaceContextValue = {
   translateChapter: (novelId: string, chapterId: string, regenerate?: boolean) => void;
   translateDescription: (novelId: string) => void;
   revertVersion: (novelId: string, chapterId: string, version: number) => void;
+  loadChapter: (novelId: string, chapterId: string) => Promise<void>;
   addTerm: (novelId: string, term: Omit<GlossaryTerm, "id" | "status">) => void;
   editTerm: (novelId: string, termId: string, values: Partial<GlossaryTerm>) => void;
   setTermStatus: (novelId: string, termId: string, status: GlossaryStatus) => void;
@@ -72,7 +76,7 @@ type WorkspaceContextValue = {
 
 type AuthContextValue = Pick<WorkspaceContextValue, "isBooting" | "account" | "setAccount" | "submitAuth" | "signOut" | "saveProvider">;
 type LibraryContextValue = Pick<WorkspaceContextValue, "novels" | "jobs" | "usage" | "getNovel" | "getChapter" | "addNovel" | "editNovel" | "deleteNovel" | "addChapter" | "editChapter" | "deleteChapter" | "moveChapter" | "reorderChapter" | "addTerm" | "editTerm" | "setTermStatus" | "deleteTerm" | "exportNovel" | "printNovel">;
-type ReaderContextValue = Pick<WorkspaceContextValue, "translationProgress" | "translateChapter" | "translateDescription" | "revertVersion">;
+type ReaderContextValue = Pick<WorkspaceContextValue, "translationProgress" | "translateChapter" | "translateDescription" | "revertVersion" | "loadChapter">;
 type SettingsContextValue = Pick<WorkspaceContextValue, "styles" | "getStyle" | "addStyle" | "editStyle" | "deleteStyle">;
 type ToastContextValue = Pick<WorkspaceContextValue, "message" | "setMessage">;
 
@@ -409,6 +413,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: nextChapter }]);
   }, [getChapter, persistWorkspaceMutations, updateNovel]);
 
+  const loadChapter = useCallback(async (novelId: string, chapterId: string) => {
+    const current = getChapter(novelId, chapterId);
+    if (current?.rawText && current.translations.every((version) => version.text || version.version !== current.currentVersion)) return;
+    const response = await fetch(`/api/novels/${novelId}/chapters/${chapterId}`);
+    const data = (await response.json()) as FullChapterResponse;
+    if (!response.ok || !data.chapter) throw new Error(data.error ?? "Unable to load chapter.");
+    updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((entry) => entry.id === chapterId ? data.chapter! : entry) }));
+  }, [getChapter, updateNovel]);
+
   const addTerm = useCallback((novelId: string, term: Omit<GlossaryTerm, "id" | "status">) => {
     const novel = getNovel(novelId);
     const sourceTerm = term.sourceTerm.trim();
@@ -501,31 +514,42 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   
   }, []);
 
+  const loadFullNovel = useCallback(async (novelId: string) => {
+    const response = await fetch(`/api/novels/${novelId}`);
+    const data = (await response.json()) as FullNovelResponse;
+    if (!response.ok || !data.novel) throw new Error(data.error ?? "Unable to load novel.");
+    setNovels((current) => current.map((entry) => entry.id === novelId ? data.novel! : entry));
+    return data.novel;
+  }, []);
+
   const exportNovel = useCallback((novelId: string, format: ExportFormat) => {
-    const novel = getNovel(novelId);
-    if (!novel) return;
     void (async () => {
-      const { buildEpubExport, buildExport, buildHtmlExport, downloadFile, downloadText, exportFileName } = await import("./export-utils");
-      if (format === "txt") downloadText(exportFileName(novel.title, "txt"), "text/plain;charset=utf-8", buildExport(novel));
-      if (format === "html") downloadText(exportFileName(novel.title, "html"), "text/html;charset=utf-8", buildHtmlExport(novel));
-      if (format === "epub") downloadFile(exportFileName(novel.title, "epub"), buildEpubExport(novel));
+      try {
+        const novel = await loadFullNovel(novelId);
+        const { buildEpubExport, buildExport, buildHtmlExport, downloadFile, downloadText, exportFileName } = await import("./export-utils");
+        if (format === "txt") downloadText(exportFileName(novel.title, "txt"), "text/plain;charset=utf-8", buildExport(novel));
+        if (format === "html") downloadText(exportFileName(novel.title, "html"), "text/html;charset=utf-8", buildHtmlExport(novel));
+        if (format === "epub") downloadFile(exportFileName(novel.title, "epub"), buildEpubExport(novel));
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Unable to export novel.");
+      }
     })();
-  
-  }, [getNovel]);
+  }, [loadFullNovel]);
 
   const printNovel = useCallback((novelId: string) => {
-    const novel = getNovel(novelId);
-    if (!novel) return;
     void (async () => {
-      const { buildHtmlExport, printHtml } = await import("./export-utils");
-      printHtml(buildHtmlExport(novel));
+      try {
+        const novel = await loadFullNovel(novelId);
+        const { buildHtmlExport, printHtml } = await import("./export-utils");
+        printHtml(buildHtmlExport(novel));
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Unable to print novel.");
+      }
     })();
-  
-  }, [getNovel]);
-
+  }, [loadFullNovel]);
   const authValue = useMemo<AuthContextValue>(() => ({ isBooting: !isPersistReady, account, setAccount, submitAuth, signOut, saveProvider }), [isPersistReady, account, submitAuth, signOut, saveProvider]);
   const libraryValue = useMemo<LibraryContextValue>(() => ({ novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, addChapter, editChapter, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel }), [novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, addChapter, editChapter, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel]);
-  const readerValue = useMemo<ReaderContextValue>(() => ({ translationProgress, translateChapter, translateDescription, revertVersion }), [translationProgress, translateChapter, translateDescription, revertVersion]);
+  const readerValue = useMemo<ReaderContextValue>(() => ({ translationProgress, translateChapter, translateDescription, revertVersion, loadChapter }), [translationProgress, translateChapter, translateDescription, revertVersion, loadChapter]);
   const settingsValue = useMemo<SettingsContextValue>(() => ({ styles, getStyle, addStyle, editStyle, deleteStyle }), [styles, getStyle, addStyle, editStyle, deleteStyle]);
   const toastValue = useMemo<ToastContextValue>(() => ({ message, setMessage }), [message]);
 

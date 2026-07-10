@@ -24,6 +24,7 @@ type StoredStyleGuide = StyleGuide & { userId: string; updatedAtDate: Date };
 type StoredJob = Job & { userId: string; updatedAt: Date };
 
 type WorkspaceState = { novels?: Novel[]; styles?: StyleGuide[]; jobs?: Job[] };
+type ReadMode = "summary" | "full";
 
 export type WorkspaceMutation =
   | { type: "novel:upsert"; novel: Novel }
@@ -138,13 +139,13 @@ function splitVersion(novelId: string, chapterId: string, version: TranslationVe
   return { ...version, userId, novelId, chapterId, updatedAt: new Date() };
 }
 
-function toChapter(chapter: StoredChapter, versions: TranslationVersion[]): Chapter {
+function toChapter(chapter: StoredChapter, versions: TranslationVersion[], mode: ReadMode): Chapter {
   return {
     id: chapter.id,
     title: chapter.title,
     volume: chapter.volume,
     order: chapter.order,
-    rawText: chapter.rawText,
+    rawText: mode === "full" ? chapter.rawText : "",
     rawTextHash: chapter.rawTextHash,
     status: chapter.status,
     translations: versions.sort((a, b) => a.version - b.version),
@@ -165,10 +166,10 @@ function toNovel(novel: StoredNovel, chapters: Chapter[], glossary: GlossaryTerm
   };
 }
 
-function toVersion(version: StoredTranslationVersion): TranslationVersion {
+function toVersion(version: StoredTranslationVersion, mode: ReadMode): TranslationVersion {
   return {
     version: version.version,
-    text: version.text,
+    text: mode === "full" ? version.text : "",
     model: version.model,
     provider: version.provider,
     tokensUsed: version.tokensUsed,
@@ -223,27 +224,27 @@ async function hasStructuredWorkspace(userId: string) {
   return novelCount + styleCount + jobCount > 0;
 }
 
-export async function getStructuredAppState(userId: string): Promise<WorkspaceState> {
+export async function getStructuredAppState(userId: string, mode: ReadMode = "full"): Promise<WorkspaceState> {
   const [novels, chapters, terms, styles, versions, jobs] = await Promise.all([
     (await collection<StoredNovel>("novels")).find({ userId }).sort({ updatedAt: -1 }).toArray(),
-    (await collection<StoredChapter>("chapters")).find({ userId }).sort({ order: 1 }).toArray(),
+    (await collection<StoredChapter>("chapters")).find({ userId }, mode === "summary" ? { projection: { rawText: 0 } } : undefined).sort({ order: 1 }).toArray(),
     (await collection<StoredGlossaryTerm>("glossaryTerms")).find({ userId }).toArray(),
     (await collection<StoredStyleGuide>("styleGuides")).find({ userId }).sort({ updatedAt: -1 }).toArray(),
-    (await collection<StoredTranslationVersion>("translationVersions")).find({ userId }).sort({ version: 1 }).toArray(),
+    (await collection<StoredTranslationVersion>("translationVersions")).find({ userId }, mode === "summary" ? { projection: { text: 0 } } : undefined).sort({ version: 1 }).toArray(),
     (await collection<StoredJob>("jobs")).find({ userId }).sort({ createdAt: -1 }).toArray(),
   ]);
 
   const versionsByChapter = new Map<string, TranslationVersion[]>();
   versions.forEach((version) => {
     const list = versionsByChapter.get(version.chapterId) ?? [];
-    list.push(toVersion(version));
+    list.push(toVersion(version, mode));
     versionsByChapter.set(version.chapterId, list);
   });
 
   const chaptersByNovel = new Map<string, Chapter[]>();
   chapters.forEach((chapter) => {
     const list = chaptersByNovel.get(chapter.novelId) ?? [];
-    list.push(toChapter(chapter, versionsByChapter.get(chapter.id) ?? []));
+    list.push(toChapter(chapter, versionsByChapter.get(chapter.id) ?? [], mode));
     chaptersByNovel.set(chapter.novelId, list);
   });
 
@@ -308,16 +309,46 @@ export async function getBootstrapState(userId: string) {
   if (!structuredExists && user.appState) {
     await replaceCollectionAppState(userId, user.appState as WorkspaceState);
     await (await usersCollection()).updateOne({ _id: new ObjectId(userId) }, { $unset: { appState: "" }, $set: { updatedAt: new Date() } });
-    return { user: safeUser(user, userId), appState: user.appState };
+    return { user: safeUser(user, userId), appState: await getStructuredAppState(userId, "summary") };
   }
 
-  return { user: safeUser(user, userId), appState: await getStructuredAppState(userId) };
+  return { user: safeUser(user, userId), appState: await getStructuredAppState(userId, "summary") };
 }
 
 export async function getAppState(userId: string) {
   return getStructuredAppState(userId);
 }
 
+
+export async function getFullChapter(userId: string, novelId: string, chapterId: string) {
+  const [chapter, versions] = await Promise.all([
+    (await collection<StoredChapter>("chapters")).findOne({ userId, novelId, id: chapterId }),
+    (await collection<StoredTranslationVersion>("translationVersions")).find({ userId, novelId, chapterId }).sort({ version: 1 }).toArray(),
+  ]);
+  if (!chapter) return null;
+  return toChapter(chapter, versions.map((version) => toVersion(version, "full")), "full");
+}
+
+export async function getFullNovel(userId: string, novelId: string) {
+  const [novel, chapters, terms, versions] = await Promise.all([
+    (await collection<StoredNovel>("novels")).findOne({ userId, id: novelId }),
+    (await collection<StoredChapter>("chapters")).find({ userId, novelId }).sort({ order: 1 }).toArray(),
+    (await collection<StoredGlossaryTerm>("glossaryTerms")).find({ userId, novelId }).toArray(),
+    (await collection<StoredTranslationVersion>("translationVersions")).find({ userId, novelId }).sort({ version: 1 }).toArray(),
+  ]);
+  if (!novel) return null;
+  const versionsByChapter = new Map<string, TranslationVersion[]>();
+  versions.forEach((version) => {
+    const list = versionsByChapter.get(version.chapterId) ?? [];
+    list.push(toVersion(version, "full"));
+    versionsByChapter.set(version.chapterId, list);
+  });
+  return toNovel(
+    novel,
+    chapters.map((chapter) => toChapter(chapter, versionsByChapter.get(chapter.id) ?? [], "full")),
+    terms.map(toTerm),
+  );
+}
 export async function saveAppState(userId: string, appState: unknown) {
   await replaceCollectionAppState(userId, appState as WorkspaceState);
   await (await usersCollection()).updateOne({ _id: new ObjectId(userId) }, { $unset: { appState: "" }, $set: { updatedAt: new Date() } });

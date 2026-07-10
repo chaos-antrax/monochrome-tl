@@ -35,7 +35,7 @@ export default function ReaderPage() {
   }>();
   const router = useRouter();
   const { getNovel, getChapter, deleteChapter, editChapter } = useLibrary();
-  const { translateChapter, translationProgress, revertVersion } = useReader();
+  const { translateChapter, translationProgress, revertVersion, loadChapter } = useReader();
   const novel = getNovel(novelId);
   const chapter = getChapter(novelId, chapterId);
   const [mode, setMode] = useState<ReaderMode>("translated");
@@ -49,8 +49,18 @@ export default function ReaderPage() {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
+  const [chapterLoadError, setChapterLoadError] = useState<{ chapterId: string; message: string } | null>(null);
   const chapterListRef = useRef<HTMLDivElement | null>(null);
 
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!chapter || chapter.rawText || chapterLoadError?.chapterId === chapterId) return;
+    void loadChapter(novelId, chapterId).catch((error) => {
+      if (!cancelled) setChapterLoadError({ chapterId, message: error instanceof Error ? error.message : "Unable to load chapter." });
+    });
+    return () => { cancelled = true; };
+  }, [chapter, chapterId, chapterLoadError?.chapterId, loadChapter, novelId]);
   useEffect(() => {
     const list = chapterListRef.current;
     if (!list) return;
@@ -71,6 +81,22 @@ export default function ReaderPage() {
         body="Return to the novel page and choose an existing chapter."
       />
     );
+
+  if (!chapter.rawText && chapterLoadError?.chapterId !== chapter.id)
+    return (
+      <Card>
+        <div className="h-3 w-24 animate-pulse rounded bg-neutral-200" />
+        <div className="mt-4 h-8 w-72 max-w-full animate-pulse rounded bg-neutral-200" />
+        <div className="mt-8 space-y-3">
+          <div className="h-4 animate-pulse rounded bg-neutral-100" />
+          <div className="h-4 animate-pulse rounded bg-neutral-100" />
+          <div className="h-4 w-2/3 animate-pulse rounded bg-neutral-100" />
+        </div>
+      </Card>
+    );
+
+  if (chapterLoadError?.chapterId === chapter.id)
+    return <Empty title="Chapter could not be loaded" body={chapterLoadError.message} />;
   const currentNovel = novel;
   const currentChapter = chapter;
   const chapterIndex = currentNovel.chapters.findIndex(
