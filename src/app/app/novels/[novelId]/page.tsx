@@ -625,20 +625,24 @@ export default function NovelPage() {
                       >
                         Edit
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => requestTermStatus(term, "approved")}
-                        className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => requestTermStatus(term, "rejected")}
-                        className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950"
-                      >
-                        Reject
-                      </button>
+                      {term.status !== "approved" ? (
+                        <button
+                          type="button"
+                          onClick={() => requestTermStatus(term, "approved")}
+                          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950"
+                        >
+                          Approve
+                        </button>
+                      ) : null}
+                      {term.status !== "rejected" ? (
+                        <button
+                          type="button"
+                          onClick={() => requestTermStatus(term, "rejected")}
+                          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950"
+                        >
+                          Reject
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => requestDeleteTerm(term)}

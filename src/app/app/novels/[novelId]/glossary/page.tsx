@@ -146,8 +146,8 @@ export default function GlossaryPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => openEdit(term)} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Edit</button>
-                  <button type="button" onClick={() => requestTermStatus(term, "approved")} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Approve</button>
-                  <button type="button" onClick={() => requestTermStatus(term, "rejected")} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Reject</button>
+                  {term.status !== "approved" ? <button type="button" onClick={() => requestTermStatus(term, "approved")} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Approve</button> : null}
+                  {term.status !== "rejected" ? <button type="button" onClick={() => requestTermStatus(term, "rejected")} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Reject</button> : null}
                   <button type="button" onClick={() => requestDeleteTerm(term)} className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950">Delete</button>
                 </div>
               </div>
