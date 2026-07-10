@@ -66,6 +66,7 @@ export function CustomSelect({
   options,
   placeholder = "Select",
   disabled = false,
+  dropdownPlacement = "down",
   className = "",
   buttonClassName = "",
 }: {
@@ -75,6 +76,7 @@ export function CustomSelect({
   options: SelectOption[];
   placeholder?: string;
   disabled?: boolean;
+  dropdownPlacement?: "down" | "up";
   className?: string;
   buttonClassName?: string;
 }) {
@@ -130,7 +132,13 @@ export function CustomSelect({
         />
       </button>
       {open ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+2px)] z-50 origin-top animate-select-pop rounded-lg border border-neutral-200 bg-white p-1 shadow-[0_18px_55px_rgba(0,0,0,0.16)]">
+        <div
+          className={`absolute left-0 right-0 z-50 rounded-lg border border-neutral-200 bg-white p-1 shadow-[0_18px_55px_rgba(0,0,0,0.16)] ${
+            dropdownPlacement === "up"
+              ? "bottom-[calc(70%+2px)] origin-bottom animate-select-pop-up"
+              : "top-[calc(100%+2px)] origin-top animate-select-pop"
+          }`}
+        >
           <div
             role="listbox"
             aria-labelledby={`${id}-label`}

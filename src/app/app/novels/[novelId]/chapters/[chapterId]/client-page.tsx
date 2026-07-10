@@ -233,12 +233,14 @@ export default function ReaderPage() {
               value={String(fontSize)}
               onChange={(value) => setFontSize(Number(value))}
               options={FONT_SIZE_OPTIONS.map((value) => ({ value: String(value), label: `${value}px` }))}
+            dropdownPlacement="up"
             />
             <CustomSelect
               label="Line height"
               value={String(lineHeight)}
               onChange={(value) => setLineHeight(Number(value))}
               options={LINE_HEIGHT_OPTIONS.map((value) => ({ value: String(value), label: value.toFixed(2) }))}
+            dropdownPlacement="up"
             />
           </div>
         </div>
@@ -413,3 +415,5 @@ function ChapterNavigation({
     </nav>
   );
 }
+
+
