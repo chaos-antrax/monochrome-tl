@@ -63,6 +63,29 @@ const statusClasses: Record<string, string> = {
     "border-neutral-300 bg-white text-neutral-500 line-through decoration-neutral-400",
 };
 
+
+export type TranslationProgressView = {
+  percent: number;
+  label: string;
+};
+
+export function TranslationProgressOverlay({ progress }: { progress?: TranslationProgressView | null }) {
+  if (!progress) return null;
+  const percent = Math.max(0, Math.min(100, Math.round(progress.percent)));
+  return (
+    <div className="absolute inset-0 z-10 grid place-items-center rounded-lg border border-white/70 bg-white/55 px-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur-md animate-page">
+      <div className="w-full max-w-xs rounded-lg border border-neutral-200/80 bg-white/80 p-4 shadow-[0_18px_70px_rgba(0,0,0,0.12)] backdrop-blur-xl">
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-neutral-950 border-t-transparent" aria-hidden="true" />
+        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Translating</p>
+        <p className="mt-1 text-sm font-semibold text-neutral-950">{progress.label}</p>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-neutral-200">
+          <div className="h-full rounded-full bg-neutral-950 transition-[width] duration-500 ease-out" style={{ width: `${percent}%` }} />
+        </div>
+        <p className="mt-2 text-xs font-semibold text-neutral-500">{percent}%</p>
+      </div>
+    </div>
+  );
+}
 export function Card({
   children,
   className = "",

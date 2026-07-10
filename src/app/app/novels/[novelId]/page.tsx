@@ -26,6 +26,7 @@ import {
   normalizeDisplayText,
   Status,
   Textarea,
+  TranslationProgressOverlay,
 } from "../../../workspace/ui";
 
 type MainTab = "chapters" | "glossary";
@@ -68,6 +69,7 @@ export default function NovelPage() {
   const {
     account,
     jobs,
+    translationProgress,
     styles,
     getNovel,
     getStyle,
@@ -148,6 +150,7 @@ export default function NovelPage() {
     : hasTranslation
       ? "Re-translate"
       : "Translate description";
+  const descriptionProgress = translationProgress?.target === "description" && translationProgress.novelId === currentNovel.id ? translationProgress : null;
 
   async function pasteChapter() {
     try {
@@ -451,13 +454,16 @@ export default function NovelPage() {
               </button>
             </div>
           </div>
-          <article
-            className={`mt-4 whitespace-pre-wrap text-base leading-7 text-neutral-800 ${effectiveMode === "chinese" ? "font-serif" : ""}`}
-          >
-            {descriptionText
-              ? normalizeDisplayText(descriptionText)
-              : "No description yet."}
-          </article>
+          <div className="relative mt-4 overflow-hidden rounded-lg">
+            <article
+              className={`whitespace-pre-wrap text-base leading-7 text-neutral-800 transition duration-300 ${descriptionProgress ? "blur-[2px] opacity-45" : ""} ${effectiveMode === "chinese" ? "font-serif" : ""}`}
+            >
+              {descriptionText
+                ? normalizeDisplayText(descriptionText)
+                : "No description yet."}
+            </article>
+            <TranslationProgressOverlay progress={descriptionProgress} />
+          </div>
         </div>
       </section>
 

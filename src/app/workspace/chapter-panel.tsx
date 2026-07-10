@@ -1,5 +1,5 @@
 import { Edit3, Trash } from "lucide-react";
-import { Empty, Mode, Reader, Status } from "./ui";
+import { Empty, Mode, Reader, Status, TranslationProgressOverlay, type TranslationProgressView } from "./ui";
 import type { Provider } from "@/lib/schemas/translation";
 
 type ReaderMode = "raw" | "translated" | "diff";
@@ -49,6 +49,7 @@ export function ChapterPanel({
   onEdit,
   onEditRaw,
   onRevert,
+  progress,
 }: {
   chapter: Chapter;
   readerMode: ReaderMode;
@@ -61,6 +62,7 @@ export function ChapterPanel({
   onEdit: () => void;
   onEditRaw: () => void;
   onRevert: (version: number) => void;
+  progress?: TranslationProgressView | null;
 }) {
   const translation = chapter.translations.find(
     (item) => item.version === chapter.currentVersion,
@@ -87,15 +89,14 @@ export function ChapterPanel({
             onClick={onEdit}
             className={` ${secondaryButton} flex items-center gap-2`}
           >
-            <Edit3 size={16} /> en
+            <Edit3 size={16} /> Title
           </button>
           <button
             type="button"
             onClick={onEditRaw}
             className={` ${secondaryButton} flex items-center gap-2`}
           >
-            {" "}
-            <Edit3 size={16} /> Ã§Â®â‚¬
+            <Edit3 size={16} /> Raw
           </button>
           <button type="button" onClick={onDelete} className={secondaryButton}>
             <Trash size={16} />
@@ -139,28 +140,31 @@ export function ChapterPanel({
           />
         ) : null}
         {readerMode === "translated" || readerMode === "diff" ? (
-          <div className={readerMode === "diff" ? "xl:hidden" : undefined}>
-            {translation ? (
-              <Reader
-                text={translation.text}
-                fontSize={fontSize}
-                lineHeight={lineHeight}
-              />
-            ) : (
-              <Empty
-                title="This chapter has not been translated yet"
-                body="Run a translation to create the first version."
-                action={
-                  <button
-                    type="button"
-                    onClick={onTranslate}
-                    className={primaryButton}
-                  >
-                    Translate this chapter
-                  </button>
-                }
-              />
-            )}
+          <div className={`relative overflow-hidden rounded-lg ${readerMode === "diff" ? "xl:hidden" : ""}`}>
+            <div className={`transition duration-300 ${progress ? "blur-[2px] opacity-45" : ""}`}>
+              {translation ? (
+                <Reader
+                  text={translation.text}
+                  fontSize={fontSize}
+                  lineHeight={lineHeight}
+                />
+              ) : (
+                <Empty
+                  title="This chapter has not been translated yet"
+                  body="Run a translation to create the first version."
+                  action={
+                    <button
+                      type="button"
+                      onClick={onTranslate}
+                      className={primaryButton}
+                    >
+                      Translate this chapter
+                    </button>
+                  }
+                />
+              )}
+            </div>
+            <TranslationProgressOverlay progress={progress} />
           </div>
         ) : null}
         {readerMode === "diff" ? (

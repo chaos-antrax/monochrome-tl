@@ -38,6 +38,7 @@ export default function ReaderPage() {
     getNovel,
     getChapter,
     translateChapter,
+    translationProgress,
     deleteChapter,
     editChapter,
     revertVersion,
@@ -88,6 +89,7 @@ export default function ReaderPage() {
     chapterIndex >= 0 && chapterIndex < currentNovel.chapters.length - 1
       ? currentNovel.chapters[chapterIndex + 1]
       : undefined;
+  const chapterProgress = translationProgress?.target === "chapter" && translationProgress.novelId === currentNovel.id && translationProgress.chapterId === currentChapter.id ? translationProgress : null;
 
   function saveChapterListScroll() {
     const list = chapterListRef.current;
@@ -248,6 +250,7 @@ export default function ReaderPage() {
             onRevert={(version) =>
               revertVersion(currentNovel.id, currentChapter.id, version)
             }
+            progress={chapterProgress}
           />
         </div>
         <div className="mt-6 border-t border-neutral-200 pt-5">
