@@ -194,28 +194,28 @@ export default function ReaderPage() {
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-2rem)] gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
-      <aside className="flex flex-col rounded-lg border border-neutral-200 bg-white/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.05)] xl:sticky xl:top-4 xl:h-[calc(100vh-2rem)]">
+    <div className="grid min-h-[calc(100vh-2rem)] min-w-0 max-w-full gap-5 overflow-x-hidden xl:grid-cols-[280px_minmax(0,1fr)]">
+      <aside className="flex min-w-0 max-w-full flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.05)] xl:sticky xl:top-4 xl:h-[calc(100vh-2rem)]">
         <Link
           href={`/app/novels/${currentNovel.id}`}
-          className="text-sm font-semibold text-neutral-500 hover:text-neutral-950"
+          className="w-fit text-sm font-semibold text-neutral-500 hover:text-neutral-950"
         >
           Back to novel
         </Link>
-        <h1 className="mt-4 font-serif text-2xl font-semibold">
+        <h1 className="mt-4 min-w-0 truncate font-serif text-2xl font-semibold">
           {currentNovel.title}
         </h1>
-        <div ref={chapterListRef} onScroll={saveChapterListScroll} className="mt-4 flex max-h-[13rem] min-h-0 flex-col gap-1 overflow-y-auto overscroll-contain pr-1 xl:max-h-none xl:flex-1">
+        <div ref={chapterListRef} onScroll={saveChapterListScroll} className="mt-4 flex max-h-[13rem] min-h-0 min-w-0 max-w-full flex-col gap-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 xl:max-h-none xl:flex-1">
           {currentNovel.chapters.map((item) => (
             <Link
               key={item.id}
               href={`/app/novels/${currentNovel.id}/chapters/${item.id}`}
               scroll={false}
               onClick={saveChapterListScroll}
-              className={`min-h-16 shrink-0 rounded-lg px-3 py-2 text-sm transition ${item.id === currentChapter.id ? "bg-neutral-950 text-white" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"}`}
+              className={`block min-h-16 min-w-0 max-w-full shrink-0 overflow-hidden rounded-lg px-3 py-2 text-sm transition ${item.id === currentChapter.id ? "bg-neutral-950 text-white" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"}`}
             >
-              <span className="block truncate font-medium">{item.title}</span>
-              <span className="text-xs opacity-60">{item.status}</span>
+              <span className="block min-w-0 max-w-full truncate font-medium">{item.title}</span>
+              <span className="block truncate text-xs opacity-60">{item.status}</span>
             </Link>
           ))}
         </div>
@@ -229,20 +229,20 @@ export default function ReaderPage() {
               value={String(fontSize)}
               onChange={(value) => setFontSize(Number(value))}
               options={FONT_SIZE_OPTIONS.map((value) => ({ value: String(value), label: `${value}px` }))}
-            dropdownPlacement="up"
+              dropdownPlacement="up"
             />
             <CustomSelect
               label="Line height"
               value={String(lineHeight)}
               onChange={(value) => setLineHeight(Number(value))}
               options={LINE_HEIGHT_OPTIONS.map((value) => ({ value: String(value), label: value.toFixed(2) }))}
-            dropdownPlacement="up"
+              dropdownPlacement="up"
             />
           </div>
         </div>
       </aside>
 
-      <Card className="min-h-[calc(100vh-2rem)]">
+      <Card className="min-h-[calc(100vh-2rem)] min-w-0 max-w-full overflow-hidden">
         <ChapterNavigation
           novelId={currentNovel.id}
           previousChapter={previousChapter}
@@ -364,7 +364,7 @@ function ChapterNavigation({
   nextChapter?: NavigationChapter;
 }) {
   const base =
-    "inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition sm:px-4";
+    "flex min-h-11 w-full min-w-0 max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition sm:w-auto sm:max-w-[48%] sm:px-4";
   const enabled =
     "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-950";
   const disabled =
@@ -373,19 +373,19 @@ function ChapterNavigation({
   return (
     <nav
       aria-label="Chapter navigation"
-      className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+      className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
     >
       {previousChapter ? (
         <Link
           href={`/app/novels/${novelId}/chapters/${previousChapter.id}`}
           className={`${base} ${enabled}`}
         >
-          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
-          <span className="truncate">Previous: {previousChapter.title}</span>
+          <ChevronLeft aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1 truncate">Previous: {previousChapter.title}</span>
         </Link>
       ) : (
         <span className={`${base} ${disabled}`}>
-          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+          <ChevronLeft aria-hidden="true" className="h-4 w-4 shrink-0" />
           <span>Previous</span>
         </span>
       )}
@@ -394,18 +394,21 @@ function ChapterNavigation({
           href={`/app/novels/${novelId}/chapters/${nextChapter.id}`}
           className={`${base} ${enabled} sm:ml-auto`}
         >
-          <span className="truncate">Next: {nextChapter.title}</span>
-          <ChevronRight aria-hidden="true" className="h-4 w-4" />
+          <span className="min-w-0 flex-1 truncate text-right sm:text-left">Next: {nextChapter.title}</span>
+          <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0" />
         </Link>
       ) : (
         <span className={`${base} ${disabled} sm:ml-auto`}>
           <span>Next</span>
-          <ChevronRight aria-hidden="true" className="h-4 w-4" />
+          <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0" />
         </span>
       )}
     </nav>
   );
 }
+
+
+
 
 
 
