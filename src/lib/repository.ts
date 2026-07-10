@@ -38,7 +38,9 @@ export type WorkspaceMutation =
   | { type: "style:delete"; styleId: string }
   | { type: "job:upsert"; job: Job };
 
-export async function ensureIndexes() {
+let indexSetupPromise: Promise<void> | null = null;
+
+async function createIndexes() {
   const db = await getDatabase();
   await Promise.all([
     db.collection<UserDocument>("users").createIndex({ email: 1 }, { unique: true }),
@@ -54,6 +56,13 @@ export async function ensureIndexes() {
   ]);
 }
 
+export function ensureIndexes() {
+  indexSetupPromise ??= createIndexes().catch((error) => {
+    indexSetupPromise = null;
+    throw error;
+  });
+  return indexSetupPromise;
+}
 async function collection<T extends object>(name: string): Promise<Collection<T>> {
   await ensureIndexes();
   return (await getDatabase()).collection<T>(name);
