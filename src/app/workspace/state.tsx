@@ -3,7 +3,6 @@
 import React, { createContext, FormEvent, ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_MAX_CHAPTER_CHARACTERS, MAX_STYLE_GUIDE_CHARACTERS, PROVIDER_DEFAULTS } from "@/lib/constants";
 import { type Provider } from "@/lib/schemas/translation";
-import { buildEpubExport, buildExport, buildHtmlExport, downloadFile, downloadText, exportFileName, printHtml } from "./export-utils";
 import { cleanPastedChapterText, estimate, hashText, inferFallbackTerms, normalizeTranslatedText } from "./text-utils";
 import type { Account, Chapter, ExportFormat, GlossaryStatus, GlossaryTerm, Job, NewTerm, Novel, StyleGuide, Tokens, TranslationProgress, TranslationVersion } from "./types";
 
@@ -430,16 +429,21 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   function exportNovel(novelId: string, format: ExportFormat) {
     const novel = getNovel(novelId);
     if (!novel) return;
-    if (format === "txt") downloadText(exportFileName(novel.title, "txt"), "text/plain;charset=utf-8", buildExport(novel));
-    if (format === "html") downloadText(exportFileName(novel.title, "html"), "text/html;charset=utf-8", buildHtmlExport(novel));
-    if (format === "epub") downloadFile(exportFileName(novel.title, "epub"), buildEpubExport(novel));
+    void (async () => {
+      const { buildEpubExport, buildExport, buildHtmlExport, downloadFile, downloadText, exportFileName } = await import("./export-utils");
+      if (format === "txt") downloadText(exportFileName(novel.title, "txt"), "text/plain;charset=utf-8", buildExport(novel));
+      if (format === "html") downloadText(exportFileName(novel.title, "html"), "text/html;charset=utf-8", buildHtmlExport(novel));
+      if (format === "epub") downloadFile(exportFileName(novel.title, "epub"), buildEpubExport(novel));
+    })();
   }
 
   function printNovel(novelId: string) {
     const novel = getNovel(novelId);
     if (!novel) return;
-    printHtml(buildHtmlExport(novel));
-
+    void (async () => {
+      const { buildHtmlExport, printHtml } = await import("./export-utils");
+      printHtml(buildHtmlExport(novel));
+    })();
   }
 
   return <WorkspaceContext.Provider value={{ isBooting: !isPersistReady, account, setAccount, novels, styles, jobs, translationProgress, message, setMessage, usage, getNovel, getChapter, getStyle, addNovel, editNovel, deleteNovel, addChapter, editChapter, deleteChapter, moveChapter, reorderChapter, translateChapter, translateDescription, revertVersion, addTerm, editTerm, setTermStatus, deleteTerm, addStyle, editStyle, deleteStyle, submitAuth, signOut, saveProvider, exportNovel, printNovel }}>{children}</WorkspaceContext.Provider>;
