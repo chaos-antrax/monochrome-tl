@@ -20,7 +20,6 @@ export type TranslationVersion = {
 export type Chapter = {
   id: string;
   title: string;
-  volume: string;
   order: number;
   rawText: string;
   rawTextHash: string;
@@ -96,3 +95,5 @@ export type Account = {
 
 export type ExportFormat = "txt" | "html" | "epub";
 export type NewTerm = { sourceTerm: string; translation: string; category: GlossaryCategory; notes?: string };
+
+

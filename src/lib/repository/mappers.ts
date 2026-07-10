@@ -33,7 +33,6 @@ export function splitChapter(novelId: string, chapter: Chapter, userId: string):
     userId,
     novelId,
     title: chapter.title,
-    volume: chapter.volume,
     order: chapter.order,
     rawText: chapter.rawText,
     rawTextHash: chapter.rawTextHash,
@@ -64,7 +63,6 @@ export function toChapter(chapter: StoredChapter, versions: TranslationVersion[]
   return {
     id: chapter.id,
     title: chapter.title,
-    volume: chapter.volume,
     order: chapter.order,
     rawText: mode === "full" ? chapter.rawText : "",
     rawTextHash: chapter.rawTextHash,
@@ -135,3 +133,5 @@ export function toJob(job: StoredJob): Job {
     completedAt: job.completedAt,
   };
 }
+
+

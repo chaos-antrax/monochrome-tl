@@ -44,7 +44,6 @@ export default function ReaderPage() {
   const [isMetaOpen, setIsMetaOpen] = useState(false);
   const [isRawOpen, setIsRawOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
-  const [editVolume, setEditVolume] = useState("");
   const [editRawText, setEditRawText] = useState("");
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
@@ -118,7 +117,6 @@ export default function ReaderPage() {
 
   function editMeta() {
     setEditTitle(currentChapter.title);
-    setEditVolume(currentChapter.volume);
     setIsMetaOpen(true);
   }
 
@@ -131,7 +129,6 @@ export default function ReaderPage() {
     event.preventDefault();
     const changes = [
       editTitle !== currentChapter.title ? "title" : null,
-      editVolume !== currentChapter.volume ? "volume" : null,
     ].filter(Boolean) as string[];
     if (changes.length === 0) {
       setConfirmAction({
@@ -149,7 +146,6 @@ export default function ReaderPage() {
       onConfirm: () => {
         editChapter(currentNovel.id, currentChapter.id, {
           title: editTitle,
-          volume: editVolume,
         });
         setIsMetaOpen(false);
         setConfirmAction(null);
@@ -294,11 +290,6 @@ export default function ReaderPage() {
             value={editTitle}
             onChange={setEditTitle}
           />
-          <Input
-            label="Volume / arc"
-            value={editVolume}
-            onChange={setEditVolume}
-          />
           <div className="flex justify-end gap-2">
             <button
               type="button"
@@ -415,5 +406,8 @@ function ChapterNavigation({
     </nav>
   );
 }
+
+
+
 
 

@@ -148,23 +148,23 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     persistWorkspaceMutations([{ type: "novel:delete", novelId }]);
   }, [persistWorkspaceMutations]);
 
-  const addChapter = useCallback((novelId: string, title: string, volume: string, rawText: string) => {
+  const addChapter = useCallback((novelId: string, title: string, rawText: string) => {
     const novel = getNovel(novelId);
     const trimmed = cleanPastedChapterText(rawText);
     if (!novel || !trimmed || trimmed.length > DEFAULT_MAX_CHAPTER_CHARACTERS) return null;
-    const next: Chapter = { id: id("chapter"), title: title.trim() || `Chapter ${novel.chapters.length + 1}`, volume: volume.trim() || "Volume 1", order: novel.chapters.length + 1, rawText: trimmed, rawTextHash: hashText(trimmed), status: "untranslated", translations: [], currentVersion: 0 };
+    const next: Chapter = { id: id("chapter"), title: title.trim() || `Chapter ${novel.chapters.length + 1}`, order: novel.chapters.length + 1, rawText: trimmed, rawTextHash: hashText(trimmed), status: "untranslated", translations: [], currentVersion: 0 };
     updateNovel(novelId, (item) => ({ ...item, chapters: [...item.chapters, next] }));
     persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: next }]);
     return next.id;
   }, [getNovel, persistWorkspaceMutations, updateNovel]);
 
-  const editChapter = useCallback((novelId: string, chapterId: string, values: { title?: string; volume?: string; rawText?: string }) => {
+  const editChapter = useCallback((novelId: string, chapterId: string, values: { title?: string; rawText?: string }) => {
     const chapter = getChapter(novelId, chapterId);
     if (!chapter) return;
     const rawText = values.rawText === undefined ? undefined : cleanPastedChapterText(values.rawText);
     const nextChapter = rawText
-      ? { ...chapter, title: values.title?.trim() || chapter.title, volume: values.volume?.trim() || chapter.volume, rawText, rawTextHash: hashText(rawText), status: chapter.translations.some((version) => version.rawTextHash === hashText(rawText)) ? "translated" as const : "untranslated" as const, error: undefined }
-      : { ...chapter, title: values.title?.trim() || chapter.title, volume: values.volume?.trim() || chapter.volume };
+      ? { ...chapter, title: values.title?.trim() || chapter.title, rawText, rawTextHash: hashText(rawText), status: chapter.translations.some((version) => version.rawTextHash === hashText(rawText)) ? "translated" as const : "untranslated" as const, error: undefined }
+      : { ...chapter, title: values.title?.trim() || chapter.title };
     updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((entry) => entry.id === chapterId ? nextChapter : entry) }));
     persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: nextChapter }]);
   }, [getChapter, persistWorkspaceMutations, updateNovel]);
@@ -466,5 +466,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
 
 

@@ -40,8 +40,8 @@ export type WorkspaceContextValue = {
   addNovel: (title: string, description: string, styleGuideId?: string) => string;
   editNovel: (novelId: string, values: { title: string; description: string; descriptionTranslated?: string; styleGuideId?: string }) => void;
   deleteNovel: (novelId: string) => void;
-  addChapter: (novelId: string, title: string, volume: string, rawText: string) => string | null;
-  editChapter: (novelId: string, chapterId: string, values: { title?: string; volume?: string; rawText?: string }) => void;
+  addChapter: (novelId: string, title: string, rawText: string) => string | null;
+  editChapter: (novelId: string, chapterId: string, values: { title?: string; rawText?: string }) => void;
   deleteChapter: (novelId: string, chapterId: string) => void;
   moveChapter: (novelId: string, chapterId: string, direction: -1 | 1) => void;
   reorderChapter: (novelId: string, draggedChapterId: string, targetChapterId: string) => void;
@@ -68,5 +68,6 @@ export type LibraryContextValue = Pick<WorkspaceContextValue, "novels" | "jobs" 
 export type ReaderContextValue = Pick<WorkspaceContextValue, "translationProgress" | "translateChapter" | "translateDescription" | "revertVersion" | "loadChapter">;
 export type SettingsContextValue = Pick<WorkspaceContextValue, "styles" | "getStyle" | "addStyle" | "editStyle" | "deleteStyle">;
 export type ToastContextValue = Pick<WorkspaceContextValue, "message" | "setMessage">;
+
 
 

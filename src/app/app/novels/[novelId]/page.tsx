@@ -85,7 +85,6 @@ export default function NovelPage() {
   const [editNovelStyleGuideId, setEditNovelStyleGuideId] = useState("");
   const [isAddChapterOpen, setIsAddChapterOpen] = useState(false);
   const [chapterTitle, setChapterTitle] = useState("");
-  const [volume, setVolume] = useState("Volume 1");
   const [rawText, setRawText] = useState("");
   const [draggedChapterId, setDraggedChapterId] = useState<string | null>(null);
   const [dragOverChapterId, setDragOverChapterId] = useState<string | null>(
@@ -222,7 +221,6 @@ export default function NovelPage() {
     const chapterId = addChapter(
       currentNovel.id,
       chapterTitle,
-      volume,
       rawText,
     );
     if (chapterId) {
@@ -518,12 +516,9 @@ export default function NovelPage() {
                     <Link
                       href={`/app/novels/${currentNovel.id}/chapters/${chapter.id}`}
                       onClick={collapseSidebarForReader}
-                      className="min-w-0 flex-1 rounded-lg p-2 transition hover:bg-neutral-50"
+                      className="flex min-h-10 min-w-0 flex-1 items-center rounded-lg px-2 py-1 transition hover:bg-neutral-50"
                     >
-                      <p className="text-xs uppercase tracking-[0.16em] text-neutral-500">
-                        {chapter.volume} / Chapter {chapter.order}
-                      </p>
-                      <h3 className="mt-1 truncate font-serif text-xl font-semibold">
+                      <h3 className="truncate font-serif text-xl font-semibold leading-tight">
                         {chapter.title}
                       </h3>
                     </Link>
@@ -742,13 +737,12 @@ export default function NovelPage() {
               Paste
             </button>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3">
             <Input
               label="Title"
               value={chapterTitle}
               onChange={setChapterTitle}
             />
-            <Input label="Volume / arc" value={volume} onChange={setVolume} />
           </div>
           <Textarea
             label="Raw Chinese"
@@ -880,3 +874,7 @@ export default function NovelPage() {
     </div>
   );
 }
+
+
+
+

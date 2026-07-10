@@ -33,8 +33,8 @@ export function buildExport(novel: Novel) {
 
 export function buildHtmlExport(novel: Novel) {
   const description = novel.descriptionTranslated ?? novel.description;
-  const toc = novel.chapters.map((chapter, index) => `<li><a href="#chapter-${index + 1}"><span>${escapeHtml(chapter.title)}</span><small>${escapeHtml(chapter.volume)} / Chapter ${chapter.order}</small></a></li>`).join("");
-  const chapterHtml = novel.chapters.map((chapter, index) => `<section id="chapter-${index + 1}" class="chapter"><div class="chapter-kicker">${escapeHtml(chapter.volume)} / Chapter ${chapter.order}</div><h2>${escapeHtml(chapter.title)}</h2><div class="prose">${renderParagraphs(getChapterText(chapter))}</div></section>`).join("\n");
+  const toc = novel.chapters.map((chapter, index) => `<li><a href="#chapter-${index + 1}"><span>${escapeHtml(chapter.title)}</span><small>Chapter ${chapter.order}</small></a></li>`).join("");
+  const chapterHtml = novel.chapters.map((chapter, index) => `<section id="chapter-${index + 1}" class="chapter"><div class="chapter-kicker">Chapter ${chapter.order}</div><h2>${escapeHtml(chapter.title)}</h2><div class="prose">${renderParagraphs(getChapterText(chapter))}</div></section>`).join("\n");
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(novel.title)}</title><style>${bookCss()}</style></head><body><main class="book"><section class="cover"><p class="eyebrow">Monochrome Translations</p><h1>${escapeHtml(novel.title)}</h1><p class="meta">${novel.chapters.length} chapters / ${novel.chapters.filter((chapter) => chapter.status === "translated").length} translated</p></section><section class="intro"><p class="eyebrow">Description</p><div class="prose description">${renderParagraphs(description)}</div></section><section class="toc"><p class="eyebrow">Contents</p><h2>Chapters</h2><ol>${toc || "<li>No chapters available</li>"}</ol></section>${chapterHtml}</main></body></html>`;
 }
 
@@ -118,7 +118,7 @@ function xhtmlDocument(title: string, body: string, bodyClass = "") {
 export function buildEpubExport(novel: Novel) {
   const chapterFiles = novel.chapters.map((chapter, index) => {
     const filename = chapterFileName(index);
-    const body = `<section class="chapter"><p class="kicker">${escapeHtml(chapter.volume)} / Chapter ${chapter.order}</p><h1>${escapeHtml(chapter.title)}</h1><div class="prose">${renderParagraphs(getChapterText(chapter))}</div></section>`;
+    const body = `<section class="chapter"><p class="kicker">Chapter ${chapter.order}</p><h1>${escapeHtml(chapter.title)}</h1><div class="prose">${renderParagraphs(getChapterText(chapter))}</div></section>`;
     return { chapter, filename, content: xhtmlDocument(chapter.title, body, "chapter-page") };
   });
   const manifestChapters = chapterFiles.map((file, index) => `<item id="chapter-${index + 1}" href="${file.filename}" media-type="application/xhtml+xml" />`).join("");
@@ -183,3 +183,4 @@ export function printHtml(content: string) {
   document.body.appendChild(frame);
   frame.srcdoc = content;
 }
+
