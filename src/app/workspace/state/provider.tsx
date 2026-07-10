@@ -3,7 +3,7 @@
 import React, { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_MAX_CHAPTER_CHARACTERS, MAX_STYLE_GUIDE_CHARACTERS, PROVIDER_DEFAULTS } from "@/lib/constants";
 import { type Provider } from "@/lib/schemas/translation";
-import { cleanPastedChapterText, estimate, hashText, inferFallbackTerms, normalizeTranslatedText } from "../text-utils";
+import { cleanPastedChapterText, estimate, hashText, normalizeTranslatedText } from "../text-utils";
 import type { Account, Chapter, ExportFormat, GlossaryStatus, GlossaryTerm, Job, NewTerm, Novel, StyleGuide, TranslationProgress, TranslationVersion } from "../types";
 import { bootstrapWorkspace, loadFullChapterRequest, loadFullNovelRequest, persistWorkspaceMutationsRequest, saveProviderRequest, signOutRequest, submitAuthRequest, translateChapterRequest, translateDescriptionRequest } from "./api";
 import { AuthContext, LibraryContext, ReaderContext, SettingsContext, ToastContext } from "./contexts";
@@ -16,6 +16,17 @@ const id = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString
 
 const styleSeed: StyleGuide[] = [];
 const novelSeed: Novel[] = [];
+
+function isUsableProviderTerm(term: NewTerm, sourceText: string) {
+  const sourceTerm = term.sourceTerm.trim();
+  const translation = term.translation.trim();
+  if (!sourceTerm || !translation) return false;
+  if (!sourceText.includes(sourceTerm)) return false;
+  if (sourceTerm === translation) return false;
+  if (/review needed|needs review|unknown|tbd|todo|n\/a/i.test(translation)) return false;
+  if (!/[A-Za-z]/.test(translation)) return false;
+  return true;
+}
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<Account>(() => ({ email: "", sessionExpiresAt: "", provider: "deepseek", selectedModel: PROVIDER_DEFAULTS.deepseek.defaultModel, verified: false }));
   const [isPersistReady, setIsPersistReady] = useState(false);
@@ -216,7 +227,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const usageEstimate = estimate(sourceChapter.rawText, normalizedText);
     const glossary = [...novel.glossary];
     const persistedTerms: GlossaryTerm[] = [];
-    newTerms.forEach((newTerm) => {
+    newTerms.filter((newTerm) => isUsableProviderTerm(newTerm, sourceChapter.rawText)).forEach((newTerm) => {
       const sourceTerm = newTerm.sourceTerm.trim();
       const translation = newTerm.translation.trim();
       if (!sourceTerm || glossary.some((entry) => entry.sourceTerm === sourceTerm)) return;
@@ -270,7 +281,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         const response = await translateChapterRequest({ rawChapterText: chapter.rawText, styleGuide: style?.content ?? null, glossary: novel.glossary.filter((entry) => entry.status === "approved" && chapter.rawText.includes(entry.sourceTerm)).map((entry) => ({ sourceTerm: entry.sourceTerm, translation: entry.translation, category: entry.category })) });
         progress.update(90, "Processing provider response");
         progress.update(96, "Saving chapter and glossary");
-        finishChapter(job, novel, chapter, response.translatedText, response.newTerms.length ? response.newTerms : inferFallbackTerms(chapter.rawText, novel.glossary), false, response.title);
+        finishChapter(job, novel, chapter, response.translatedText, response.newTerms, false, response.title);
         progress.complete("Translation saved");
       } catch (error) {
         progress.fail();
@@ -466,6 +477,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
+
 
 
 

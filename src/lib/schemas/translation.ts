@@ -41,7 +41,11 @@ export const TranslationResponseSchema = z.object({
     return value.filter((item) => {
       if (!item || typeof item !== "object") return false;
       const candidate = item as { sourceTerm?: unknown; translation?: unknown };
-      return typeof candidate.sourceTerm === "string" && candidate.sourceTerm.trim() && typeof candidate.translation === "string" && candidate.translation.trim();
+      if (typeof candidate.sourceTerm !== "string" || typeof candidate.translation !== "string") return false;
+      const translation = candidate.translation.trim();
+      if (!candidate.sourceTerm.trim() || !translation) return false;
+      if (/review needed|needs review|unknown|tbd|todo|n\/a/i.test(translation)) return false;
+      return /[A-Za-z]/.test(translation);
     });
   }, z.array(NewTermSchema)).default([]),
 });
@@ -57,3 +61,4 @@ export type Provider = z.infer<typeof ProviderSchema>;
 export type TranslationRequest = z.infer<typeof TranslationRequestSchema>;
 export type TranslationResponse = z.infer<typeof TranslationResponseSchema>;
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
+
