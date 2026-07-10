@@ -1,33 +1,6 @@
 import { Edit3, Trash } from "lucide-react";
 import { Empty, Mode, Reader, Status, TranslationProgressOverlay, type TranslationProgressView } from "./ui";
-import type { Provider } from "@/lib/schemas/translation";
-
-type ReaderMode = "raw" | "translated" | "diff";
-type Tokens = { input: number; output: number };
-
-type TranslationVersion = {
-  version: number;
-  text: string;
-  model: string;
-  provider: Provider;
-  tokensUsed: Tokens;
-  estimatedCost: number;
-  createdAt: string;
-  rawTextHash: string;
-};
-
-type Chapter = {
-  id: string;
-  title: string;
-  volume: string;
-  order: number;
-  rawText: string;
-  rawTextHash: string;
-  status: "untranslated" | "queued" | "translating" | "translated" | "failed";
-  translations: TranslationVersion[];
-  currentVersion: number;
-  error?: string;
-};
+import type { Chapter, ReaderMode } from "./types";
 
 const labelDate = (value?: string) =>
   value ? new Date(value).toLocaleString() : "Never";
@@ -223,3 +196,4 @@ export function ChapterPanel({
     </>
   );
 }
+

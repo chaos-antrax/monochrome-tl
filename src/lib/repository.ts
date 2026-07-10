@@ -1,72 +1,13 @@
-import { ObjectId, type Collection } from "mongodb";
-import { getDatabase } from "./db";
+import { ObjectId } from "mongodb";
 import { decryptSecret, encryptSecret } from "./crypto";
 import type { Provider } from "./schemas/translation";
-import type { Chapter, GlossaryTerm, Job, Novel, StyleGuide, TranslationVersion } from "@/app/workspace/types";
+import type { Chapter, GlossaryTerm, TranslationVersion } from "@/app/workspace/types";
+import { collection } from "./repository/indexes";
+import { safeUser, splitChapter, splitJob, splitNovel, splitStyle, splitTerm, splitVersion, toChapter, toJob, toNovel, toStyle, toTerm, toVersion } from "./repository/mappers";
+import type { ReadMode, StoredChapter, StoredGlossaryTerm, StoredJob, StoredNovel, StoredStyleGuide, StoredTranslationVersion, UserDocument, WorkspaceMutation, WorkspaceState } from "./repository/types";
 
-type UserDocument = {
-  _id?: ObjectId;
-  email: string;
-  passwordHash: string;
-  provider?: Provider;
-  encryptedApiKey?: { iv: string; authTag: string; ciphertext: string };
-  selectedModel?: string;
-  appState?: unknown;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type StoredNovel = Omit<Novel, "chapters" | "glossary"> & { userId: string; createdAt?: Date; updatedAt: Date };
-type StoredChapter = Omit<Chapter, "translations"> & { userId: string; novelId: string; updatedAt: Date };
-type StoredTranslationVersion = TranslationVersion & { userId: string; novelId: string; chapterId: string; updatedAt: Date };
-type StoredGlossaryTerm = GlossaryTerm & { userId: string; novelId: string; updatedAt: Date };
-type StoredStyleGuide = StyleGuide & { userId: string; updatedAtDate: Date };
-type StoredJob = Job & { userId: string; updatedAt: Date };
-
-type WorkspaceState = { novels?: Novel[]; styles?: StyleGuide[]; jobs?: Job[] };
-type ReadMode = "summary" | "full";
-
-export type WorkspaceMutation =
-  | { type: "novel:upsert"; novel: Novel }
-  | { type: "novel:delete"; novelId: string }
-  | { type: "chapter:upsert"; novelId: string; chapter: Chapter }
-  | { type: "chapter:delete"; novelId: string; chapterId: string; orderUpdates?: Array<{ id: string; order: number }> }
-  | { type: "chapters:reorder"; novelId: string; chapters: Array<{ id: string; order: number }> }
-  | { type: "term:upsert"; novelId: string; term: GlossaryTerm }
-  | { type: "term:delete"; novelId: string; termId: string }
-  | { type: "style:upsert"; style: StyleGuide }
-  | { type: "style:delete"; styleId: string }
-  | { type: "job:upsert"; job: Job };
-
-let indexSetupPromise: Promise<void> | null = null;
-
-async function createIndexes() {
-  const db = await getDatabase();
-  await Promise.all([
-    db.collection<UserDocument>("users").createIndex({ email: 1 }, { unique: true }),
-    db.collection<StoredNovel>("novels").createIndex({ userId: 1, id: 1 }, { unique: true }),
-    db.collection<StoredChapter>("chapters").createIndex({ userId: 1, novelId: 1, order: 1 }),
-    db.collection<StoredChapter>("chapters").createIndex({ userId: 1, id: 1 }, { unique: true }),
-    db.collection<StoredGlossaryTerm>("glossaryTerms").createIndex({ userId: 1, novelId: 1, sourceTerm: 1 }, { unique: true }),
-    db.collection<StoredGlossaryTerm>("glossaryTerms").createIndex({ userId: 1, id: 1 }, { unique: true }),
-    db.collection<StoredStyleGuide>("styleGuides").createIndex({ userId: 1, id: 1 }, { unique: true }),
-    db.collection<StoredTranslationVersion>("translationVersions").createIndex({ userId: 1, chapterId: 1, version: 1 }, { unique: true }),
-    db.collection<StoredJob>("jobs").createIndex({ userId: 1, status: 1 }),
-    db.collection<StoredJob>("jobs").createIndex({ userId: 1, id: 1 }, { unique: true }),
-  ]);
-}
-
-export function ensureIndexes() {
-  indexSetupPromise ??= createIndexes().catch((error) => {
-    indexSetupPromise = null;
-    throw error;
-  });
-  return indexSetupPromise;
-}
-async function collection<T extends object>(name: string): Promise<Collection<T>> {
-  await ensureIndexes();
-  return (await getDatabase()).collection<T>(name);
-}
+export type { WorkspaceMutation } from "./repository/types";
+export { ensureIndexes } from "./repository/indexes";
 
 export async function usersCollection() {
   return collection<UserDocument>("users");
@@ -87,141 +28,6 @@ export async function getSafeUser(userId: string) {
   const user = await (await usersCollection()).findOne({ _id: new ObjectId(userId) });
   if (!user) return null;
   return safeUser(user, userId);
-}
-
-function safeUser(user: UserDocument, fallbackId: string) {
-  return {
-    id: user._id?.toHexString() ?? fallbackId,
-    email: user.email,
-    provider: user.provider,
-    selectedModel: user.selectedModel,
-    hasApiKey: Boolean(user.encryptedApiKey),
-  };
-}
-
-function stripUndefined<T extends Record<string, unknown>>(value: T): T {
-  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as T;
-}
-
-function splitNovel(novel: Novel, userId: string): StoredNovel {
-  return stripUndefined({
-    id: novel.id,
-    userId,
-    title: novel.title,
-    description: novel.description,
-    descriptionTranslated: novel.descriptionTranslated,
-    styleGuideId: novel.styleGuideId,
-    updatedAt: new Date(),
-  });
-}
-
-function splitChapter(novelId: string, chapter: Chapter, userId: string): StoredChapter {
-  return stripUndefined({
-    id: chapter.id,
-    userId,
-    novelId,
-    title: chapter.title,
-    volume: chapter.volume,
-    order: chapter.order,
-    rawText: chapter.rawText,
-    rawTextHash: chapter.rawTextHash,
-    status: chapter.status,
-    currentVersion: chapter.currentVersion,
-    error: chapter.error,
-    updatedAt: new Date(),
-  });
-}
-
-function splitTerm(novelId: string, term: GlossaryTerm, userId: string): StoredGlossaryTerm {
-  return stripUndefined({ ...term, userId, novelId, updatedAt: new Date() });
-}
-
-function splitStyle(style: StyleGuide, userId: string): StoredStyleGuide {
-  return { ...style, userId, updatedAtDate: new Date() };
-}
-
-function splitJob(job: Job, userId: string): StoredJob {
-  return stripUndefined({ ...job, userId, updatedAt: new Date() });
-}
-
-function splitVersion(novelId: string, chapterId: string, version: TranslationVersion, userId: string): StoredTranslationVersion {
-  return { ...version, userId, novelId, chapterId, updatedAt: new Date() };
-}
-
-function toChapter(chapter: StoredChapter, versions: TranslationVersion[], mode: ReadMode): Chapter {
-  return {
-    id: chapter.id,
-    title: chapter.title,
-    volume: chapter.volume,
-    order: chapter.order,
-    rawText: mode === "full" ? chapter.rawText : "",
-    rawTextHash: chapter.rawTextHash,
-    status: chapter.status,
-    translations: versions.sort((a, b) => a.version - b.version),
-    currentVersion: chapter.currentVersion,
-    error: chapter.error,
-  };
-}
-
-function toNovel(novel: StoredNovel, chapters: Chapter[], glossary: GlossaryTerm[]): Novel {
-  return {
-    id: novel.id,
-    title: novel.title,
-    description: novel.description,
-    descriptionTranslated: novel.descriptionTranslated,
-    styleGuideId: novel.styleGuideId,
-    glossary,
-    chapters: chapters.sort((a, b) => a.order - b.order),
-  };
-}
-
-function toVersion(version: StoredTranslationVersion, mode: ReadMode): TranslationVersion {
-  return {
-    version: version.version,
-    text: mode === "full" ? version.text : "",
-    model: version.model,
-    provider: version.provider,
-    tokensUsed: version.tokensUsed,
-    estimatedCost: version.estimatedCost,
-    createdAt: version.createdAt,
-    rawTextHash: version.rawTextHash,
-  };
-}
-
-function toTerm(term: StoredGlossaryTerm): GlossaryTerm {
-  return {
-    id: term.id,
-    sourceTerm: term.sourceTerm,
-    translation: term.translation,
-    category: term.category,
-    pinyin: term.pinyin,
-    notes: term.notes,
-    status: term.status,
-    discoveredInChapterId: term.discoveredInChapterId,
-    conflict: term.conflict,
-  };
-}
-
-function toStyle(style: StoredStyleGuide): StyleGuide {
-  return { id: style.id, name: style.name, content: style.content, createdAt: style.createdAt, updatedAt: style.updatedAt };
-}
-
-function toJob(job: StoredJob): Job {
-  return {
-    id: job.id,
-    novelId: job.novelId,
-    chapterId: job.chapterId,
-    target: job.target,
-    status: job.status,
-    provider: job.provider,
-    model: job.model,
-    attempts: job.attempts,
-    tokensUsed: job.tokensUsed,
-    estimatedCost: job.estimatedCost,
-    error: job.error,
-    createdAt: job.createdAt,
-    completedAt: job.completedAt,
-  };
 }
 
 async function hasStructuredWorkspace(userId: string) {
@@ -328,7 +134,6 @@ export async function getAppState(userId: string) {
   return getStructuredAppState(userId);
 }
 
-
 export async function getFullChapter(userId: string, novelId: string, chapterId: string) {
   const [chapter, versions] = await Promise.all([
     (await collection<StoredChapter>("chapters")).findOne({ userId, novelId, id: chapterId }),
@@ -358,6 +163,7 @@ export async function getFullNovel(userId: string, novelId: string) {
     terms.map(toTerm),
   );
 }
+
 export async function saveAppState(userId: string, appState: unknown) {
   await replaceCollectionAppState(userId, appState as WorkspaceState);
   await (await usersCollection()).updateOne({ _id: new ObjectId(userId) }, { $unset: { appState: "" }, $set: { updatedAt: new Date() } });
@@ -440,3 +246,4 @@ export async function getProviderConfig(userId: string) {
     apiKey: decryptSecret(user.encryptedApiKey),
   };
 }
+
