@@ -19,6 +19,17 @@ type BootstrapResponse = {
   user: null | { email: string; provider?: Provider; selectedModel?: string; hasApiKey?: boolean };
   appState: null | { novels?: Novel[]; styles?: StyleGuide[]; jobs?: Job[] };
 };
+type WorkspaceMutation =
+  | { type: "novel:upsert"; novel: Novel }
+  | { type: "novel:delete"; novelId: string }
+  | { type: "chapter:upsert"; novelId: string; chapter: Chapter }
+  | { type: "chapter:delete"; novelId: string; chapterId: string; orderUpdates?: Array<{ id: string; order: number }> }
+  | { type: "chapters:reorder"; novelId: string; chapters: Array<{ id: string; order: number }> }
+  | { type: "term:upsert"; novelId: string; term: GlossaryTerm }
+  | { type: "term:delete"; novelId: string; termId: string }
+  | { type: "style:upsert"; style: StyleGuide }
+  | { type: "style:delete"; styleId: string }
+  | { type: "job:upsert"; job: Job };
 
 type WorkspaceContextValue = {
   isBooting: boolean;
@@ -74,7 +85,6 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<Account>(() => ({ email: "", sessionExpiresAt: "", provider: "deepseek", selectedModel: PROVIDER_DEFAULTS.deepseek.defaultModel, verified: false }));
   const [isPersistReady, setIsPersistReady] = useState(false);
-  const saveTimerRef = useRef<number | null>(null);
   const persistenceErrorShownRef = useRef(false);
   const [novels, setNovels] = useState(novelSeed);
   const [styles, setStyles] = useState(styleSeed);
@@ -108,27 +118,28 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     void loadPersistedState();
     return () => { cancelled = true; };
   }, []);
-  useEffect(() => {
-    if (!isPersistReady || !account.email) return;
-    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = window.setTimeout(() => {
-      void fetch("/api/app-state", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ appState: { novels, styles, jobs } }) })
-        .then(async (response) => {
-          if (response.ok) {
-            persistenceErrorShownRef.current = false;
-            return;
-          }
-          const data = (await response.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(data?.error ?? "Workspace changes could not be saved.");
-        })
-        .catch((error) => {
-          if (persistenceErrorShownRef.current) return;
-          persistenceErrorShownRef.current = true;
-          setMessage(error instanceof Error ? error.message : "Workspace changes could not be saved.");
-        });
-    }, 600);
-  }, [isPersistReady, account.email, novels, styles, jobs]);
 
+  const persistWorkspaceMutations = useCallback((mutations: WorkspaceMutation[]) => {
+    if (!account.email || mutations.length === 0) return;
+    void fetch("/api/workspace", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mutations }),
+    })
+      .then(async (response) => {
+        if (response.ok) {
+          persistenceErrorShownRef.current = false;
+          return;
+        }
+        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error ?? "Workspace changes could not be saved.");
+      })
+      .catch((error) => {
+        if (persistenceErrorShownRef.current) return;
+        persistenceErrorShownRef.current = true;
+        setMessage(error instanceof Error ? error.message : "Workspace changes could not be saved.");
+      });
+  }, [account.email]);
   const usage = useMemo(() => calculateUsage(novels, jobs), [novels, jobs]);
   const getNovel = useCallback((novelId: string) => novels.find((item) => item.id === novelId), [novels]);
   const getChapter = useCallback((novelId: string, chapterId: string) => getNovel(novelId)?.chapters.find((item) => item.id === chapterId), [getNovel]);
@@ -189,27 +200,30 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const addNovel = useCallback((title: string, description: string, styleGuideId?: string) => {
     const next: Novel = { id: id("novel"), title: title.trim(), description: description.trim(), styleGuideId: styleGuideId || undefined, glossary: [], chapters: [] };
     setNovels((current) => [next, ...current]);
+    persistWorkspaceMutations([{ type: "novel:upsert", novel: next }]);
     return next.id;
-  
-  }, []);
+  }, [persistWorkspaceMutations]);
 
   const editNovel = useCallback((novelId: string, values: { title: string; description: string; descriptionTranslated?: string; styleGuideId?: string }) => {
-    updateNovel(novelId, (novel) => {
-      const description = values.description.trim();
-      const translated = values.descriptionTranslated ? normalizeTranslatedText(values.descriptionTranslated) : undefined;
-      return {
-        ...novel,
-        title: values.title.trim() || novel.title,
-        description,
-        descriptionTranslated: translated || (description === novel.description ? novel.descriptionTranslated : undefined),
-        styleGuideId: values.styleGuideId || undefined,
-      };
-    });
-  }, [updateNovel]);
+    const currentNovel = getNovel(novelId);
+    if (!currentNovel) return;
+    const description = values.description.trim();
+    const translated = values.descriptionTranslated ? normalizeTranslatedText(values.descriptionTranslated) : undefined;
+    const nextNovel: Novel = {
+      ...currentNovel,
+      title: values.title.trim() || currentNovel.title,
+      description,
+      descriptionTranslated: translated || (description === currentNovel.description ? currentNovel.descriptionTranslated : undefined),
+      styleGuideId: values.styleGuideId || undefined,
+    };
+    updateNovel(novelId, () => nextNovel);
+    persistWorkspaceMutations([{ type: "novel:upsert", novel: nextNovel }]);
+  }, [getNovel, persistWorkspaceMutations, updateNovel]);
+
   const deleteNovel = useCallback((novelId: string) => {
     setNovels((current) => current.filter((item) => item.id !== novelId));
-  
-  }, []);
+    persistWorkspaceMutations([{ type: "novel:delete", novelId }]);
+  }, [persistWorkspaceMutations]);
 
   const addChapter = useCallback((novelId: string, title: string, volume: string, rawText: string) => {
     const novel = getNovel(novelId);
@@ -217,92 +231,100 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (!novel || !trimmed || trimmed.length > DEFAULT_MAX_CHAPTER_CHARACTERS) return null;
     const next: Chapter = { id: id("chapter"), title: title.trim() || `Chapter ${novel.chapters.length + 1}`, volume: volume.trim() || "Volume 1", order: novel.chapters.length + 1, rawText: trimmed, rawTextHash: hashText(trimmed), status: "untranslated", translations: [], currentVersion: 0 };
     updateNovel(novelId, (item) => ({ ...item, chapters: [...item.chapters, next] }));
+    persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: next }]);
     return next.id;
-  
-  }, [getNovel, updateNovel]);
+  }, [getNovel, persistWorkspaceMutations, updateNovel]);
 
   const editChapter = useCallback((novelId: string, chapterId: string, values: { title?: string; volume?: string; rawText?: string }) => {
-    updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((chapter) => {
-      if (chapter.id !== chapterId) return chapter;
-      const rawText = values.rawText === undefined ? undefined : cleanPastedChapterText(values.rawText);
-      if (!rawText) return { ...chapter, title: values.title?.trim() || chapter.title, volume: values.volume?.trim() || chapter.volume };
-      const rawTextHash = hashText(rawText);
-      return { ...chapter, title: values.title?.trim() || chapter.title, volume: values.volume?.trim() || chapter.volume, rawText, rawTextHash, status: chapter.translations.some((version) => version.rawTextHash === rawTextHash) ? "translated" : "untranslated", error: undefined };
-    }) }));
-  }, [updateNovel]);
+    const chapter = getChapter(novelId, chapterId);
+    if (!chapter) return;
+    const rawText = values.rawText === undefined ? undefined : cleanPastedChapterText(values.rawText);
+    const nextChapter = rawText
+      ? { ...chapter, title: values.title?.trim() || chapter.title, volume: values.volume?.trim() || chapter.volume, rawText, rawTextHash: hashText(rawText), status: chapter.translations.some((version) => version.rawTextHash === hashText(rawText)) ? "translated" as const : "untranslated" as const, error: undefined }
+      : { ...chapter, title: values.title?.trim() || chapter.title, volume: values.volume?.trim() || chapter.volume };
+    updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((entry) => entry.id === chapterId ? nextChapter : entry) }));
+    persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: nextChapter }]);
+  }, [getChapter, persistWorkspaceMutations, updateNovel]);
+
   const deleteChapter = useCallback((novelId: string, chapterId: string) => {
-    updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.filter((chapter) => chapter.id !== chapterId).map((chapter, index) => ({ ...chapter, order: index + 1 })) }));
-  
-  }, [updateNovel]);
+    const novel = getNovel(novelId);
+    const nextChapters = novel?.chapters.filter((chapter) => chapter.id !== chapterId).map((chapter, index) => ({ ...chapter, order: index + 1 })) ?? [];
+    updateNovel(novelId, (item) => ({ ...item, chapters: nextChapters }));
+    persistWorkspaceMutations([{ type: "chapter:delete", novelId, chapterId, orderUpdates: nextChapters.map((chapter) => ({ id: chapter.id, order: chapter.order })) }]);
+  }, [getNovel, persistWorkspaceMutations, updateNovel]);
 
   const moveChapter = useCallback((novelId: string, chapterId: string, direction: -1 | 1) => {
-    updateNovel(novelId, (novel) => {
-      const chapters = [...novel.chapters];
-      const index = chapters.findIndex((chapter) => chapter.id === chapterId);
-      const nextIndex = index + direction;
-      if (index < 0 || nextIndex < 0 || nextIndex >= chapters.length) return novel;
-      [chapters[index], chapters[nextIndex]] = [chapters[nextIndex], chapters[index]];
-      return { ...novel, chapters: chapters.map((chapter, orderIndex) => ({ ...chapter, order: orderIndex + 1 })) };
-    });
-  
-  }, [updateNovel]);
+    const novel = getNovel(novelId);
+    if (!novel) return;
+    const chapters = [...novel.chapters];
+    const index = chapters.findIndex((chapter) => chapter.id === chapterId);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= chapters.length) return;
+    [chapters[index], chapters[nextIndex]] = [chapters[nextIndex], chapters[index]];
+    const nextChapters = chapters.map((chapter, orderIndex) => ({ ...chapter, order: orderIndex + 1 }));
+    updateNovel(novelId, (item) => ({ ...item, chapters: nextChapters }));
+    persistWorkspaceMutations([{ type: "chapters:reorder", novelId, chapters: nextChapters.map((chapter) => ({ id: chapter.id, order: chapter.order })) }]);
+  }, [getNovel, persistWorkspaceMutations, updateNovel]);
 
   const reorderChapter = useCallback((novelId: string, draggedChapterId: string, targetChapterId: string) => {
     if (draggedChapterId === targetChapterId) return;
-    updateNovel(novelId, (novel) => {
-      const chapters = [...novel.chapters];
-      const fromIndex = chapters.findIndex((chapter) => chapter.id === draggedChapterId);
-      const toIndex = chapters.findIndex((chapter) => chapter.id === targetChapterId);
-      if (fromIndex < 0 || toIndex < 0) return novel;
-      const [moved] = chapters.splice(fromIndex, 1);
-      chapters.splice(toIndex, 0, moved);
-      return { ...novel, chapters: chapters.map((chapter, orderIndex) => ({ ...chapter, order: orderIndex + 1 })) };
-    });
-  
-  }, [updateNovel]);
+    const novel = getNovel(novelId);
+    if (!novel) return;
+    const chapters = [...novel.chapters];
+    const fromIndex = chapters.findIndex((chapter) => chapter.id === draggedChapterId);
+    const toIndex = chapters.findIndex((chapter) => chapter.id === targetChapterId);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const [moved] = chapters.splice(fromIndex, 1);
+    chapters.splice(toIndex, 0, moved);
+    const nextChapters = chapters.map((chapter, orderIndex) => ({ ...chapter, order: orderIndex + 1 }));
+    updateNovel(novelId, (item) => ({ ...item, chapters: nextChapters }));
+    persistWorkspaceMutations([{ type: "chapters:reorder", novelId, chapters: nextChapters.map((chapter) => ({ id: chapter.id, order: chapter.order })) }]);
+  }, [getNovel, persistWorkspaceMutations, updateNovel]);
 
   const createJob = useCallback((novelId: string, target: Job["target"], chapterId?: string) => {
     const job: Job = { id: id("job"), novelId, chapterId, target, status: "queued", provider: account.provider, model: account.selectedModel, attempts: 1, createdAt: now() };
     setJobs((current) => [job, ...current]);
+    persistWorkspaceMutations([{ type: "job:upsert", job }]);
     return job;
-  
-  }, [account.provider, account.selectedModel]);
+  }, [account.provider, account.selectedModel, persistWorkspaceMutations]);
 
   const readProviderError = useCallback(async (response: Response) => {
     const data = await response.json().catch(() => null) as { error?: string } | null;
     return data?.error ?? `Provider request failed with status ${response.status}.`;
-  
   }, []);
 
   const finishChapter = useCallback((job: Job, novel: Novel, sourceChapter: Chapter, translatedText: string, newTerms: NewTerm[], memoryHit: boolean, title?: string) => {
     const normalizedText = normalizeTranslatedText(translatedText);
     const usageEstimate = estimate(sourceChapter.rawText, normalizedText);
-    updateNovel(novel.id, (currentNovel) => {
-      const glossary = [...currentNovel.glossary];
-      newTerms.forEach((newTerm) => {
-        const sourceTerm = newTerm.sourceTerm.trim();
-        const translation = newTerm.translation.trim();
-        if (!sourceTerm || glossary.some((entry) => entry.sourceTerm === sourceTerm)) return;
-        const conflict = glossary.find((entry) => entry.status === "approved" && entry.sourceTerm === sourceTerm && entry.translation !== translation);
-        glossary.push({ id: id("term"), ...newTerm, sourceTerm, translation, status: "pending", discoveredInChapterId: sourceChapter.id, conflict: conflict ? `Approved term uses ${conflict.translation}` : undefined });
-      });
-      return { ...currentNovel, glossary, chapters: currentNovel.chapters.map((entry) => {
-        if (entry.id !== sourceChapter.id) return entry;
-        const versionNumber = entry.translations.length + 1;
-        const version: TranslationVersion = { version: versionNumber, text: normalizedText, model: account.selectedModel, provider: account.provider, tokensUsed: usageEstimate.tokensUsed, estimatedCost: memoryHit ? 0 : usageEstimate.estimatedCost, createdAt: now(), rawTextHash: entry.rawTextHash };
-        return { ...entry, title: title?.trim() || entry.title, status: "translated", translations: [...entry.translations, version], currentVersion: versionNumber };
-      }) };
+    const glossary = [...novel.glossary];
+    const persistedTerms: GlossaryTerm[] = [];
+    newTerms.forEach((newTerm) => {
+      const sourceTerm = newTerm.sourceTerm.trim();
+      const translation = newTerm.translation.trim();
+      if (!sourceTerm || glossary.some((entry) => entry.sourceTerm === sourceTerm)) return;
+      const conflict = glossary.find((entry) => entry.status === "approved" && entry.sourceTerm === sourceTerm && entry.translation !== translation);
+      const term: GlossaryTerm = { id: id("term"), ...newTerm, sourceTerm, translation, status: "pending", discoveredInChapterId: sourceChapter.id, conflict: conflict ? `Approved term uses ${conflict.translation}` : undefined };
+      glossary.push(term);
+      persistedTerms.push(term);
     });
-    setJobs((current) => current.map((item) => item.id === job.id ? { ...item, status: "completed", completedAt: now(), tokensUsed: usageEstimate.tokensUsed, estimatedCost: memoryHit ? 0 : usageEstimate.estimatedCost } : item));
-  
-  }, [account.provider, account.selectedModel, updateNovel]);
+    const versionNumber = sourceChapter.translations.length + 1;
+    const version: TranslationVersion = { version: versionNumber, text: normalizedText, model: account.selectedModel, provider: account.provider, tokensUsed: usageEstimate.tokensUsed, estimatedCost: memoryHit ? 0 : usageEstimate.estimatedCost, createdAt: now(), rawTextHash: sourceChapter.rawTextHash };
+    const nextChapter: Chapter = { ...sourceChapter, title: title?.trim() || sourceChapter.title, status: "translated", translations: [...sourceChapter.translations, version], currentVersion: versionNumber };
+    const completedJob: Job = { ...job, status: "completed", completedAt: now(), tokensUsed: usageEstimate.tokensUsed, estimatedCost: memoryHit ? 0 : usageEstimate.estimatedCost };
+    updateNovel(novel.id, (currentNovel) => ({ ...currentNovel, glossary: [...currentNovel.glossary, ...persistedTerms.filter((term) => !currentNovel.glossary.some((entry) => entry.sourceTerm === term.sourceTerm))], chapters: currentNovel.chapters.map((entry) => entry.id === sourceChapter.id ? nextChapter : entry) }));
+    setJobs((current) => current.map((item) => item.id === job.id ? completedJob : item));
+    persistWorkspaceMutations([{ type: "chapter:upsert", novelId: novel.id, chapter: nextChapter }, ...persistedTerms.map((term): WorkspaceMutation => ({ type: "term:upsert", novelId: novel.id, term })), { type: "job:upsert", job: completedJob }]);
+  }, [account.provider, account.selectedModel, persistWorkspaceMutations, updateNovel]);
 
   const failChapter = useCallback((job: Job, novelId: string, chapterId: string, error: string) => {
+    const chapter = getChapter(novelId, chapterId);
+    const failedChapter = chapter ? { ...chapter, status: "failed" as const, error } : null;
+    const failedJob: Job = { ...job, status: "failed", completedAt: now(), error };
     updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((entry) => entry.id === chapterId ? { ...entry, status: "failed", error } : entry) }));
-    setJobs((current) => current.map((item) => item.id === job.id ? { ...item, status: "failed", completedAt: now(), error } : item));
+    setJobs((current) => current.map((item) => item.id === job.id ? failedJob : item));
+    persistWorkspaceMutations([...(failedChapter ? [{ type: "chapter:upsert" as const, novelId, chapter: failedChapter }] : []), { type: "job:upsert", job: failedJob }]);
     setMessage(error);
-  
-  }, [updateNovel]);
+  }, [getChapter, persistWorkspaceMutations, updateNovel]);
 
   const translateChapter = useCallback((novelId: string, chapterId: string, regenerate = false) => {
     const novel = getNovel(novelId);
@@ -316,7 +338,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const progress = startTranslationProgress("chapter", novelId, chapterId);
     const job = createJob(novelId, "chapter", chapterId);
     const memoryHit = !regenerate && chapter.translations.find((item) => item.rawTextHash === chapter.rawTextHash);
-    updateNovel(novelId, (item) => ({ ...item, chapters: item.chapters.map((entry) => entry.id === chapterId ? { ...entry, status: "translating", error: undefined } : entry) }));
+    const translatingChapter: Chapter = { ...chapter, status: "translating", error: undefined };
+    updateNovel(novelId, (item) => ({ ...item, chapters: item.chapters.map((entry) => entry.id === chapterId ? translatingChapter : entry) }));
+    persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: translatingChapter }]);
     void (async () => {
       if (memoryHit) {
         progress.update(86, "Loading translation memory");
@@ -337,8 +361,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         failChapter(job, novelId, chapterId, error instanceof Error ? error.message : "Translation failed.");
       }
     })();
-  
-  }, [account.verified, createJob, failChapter, finishChapter, getChapter, getNovel, getStyle, readProviderError, startTranslationProgress, updateNovel]);
+  }, [account.verified, createJob, failChapter, finishChapter, getChapter, getNovel, getStyle, persistWorkspaceMutations, readProviderError, startTranslationProgress, updateNovel]);
 
   const translateDescription = useCallback((novelId: string) => {
     const novel = getNovel(novelId);
@@ -360,63 +383,81 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         response = data.response;
       } catch (error) {
         progress.fail();
-        setJobs((current) => current.map((item) => item.id === job.id ? { ...item, status: "failed", completedAt: now(), error: error instanceof Error ? error.message : "Description translation failed." } : item));
+        const failedJob: Job = { ...job, status: "failed", completedAt: now(), error: error instanceof Error ? error.message : "Description translation failed." };
+        setJobs((current) => current.map((item) => item.id === job.id ? failedJob : item));
+        persistWorkspaceMutations([{ type: "job:upsert", job: failedJob }]);
         setMessage(error instanceof Error ? error.message : "Description translation failed.");
         return;
       }
       const normalizedText = normalizeTranslatedText(response.translatedText);
       const usageEstimate = estimate(novel.description, normalizedText);
+      const nextNovel: Novel = { ...novel, descriptionTranslated: normalizedText };
+      const completedJob: Job = { ...job, status: "completed", completedAt: now(), ...usageEstimate };
       progress.update(96, "Saving translated description");
       updateNovel(novelId, (item) => ({ ...item, descriptionTranslated: normalizedText }));
-      setJobs((current) => current.map((item) => item.id === job.id ? { ...item, status: "completed", completedAt: now(), ...usageEstimate } : item));
+      setJobs((current) => current.map((item) => item.id === job.id ? completedJob : item));
+      persistWorkspaceMutations([{ type: "novel:upsert", novel: nextNovel }, { type: "job:upsert", job: completedJob }]);
       progress.complete("Description saved");
     })();
-  
-  }, [account.verified, createJob, getNovel, getStyle, readProviderError, startTranslationProgress, updateNovel]);
+  }, [account.verified, createJob, getNovel, getStyle, persistWorkspaceMutations, readProviderError, startTranslationProgress, updateNovel]);
+
   const revertVersion = useCallback((novelId: string, chapterId: string, version: number) => {
-    updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((entry) => entry.id === chapterId ? { ...entry, currentVersion: version, status: "translated" } : entry) }));
-  
-  }, [updateNovel]);
+    const chapter = getChapter(novelId, chapterId);
+    if (!chapter) return;
+    const nextChapter: Chapter = { ...chapter, currentVersion: version, status: "translated" };
+    updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((entry) => entry.id === chapterId ? nextChapter : entry) }));
+    persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: nextChapter }]);
+  }, [getChapter, persistWorkspaceMutations, updateNovel]);
 
   const addTerm = useCallback((novelId: string, term: Omit<GlossaryTerm, "id" | "status">) => {
-    updateNovel(novelId, (novel) => novel.glossary.some((entry) => entry.sourceTerm === term.sourceTerm.trim()) ? novel : { ...novel, glossary: [...novel.glossary, { ...term, id: id("term"), sourceTerm: term.sourceTerm.trim(), translation: term.translation.trim(), status: "approved" }] });
-  
-  }, [updateNovel]);
+    const novel = getNovel(novelId);
+    const sourceTerm = term.sourceTerm.trim();
+    if (!novel || novel.glossary.some((entry) => entry.sourceTerm === sourceTerm)) return;
+    const nextTerm: GlossaryTerm = { ...term, id: id("term"), sourceTerm, translation: term.translation.trim(), status: "approved" };
+    updateNovel(novelId, (item) => ({ ...item, glossary: [...item.glossary, nextTerm] }));
+    persistWorkspaceMutations([{ type: "term:upsert", novelId, term: nextTerm }]);
+  }, [getNovel, persistWorkspaceMutations, updateNovel]);
 
   const editTerm = useCallback((novelId: string, termId: string, values: Partial<GlossaryTerm>) => {
-    updateNovel(novelId, (novel) => ({ ...novel, glossary: novel.glossary.map((entry) => entry.id === termId ? { ...entry, ...values, conflict: undefined } : entry) }));
-  
-  }, [updateNovel]);
+    const novel = getNovel(novelId);
+    const currentTerm = novel?.glossary.find((entry) => entry.id === termId);
+    if (!currentTerm) return;
+    const nextTerm: GlossaryTerm = { ...currentTerm, ...values, conflict: undefined };
+    updateNovel(novelId, (item) => ({ ...item, glossary: item.glossary.map((entry) => entry.id === termId ? nextTerm : entry) }));
+    persistWorkspaceMutations([{ type: "term:upsert", novelId, term: nextTerm }]);
+  }, [getNovel, persistWorkspaceMutations, updateNovel]);
 
   const setTermStatus = useCallback((novelId: string, termId: string, status: GlossaryStatus) => {
     editTerm(novelId, termId, { status });
-  
   }, [editTerm]);
 
   const deleteTerm = useCallback((novelId: string, termId: string) => {
     updateNovel(novelId, (novel) => ({ ...novel, glossary: novel.glossary.filter((entry) => entry.id !== termId) }));
-  
-  }, [updateNovel]);
+    persistWorkspaceMutations([{ type: "term:delete", novelId, termId }]);
+  }, [persistWorkspaceMutations, updateNovel]);
 
   const addStyle = useCallback((name: string, content: string) => {
     if (!name.trim() || !content.trim() || content.length > MAX_STYLE_GUIDE_CHARACTERS) return;
     const stamp = now();
-    setStyles((current) => [...current, { id: id("style"), name: name.trim(), content: content.trim(), createdAt: stamp, updatedAt: stamp }]);
-  
-  }, []);
+    const nextStyle: StyleGuide = { id: id("style"), name: name.trim(), content: content.trim(), createdAt: stamp, updatedAt: stamp };
+    setStyles((current) => [...current, nextStyle]);
+    persistWorkspaceMutations([{ type: "style:upsert", style: nextStyle }]);
+  }, [persistWorkspaceMutations]);
 
   const editStyle = useCallback((styleId: string, name: string, content: string) => {
     if (!name.trim() || !content.trim() || content.length > MAX_STYLE_GUIDE_CHARACTERS) return;
-    setStyles((current) => current.map((entry) => entry.id === styleId ? { ...entry, name: name.trim(), content: content.trim(), updatedAt: now() } : entry));
-  
-  }, []);
+    const currentStyle = styles.find((entry) => entry.id === styleId);
+    if (!currentStyle) return;
+    const nextStyle: StyleGuide = { ...currentStyle, name: name.trim(), content: content.trim(), updatedAt: now() };
+    setStyles((current) => current.map((entry) => entry.id === styleId ? nextStyle : entry));
+    persistWorkspaceMutations([{ type: "style:upsert", style: nextStyle }]);
+  }, [persistWorkspaceMutations, styles]);
 
   const deleteStyle = useCallback((styleId: string) => {
     setStyles((current) => current.filter((entry) => entry.id !== styleId));
     setNovels((current) => current.map((novel) => novel.styleGuideId === styleId ? { ...novel, styleGuideId: undefined } : novel));
-  
-  }, []);
-
+    persistWorkspaceMutations([{ type: "style:delete", styleId }]);
+  }, [persistWorkspaceMutations]);
   const submitAuth = useCallback(async (mode: "signup" | "login", email: string, password: string) => {
     if (!email.trim() || !password) {
       setMessage("Email and password are required.");
