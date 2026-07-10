@@ -26,7 +26,7 @@ type ConfirmAction = {
 };
 
 const FONT_SIZE_OPTIONS = [16, 18, 19, 20, 22, 24, 26];
-const LINE_HEIGHT_OPTIONS = [1.5, 1.65, 1.8, 1.95, 2.1];
+const LINE_HEIGHT_OPTIONS = [1.4, 1.5, 1.65, 1.8, 1.95, 2.1];
 
 export default function ReaderPage() {
   const { novelId, chapterId } = useParams<{
@@ -39,8 +39,8 @@ export default function ReaderPage() {
   const novel = getNovel(novelId);
   const chapter = getChapter(novelId, chapterId);
   const [mode, setMode] = useState<ReaderMode>("translated");
-  const [fontSize, setFontSize] = useState(19);
-  const [lineHeight, setLineHeight] = useState(1.8);
+  const [fontSize, setFontSize] = useState(16);
+  const [lineHeight, setLineHeight] = useState(1.4);
   const [isMetaOpen, setIsMetaOpen] = useState(false);
   const [isRawOpen, setIsRawOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -406,6 +406,7 @@ function ChapterNavigation({
     </nav>
   );
 }
+
 
 
 
