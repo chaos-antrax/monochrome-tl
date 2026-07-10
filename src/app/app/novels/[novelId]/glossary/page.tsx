@@ -5,7 +5,7 @@ import { FormEvent, useState } from "react";
 import { useParams } from "next/navigation";
 import { GlossaryCategorySchema, type GlossaryCategory } from "@/lib/schemas/translation";
 import { useWorkspace, type GlossaryStatus, type GlossaryTerm } from "../../../../workspace/state";
-import { Card, ConfirmDialog, Empty, formatChangedFields, Input, Modal, Mode, Textarea } from "../../../../workspace/ui";
+import { Card, ConfirmDialog, CustomSelect, Empty, formatChangedFields, Input, Modal, Mode, Textarea } from "../../../../workspace/ui";
 
 type ConfirmAction = { title: string; body: string; confirmLabel?: string; destructive?: boolean; onConfirm: () => void };
 
@@ -106,7 +106,7 @@ export default function GlossaryPage() {
     <form onSubmit={submit} className="space-y-4">
       <Input label="Source term" value={sourceTerm} onChange={setSourceTerm} />
       <Input label="Translation" value={translation} onChange={setTranslation} />
-      <label className="block text-sm font-medium text-neutral-700">Category<select value={category} onChange={(event) => setCategory(event.target.value as GlossaryCategory)} className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 outline-none transition focus:border-neutral-950">{GlossaryCategorySchema.options.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+      <CustomSelect label="Category" value={category} onChange={(value) => setCategory(value as GlossaryCategory)} options={GlossaryCategorySchema.options.map((option) => ({ value: option, label: option }))} />
       <Input label="Pinyin" value={pinyin} onChange={setPinyin} />
       <Textarea label="Notes" value={notes} onChange={setNotes} rows={4} />
       <div className="flex justify-end gap-2">
@@ -123,7 +123,7 @@ export default function GlossaryPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Glossary</p>
             <h1 className="mt-2 font-serif text-4xl font-semibold">{currentNovel.title}</h1>
-            <div className="mt-4 flex gap-2"><Link href={`/app/novels/${currentNovel.id}/chapters`} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold transition hover:border-neutral-950">Chapters</Link></div>
+            <div className="mt-4 flex gap-2"><Link href={`/app/novels/${currentNovel.id}`} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold transition hover:border-neutral-950">Novel</Link></div>
           </div>
           <button type="button" onClick={() => setIsAddOpen(true)} className="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 sm:w-auto">Add term</button>
         </div>
@@ -132,7 +132,7 @@ export default function GlossaryPage() {
       <Card>
         <div className="flex flex-col gap-3 border-b border-neutral-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="font-serif text-2xl font-semibold">Terms</h2>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center"><Mode modes={["approved", "pending", "rejected"]} value={tab} onChange={(value) => setTab(value as GlossaryStatus)} /><label className="block text-sm font-medium text-neutral-700">Category<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as "all" | GlossaryCategory)} className="mt-1.5 w-full min-w-44 rounded-lg border border-neutral-200 bg-white px-3 py-2.5 outline-none transition focus:border-neutral-950"><option value="all">All categories</option>{GlossaryCategorySchema.options.map((option) => <option key={option} value={option}>{option}</option>)}</select></label></div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center"><Mode modes={["approved", "pending", "rejected"]} value={tab} onChange={(value) => setTab(value as GlossaryStatus)} /><CustomSelect label="Category" value={categoryFilter} onChange={(value) => setCategoryFilter(value as "all" | GlossaryCategory)} className="min-w-44" options={[{ value: "all", label: "All categories" }, ...GlossaryCategorySchema.options.map((option) => ({ value: option, label: option }))]} /></div>
         </div>
         <div className="mt-4 grid gap-3">
           {terms.map((term) => (
@@ -146,8 +146,8 @@ export default function GlossaryPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => openEdit(term)} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Edit</button>
-                  <button type="button" onClick={() => requestTermStatus(term, "approved")} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Approve</button>
-                  <button type="button" onClick={() => requestTermStatus(term, "rejected")} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Reject</button>
+                  {term.status !== "approved" ? <button type="button" onClick={() => requestTermStatus(term, "approved")} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Approve</button> : null}
+                  {term.status !== "rejected" ? <button type="button" onClick={() => requestTermStatus(term, "rejected")} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Reject</button> : null}
                   <button type="button" onClick={() => requestDeleteTerm(term)} className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950">Delete</button>
                 </div>
               </div>

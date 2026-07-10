@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Download, FileArchive, FileText, Printer, type LucideIcon } from "lucide-react";
 import { useWorkspace, type ExportFormat } from "../../workspace/state";
-import { Card, Empty } from "../../workspace/ui";
+import { Card, CustomSelect, Empty } from "../../workspace/ui";
 
 const exportOptions: Array<{ format: ExportFormat; label: string; description: string; Icon: LucideIcon }> = [
   { format: "txt", label: "TXT", description: "Plain text manuscript for lightweight editing and backups.", Icon: FileText },
@@ -33,7 +33,7 @@ export default function ExportPage() {
               {novels.length === 1 ? (
                 <label className="block text-sm font-medium text-neutral-700">Novel<input value={selectedNovel?.title ?? ""} disabled className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-neutral-100 px-3 py-2.5 text-neutral-500" /></label>
               ) : (
-                <label className="block text-sm font-medium text-neutral-700">Novel<select value={selectedNovel?.id ?? ""} onChange={(event) => setNovelId(event.target.value)} className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 outline-none transition focus:border-neutral-950">{novels.map((novel) => <option key={novel.id} value={novel.id}>{novel.title}</option>)}</select></label>
+                <CustomSelect label="Novel" value={selectedNovel?.id ?? ""} onChange={setNovelId} options={novels.map((novel) => ({ value: novel.id, label: novel.title }))} />
               )}
 
               <div className="mt-5 grid gap-3 md:grid-cols-3">
