@@ -54,6 +54,24 @@ export async function getSafeUser(userId: string) {
   };
 }
 
+
+export async function getBootstrapState(userId: string) {
+  const user = await (await usersCollection()).findOne(
+    { _id: new ObjectId(userId) },
+    { projection: { email: 1, provider: 1, selectedModel: 1, encryptedApiKey: 1, appState: 1 } },
+  );
+  if (!user) return { user: null, appState: null };
+  return {
+    user: {
+      id: user._id?.toHexString() ?? userId,
+      email: user.email,
+      provider: user.provider,
+      selectedModel: user.selectedModel,
+      hasApiKey: Boolean(user.encryptedApiKey),
+    },
+    appState: user.appState ?? null,
+  };
+}
 export async function getAppState(userId: string) {
   const user = await (await usersCollection()).findOne({ _id: new ObjectId(userId) }, { projection: { appState: 1 } });
   return user?.appState ?? null;

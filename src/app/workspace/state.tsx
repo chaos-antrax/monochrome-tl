@@ -14,6 +14,11 @@ const id = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString
 
 const styleSeed: StyleGuide[] = [];
 const novelSeed: Novel[] = [];
+type BootstrapResponse = {
+  error?: string;
+  user: null | { email: string; provider?: Provider; selectedModel?: string; hasApiKey?: boolean };
+  appState: null | { novels?: Novel[]; styles?: StyleGuide[]; jobs?: Job[] };
+};
 
 type WorkspaceContextValue = {
   isBooting: boolean;
@@ -82,19 +87,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     async function loadPersistedState() {
       try {
-        const me = await fetch("/api/auth/me");
-        const meData = (await me.json()) as { error?: string; user: null | { email: string; provider?: Provider; selectedModel?: string; hasApiKey?: boolean } };
-        if (!me.ok) throw new Error(meData.error ?? "Unable to load account.");
+        const response = await fetch("/api/bootstrap");
+        const data = (await response.json()) as BootstrapResponse;
+        if (!response.ok) throw new Error(data.error ?? "Unable to bootstrap workspace.");
         if (cancelled) return;
-        if (meData.user) {
-          setAccount((current) => ({ ...current, email: meData.user?.email ?? current.email, provider: meData.user?.provider ?? current.provider, selectedModel: meData.user?.selectedModel ?? current.selectedModel, apiKeyMasked: meData.user?.hasApiKey ? "stored securely" : current.apiKeyMasked, verified: Boolean(meData.user?.hasApiKey), sessionExpiresAt: new Date(Date.now() + 604800000).toISOString() }));
-          const stateResponse = await fetch("/api/app-state");
-          const stateData = (await stateResponse.json()) as { error?: string; appState?: { novels?: Novel[]; styles?: StyleGuide[]; jobs?: Job[] } };
-          if (!stateResponse.ok) throw new Error(stateData.error ?? "Unable to load saved workspace.");
-          if (!cancelled && stateData.appState) {
-            setNovels(stateData.appState.novels ?? novelSeed);
-            setStyles(stateData.appState.styles ?? styleSeed);
-            setJobs(stateData.appState.jobs ?? []);
+        if (data.user) {
+          setAccount((current) => ({ ...current, email: data.user?.email ?? current.email, provider: data.user?.provider ?? current.provider, selectedModel: data.user?.selectedModel ?? current.selectedModel, apiKeyMasked: data.user?.hasApiKey ? "stored securely" : current.apiKeyMasked, verified: Boolean(data.user?.hasApiKey), sessionExpiresAt: new Date(Date.now() + 604800000).toISOString() }));
+          if (data.appState) {
+            setNovels(data.appState.novels ?? novelSeed);
+            setStyles(data.appState.styles ?? styleSeed);
+            setJobs(data.appState.jobs ?? []);
           }
         }
       } catch (error) {
@@ -106,7 +108,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     void loadPersistedState();
     return () => { cancelled = true; };
   }, []);
-
   useEffect(() => {
     if (!isPersistReady || !account.email) return;
     if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
