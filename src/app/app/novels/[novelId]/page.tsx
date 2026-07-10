@@ -54,7 +54,10 @@ function StyleSelect({
       label={label}
       value={value}
       onChange={onChange}
-      options={[{ value: "", label: "Plain" }, ...styles.map((style) => ({ value: style.id, label: style.name }))]}
+      options={[
+        { value: "", label: "Plain" },
+        ...styles.map((style) => ({ value: style.id, label: style.name })),
+      ]}
     />
   );
 }
@@ -272,7 +275,7 @@ export default function NovelPage() {
   }
 
   function collapseSidebarForReader() {
-    window.dispatchEvent(new Event('monochrome:collapse-sidebar'));
+    window.dispatchEvent(new Event("monochrome:collapse-sidebar"));
   }
 
   function requestDeleteChapter(chapterId: string, title: string) {
@@ -372,7 +375,7 @@ export default function NovelPage() {
   return (
     <div className="space-y-5">
       <section className="rounded-lg border border-neutral-200 bg-white/90 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex relative flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">
               Novel
@@ -386,7 +389,7 @@ export default function NovelPage() {
               {currentNovel.glossary.length} terms
             </p>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <div className="flex absolute top-0 right-0 max-w-fit sm:relative flex-col-reverse gap-2 sm:w-auto sm:flex-row">
             <button
               type="button"
               onClick={openEditNovel}
@@ -409,10 +412,10 @@ export default function NovelPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">
-                Description
+                {effectiveMode === "english" ? "English" : "Chinese"}
               </p>
               <h2 className="mt-1 font-serif text-2xl font-semibold">
-                {effectiveMode === "english" ? "English" : "Chinese"}
+                Description
               </h2>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -572,9 +575,17 @@ export default function NovelPage() {
               <CustomSelect
                 label="Category"
                 value={categoryFilter}
-                onChange={(value) => setCategoryFilter(value as "all" | GlossaryCategory)}
+                onChange={(value) =>
+                  setCategoryFilter(value as "all" | GlossaryCategory)
+                }
                 className="min-w-44"
-                options={[{ value: "all", label: "All categories" }, ...GlossaryCategorySchema.options.map((option) => ({ value: option, label: option }))]}
+                options={[
+                  { value: "all", label: "All categories" },
+                  ...GlossaryCategorySchema.options.map((option) => ({
+                    value: option,
+                    label: option,
+                  })),
+                ]}
               />
             </div>
             <div className="grid gap-3">
@@ -792,7 +803,10 @@ export default function NovelPage() {
             label="Category"
             value={category}
             onChange={(value) => setCategory(value as GlossaryCategory)}
-            options={GlossaryCategorySchema.options.map((option) => ({ value: option, label: option }))}
+            options={GlossaryCategorySchema.options.map((option) => ({
+              value: option,
+              label: option,
+            }))}
           />
           <Input label="Pinyin" value={pinyin} onChange={setPinyin} />
           <Textarea label="Notes" value={notes} onChange={setNotes} rows={4} />
