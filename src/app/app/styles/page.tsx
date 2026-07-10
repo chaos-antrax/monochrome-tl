@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { MAX_STYLE_GUIDE_CHARACTERS } from "@/lib/constants";
 import {
-  useWorkspace,
+  useSettings,
   labelDate,
   type StyleGuide,
 } from "../../workspace/state";
@@ -26,7 +26,7 @@ type ConfirmAction = {
 };
 
 export default function StylesPage() {
-  const { styles, addStyle, editStyle, deleteStyle } = useWorkspace();
+  const { styles, addStyle, editStyle, deleteStyle } = useSettings();
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);

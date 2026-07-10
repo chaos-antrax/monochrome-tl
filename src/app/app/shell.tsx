@@ -17,7 +17,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { WorkspaceProvider, useWorkspace } from "../workspace/state";
+import { WorkspaceProvider, useAuth, useLibrary, useToast } from "../workspace/state";
 
 const nav: Array<{ href: string; label: string; Icon: LucideIcon }> = [
   { href: "/app/library", label: "Library", Icon: Library },
@@ -115,7 +115,8 @@ function Sidebar({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const { novels, account, jobs } = useWorkspace();
+  const { novels, jobs } = useLibrary();
+  const { account } = useAuth();
   const activeJobs = jobs.filter(
     (job) => job.status === "queued" || job.status === "processing",
   ).length;
@@ -282,7 +283,7 @@ function LoadingOverlay() {
   );
 }
 function ToastLayer() {
-  const { message, setMessage } = useWorkspace();
+  const { message, setMessage } = useToast();
 
   useEffect(() => {
     if (!message) return;
@@ -316,7 +317,7 @@ function ToastLayer() {
   );
 }
 function ShellInner({ children }: { children: React.ReactNode }) {
-  const { isBooting } = useWorkspace();
+  const { isBooting } = useAuth();
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerClosing, setDrawerClosing] = useState(false);

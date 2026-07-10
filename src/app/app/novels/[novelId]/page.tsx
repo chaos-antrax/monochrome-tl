@@ -10,7 +10,10 @@ import {
   type GlossaryCategory,
 } from "@/lib/schemas/translation";
 import {
-  useWorkspace,
+  useAuth,
+  useLibrary,
+  useReader,
+  useSettings,
   type GlossaryStatus,
   type GlossaryTerm,
 } from "../../../workspace/state";
@@ -66,24 +69,10 @@ function StyleSelect({
 export default function NovelPage() {
   const { novelId } = useParams<{ novelId: string }>();
   const router = useRouter();
-  const {
-    account,
-    jobs,
-    translationProgress,
-    styles,
-    getNovel,
-    getStyle,
-    editNovel,
-    deleteNovel,
-    translateDescription,
-    addChapter,
-    deleteChapter,
-    reorderChapter,
-    addTerm,
-    editTerm,
-    setTermStatus,
-    deleteTerm,
-  } = useWorkspace();
+  const { account } = useAuth();
+  const { jobs, getNovel, editNovel, deleteNovel, addChapter, deleteChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm } = useLibrary();
+  const { translationProgress, translateDescription } = useReader();
+  const { styles, getStyle } = useSettings();
   const novel = getNovel(novelId);
   const [mainTab, setMainTab] = useState<MainTab>("chapters");
   const [descriptionMode, setDescriptionMode] =

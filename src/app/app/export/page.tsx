@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Download, FileArchive, FileText, Printer, type LucideIcon } from "lucide-react";
-import { useWorkspace, type ExportFormat } from "../../workspace/state";
+import { useLibrary, type ExportFormat } from "../../workspace/state";
 import { Card, CustomSelect, Empty } from "../../workspace/ui";
 
 const exportOptions: Array<{ format: ExportFormat; label: string; description: string; Icon: LucideIcon }> = [
@@ -12,7 +12,7 @@ const exportOptions: Array<{ format: ExportFormat; label: string; description: s
 ];
 
 export default function ExportPage() {
-  const { novels, exportNovel, printNovel } = useWorkspace();
+  const { novels, exportNovel, printNovel } = useLibrary();
   const [novelId, setNovelId] = useState(novels[0]?.id ?? "");
   const selectedNovel = novels.find((novel) => novel.id === novelId) ?? novels[0] ?? null;
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { useWorkspace } from "../../workspace/state";
+import { useLibrary, useSettings } from "../../workspace/state";
 import {
   Card,
   ConfirmDialog,
@@ -36,7 +36,8 @@ function StyleSelect({
 }
 
 export default function LibraryPage() {
-  const { novels, styles, addNovel, deleteNovel, getStyle } = useWorkspace();
+  const { novels, addNovel, deleteNovel } = useLibrary();
+  const { styles, getStyle } = useSettings();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [styleGuideId, setStyleGuideId] = useState("");

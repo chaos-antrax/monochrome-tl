@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { WorkspaceProvider, useWorkspace } from "../workspace/state";
+import { WorkspaceProvider, useAuth, useToast } from "../workspace/state";
 import { Input, LoadingButton } from "../workspace/ui";
 
 function LoginForm() {
   const router = useRouter();
-  const { submitAuth, message, setMessage } = useWorkspace();
+  const { submitAuth } = useAuth();
+  const { message, setMessage } = useToast();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

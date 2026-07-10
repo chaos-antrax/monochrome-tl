@@ -4,14 +4,14 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useParams } from "next/navigation";
 import { GlossaryCategorySchema, type GlossaryCategory } from "@/lib/schemas/translation";
-import { useWorkspace, type GlossaryStatus, type GlossaryTerm } from "../../../../workspace/state";
+import { useLibrary, type GlossaryStatus, type GlossaryTerm } from "../../../../workspace/state";
 import { Card, ConfirmDialog, CustomSelect, Empty, formatChangedFields, Input, Modal, Mode, Textarea } from "../../../../workspace/ui";
 
 type ConfirmAction = { title: string; body: string; confirmLabel?: string; destructive?: boolean; onConfirm: () => void };
 
 export default function GlossaryPage() {
   const { novelId } = useParams<{ novelId: string }>();
-  const { getNovel, addTerm, editTerm, setTermStatus, deleteTerm } = useWorkspace();
+  const { getNovel, addTerm, editTerm, setTermStatus, deleteTerm } = useLibrary();
   const novel = getNovel(novelId);
   const [tab, setTab] = useState<GlossaryStatus>("pending");
   const [categoryFilter, setCategoryFilter] = useState<"all" | GlossaryCategory>("all");

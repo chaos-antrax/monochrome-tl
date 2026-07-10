@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { useWorkspace, type ReaderMode } from "../../../../../workspace/state";
+import { useLibrary, useReader, type ReaderMode } from "../../../../../workspace/state";
 import { ChapterPanel } from "../../../../../workspace/chapter-panel";
 import {
   Card,
@@ -34,15 +34,8 @@ export default function ReaderPage() {
     chapterId: string;
   }>();
   const router = useRouter();
-  const {
-    getNovel,
-    getChapter,
-    translateChapter,
-    translationProgress,
-    deleteChapter,
-    editChapter,
-    revertVersion,
-  } = useWorkspace();
+  const { getNovel, getChapter, deleteChapter, editChapter } = useLibrary();
+  const { translateChapter, translationProgress, revertVersion } = useReader();
   const novel = getNovel(novelId);
   const chapter = getChapter(novelId, chapterId);
   const [mode, setMode] = useState<ReaderMode>("translated");

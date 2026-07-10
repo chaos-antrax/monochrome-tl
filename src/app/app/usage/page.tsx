@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
-import { useWorkspace, cost, labelDate } from "../../workspace/state";
+import { useLibrary, cost, labelDate } from "../../workspace/state";
 import { Card, Empty } from "../../workspace/ui";
 
 export default function UsagePage() {
-  const { jobs, usage } = useWorkspace();
+  const { jobs, usage } = useLibrary();
 
   return (
     <div className="space-y-5">

@@ -4,12 +4,12 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PROVIDER_DEFAULTS } from "@/lib/constants";
 import { type Provider } from "@/lib/schemas/translation";
-import { useWorkspace, labelDate } from "../../workspace/state";
+import { useAuth, labelDate } from "../../workspace/state";
 import { Card, CustomSelect, Input, LoadingButton } from "../../workspace/ui";
 
 export default function AccountPage() {
   const router = useRouter();
-  const { account, setAccount, saveProvider, signOut } = useWorkspace();
+  const { account, setAccount, saveProvider, signOut } = useAuth();
   const [apiKey, setApiKey] = useState("");
   const [provider, setProvider] = useState<Provider>(account.provider);
   const [model, setModel] = useState(account.selectedModel);
