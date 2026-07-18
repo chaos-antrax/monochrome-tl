@@ -180,6 +180,38 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: nextChapter }]);
   }, [getChapter, persistWorkspaceMutations, updateNovel]);
 
+
+  const editChapterContent = useCallback((novelId: string, chapterId: string, values: { rawText?: string; translatedText?: string }) => {
+    const chapter = getChapter(novelId, chapterId);
+    if (!chapter) return;
+    const hasRawUpdate = values.rawText !== undefined;
+    const hasTranslationUpdate = values.translatedText !== undefined;
+    const rawText = hasRawUpdate ? cleanPastedChapterText(values.rawText ?? "") : chapter.rawText;
+    if (hasRawUpdate && !rawText) return;
+    const rawTextHash = hasRawUpdate ? hashText(rawText) : chapter.rawTextHash;
+    const translatedText = hasTranslationUpdate ? normalizeTranslatedText(values.translatedText ?? "") : undefined;
+    if (hasTranslationUpdate && !translatedText) return;
+    const translations = chapter.translations.map((version) =>
+      version.version === chapter.currentVersion
+        ? {
+            ...version,
+            text: translatedText ?? version.text,
+            rawTextHash,
+          }
+        : version,
+    );
+    const currentVersion = translations.find((version) => version.version === chapter.currentVersion);
+    const nextChapter: Chapter = {
+      ...chapter,
+      rawText,
+      rawTextHash,
+      translations,
+      status: currentVersion?.text ? "translated" : hasRawUpdate ? "untranslated" : chapter.status,
+      error: undefined,
+    };
+    updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((entry) => entry.id === chapterId ? nextChapter : entry) }));
+    persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: nextChapter }]);
+  }, [getChapter, persistWorkspaceMutations, updateNovel]);
   const deleteChapter = useCallback((novelId: string, chapterId: string) => {
     const novel = getNovel(novelId);
     const nextChapters = novel?.chapters.filter((chapter) => chapter.id !== chapterId).map((chapter, index) => ({ ...chapter, order: index + 1 })) ?? [];
@@ -460,7 +492,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     })();
   }, [loadFullNovel]);
   const authValue = useMemo<AuthContextValue>(() => ({ isBooting: !isPersistReady, account, setAccount, submitAuth, signOut, saveProvider }), [isPersistReady, account, submitAuth, signOut, saveProvider]);
-  const libraryValue = useMemo<LibraryContextValue>(() => ({ novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, addChapter, editChapter, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel }), [novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, addChapter, editChapter, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel]);
+  const libraryValue = useMemo<LibraryContextValue>(() => ({ novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, addChapter, editChapter, editChapterContent, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel }), [novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, addChapter, editChapter, editChapterContent, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel]);
   const readerValue = useMemo<ReaderContextValue>(() => ({ translationProgress, translateChapter, translateDescription, revertVersion, loadChapter }), [translationProgress, translateChapter, translateDescription, revertVersion, loadChapter]);
   const settingsValue = useMemo<SettingsContextValue>(() => ({ styles, getStyle, addStyle, editStyle, deleteStyle }), [styles, getStyle, addStyle, editStyle, deleteStyle]);
   const toastValue = useMemo<ToastContextValue>(() => ({ message, setMessage }), [message]);
@@ -477,6 +509,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
 
 
 

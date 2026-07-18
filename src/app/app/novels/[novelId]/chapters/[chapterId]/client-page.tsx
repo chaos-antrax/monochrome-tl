@@ -14,7 +14,6 @@ import {
   formatChangedFields,
   Input,
   Modal,
-  Textarea,
 } from "../../../../../workspace/ui";
 
 type ConfirmAction = {
@@ -34,7 +33,7 @@ export default function ReaderPage() {
     chapterId: string;
   }>();
   const router = useRouter();
-  const { getNovel, getChapter, deleteChapter, editChapter } = useLibrary();
+  const { getNovel, getChapter, deleteChapter, editChapter, editChapterContent } = useLibrary();
   const { translateChapter, translationProgress, revertVersion, loadChapter } = useReader();
   const novel = getNovel(novelId);
   const chapter = getChapter(novelId, chapterId);
@@ -42,9 +41,10 @@ export default function ReaderPage() {
   const [fontSize, setFontSize] = useState(16);
   const [lineHeight, setLineHeight] = useState(1.4);
   const [isMetaOpen, setIsMetaOpen] = useState(false);
-  const [isRawOpen, setIsRawOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
+  const [isContentEditing, setIsContentEditing] = useState(false);
   const [editRawText, setEditRawText] = useState("");
+  const [editTranslatedText, setEditTranslatedText] = useState("");
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
@@ -108,6 +108,7 @@ export default function ReaderPage() {
       ? currentNovel.chapters[chapterIndex + 1]
       : undefined;
   const chapterProgress = translationProgress?.target === "chapter" && translationProgress.novelId === currentNovel.id && translationProgress.chapterId === currentChapter.id ? translationProgress : null;
+  const currentTranslation = currentChapter.translations.find((item) => item.version === currentChapter.currentVersion);
 
   function saveChapterListScroll() {
     const list = chapterListRef.current;
@@ -118,11 +119,6 @@ export default function ReaderPage() {
   function editMeta() {
     setEditTitle(currentChapter.title);
     setIsMetaOpen(true);
-  }
-
-  function editRaw() {
-    setEditRawText(currentChapter.rawText);
-    setIsRawOpen(true);
   }
 
   function submitMeta(event: FormEvent<HTMLFormElement>) {
@@ -152,33 +148,51 @@ export default function ReaderPage() {
       },
     });
   }
+  function startContentEdit() {
+    if (mode === "translated" && !currentTranslation) setMode("raw");
+    setEditRawText(currentChapter.rawText);
+    setEditTranslatedText(currentTranslation?.text ?? "");
+    setIsContentEditing(true);
+  }
 
-  function submitRaw(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function cancelContentEdit() {
+    setIsContentEditing(false);
+    setEditRawText("");
+    setEditTranslatedText("");
+  }
+
+  function saveContentEdit() {
     if (!editRawText.trim()) return;
-    if (editRawText === currentChapter.rawText) {
+    if (currentTranslation && !editTranslatedText.trim()) return;
+    const rawChanged = editRawText !== currentChapter.rawText;
+    const translationChanged = Boolean(currentTranslation) && editTranslatedText !== currentTranslation?.text;
+    const changes = [
+      rawChanged ? "raw Chinese text" : null,
+      translationChanged ? "translated text" : null,
+    ].filter(Boolean) as string[];
+    if (changes.length === 0) {
       setConfirmAction({
         title: "No changes detected",
-        body: `The raw source text for "${currentChapter.title}" has not changed.`,
+        body: `No editable content changed for "${currentChapter.title}".`,
         confirmLabel: "Close",
         onConfirm: () => setConfirmAction(null),
       });
       return;
     }
     setConfirmAction({
-      title: "Save raw chapter text?",
-      body: `Replace raw source text for "${currentChapter.title}".`,
-      confirmLabel: "Save raw text",
+      title: "Save chapter content?",
+      body: `Update ${formatChangedFields(changes)} for "${currentChapter.title}".`,
+      confirmLabel: "Save content",
       onConfirm: () => {
-        editChapter(currentNovel.id, currentChapter.id, {
-          rawText: editRawText,
+        editChapterContent(currentNovel.id, currentChapter.id, {
+          rawText: rawChanged ? editRawText : undefined,
+          translatedText: translationChanged ? editTranslatedText : undefined,
         });
-        setIsRawOpen(false);
+        cancelContentEdit();
         setConfirmAction(null);
       },
     });
   }
-
   function requestDeleteChapter() {
     setConfirmAction({
       title: "Delete chapter?",
@@ -263,7 +277,15 @@ export default function ReaderPage() {
             }
             onDelete={requestDeleteChapter}
             onEdit={editMeta}
-            onEditRaw={editRaw}
+            isEditingContent={isContentEditing}
+            editRawText={editRawText}
+            editTranslatedText={editTranslatedText}
+            onEditRawText={setEditRawText}
+            onEditTranslatedText={setEditTranslatedText}
+            onStartEditContent={startContentEdit}
+            onCancelEditContent={cancelContentEdit}
+            onSaveContent={saveContentEdit}
+            canSaveContent={Boolean(editRawText.trim()) && (!currentTranslation || Boolean(editTranslatedText.trim()))}
             onRevert={(version) =>
               revertVersion(currentNovel.id, currentChapter.id, version)
             }
@@ -303,38 +325,6 @@ export default function ReaderPage() {
               className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
             >
               Save changes
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      <Modal
-        title="Edit raw chapter"
-        open={isRawOpen}
-        onClose={() => setIsRawOpen(false)}
-      >
-        <form onSubmit={submitRaw} className="space-y-4">
-          <Textarea
-            label="Raw Chinese text"
-            value={editRawText}
-            onChange={setEditRawText}
-            rows={16}
-            className="font-serif leading-7"
-          />
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setIsRawOpen(false)}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!editRawText.trim()}
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
-            >
-              Save raw text
             </button>
           </div>
         </form>
@@ -406,6 +396,16 @@ function ChapterNavigation({
     </nav>
   );
 }
+
+
+
+
+
+
+
+
+
+
 
 
 

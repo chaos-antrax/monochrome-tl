@@ -42,6 +42,7 @@ export type WorkspaceContextValue = {
   deleteNovel: (novelId: string) => void;
   addChapter: (novelId: string, title: string, rawText: string) => string | null;
   editChapter: (novelId: string, chapterId: string, values: { title?: string; rawText?: string }) => void;
+  editChapterContent: (novelId: string, chapterId: string, values: { rawText?: string; translatedText?: string }) => void;
   deleteChapter: (novelId: string, chapterId: string) => void;
   moveChapter: (novelId: string, chapterId: string, direction: -1 | 1) => void;
   reorderChapter: (novelId: string, draggedChapterId: string, targetChapterId: string) => void;
@@ -64,10 +65,11 @@ export type WorkspaceContextValue = {
 };
 
 export type AuthContextValue = Pick<WorkspaceContextValue, "isBooting" | "account" | "setAccount" | "submitAuth" | "signOut" | "saveProvider">;
-export type LibraryContextValue = Pick<WorkspaceContextValue, "novels" | "jobs" | "usage" | "getNovel" | "getChapter" | "addNovel" | "editNovel" | "deleteNovel" | "addChapter" | "editChapter" | "deleteChapter" | "moveChapter" | "reorderChapter" | "addTerm" | "editTerm" | "setTermStatus" | "deleteTerm" | "exportNovel" | "printNovel">;
+export type LibraryContextValue = Pick<WorkspaceContextValue, "novels" | "jobs" | "usage" | "getNovel" | "getChapter" | "addNovel" | "editNovel" | "deleteNovel" | "addChapter" | "editChapter" | "editChapterContent" | "deleteChapter" | "moveChapter" | "reorderChapter" | "addTerm" | "editTerm" | "setTermStatus" | "deleteTerm" | "exportNovel" | "printNovel">;
 export type ReaderContextValue = Pick<WorkspaceContextValue, "translationProgress" | "translateChapter" | "translateDescription" | "revertVersion" | "loadChapter">;
 export type SettingsContextValue = Pick<WorkspaceContextValue, "styles" | "getStyle" | "addStyle" | "editStyle" | "deleteStyle">;
 export type ToastContextValue = Pick<WorkspaceContextValue, "message" | "setMessage">;
+
 
 
 
