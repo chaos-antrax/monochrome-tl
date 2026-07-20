@@ -32,6 +32,46 @@ type ConfirmAction = {
 const FONT_SIZE_OPTIONS = [16, 18, 19, 20, 22, 24, 26];
 const LINE_HEIGHT_OPTIONS = [1.4, 1.5, 1.65, 1.8, 1.95, 2.1];
 
+function getTextareaCaretMetrics(textarea: HTMLTextAreaElement, offset: number) {
+  const computed = window.getComputedStyle(textarea);
+  const mirror = document.createElement("div");
+  const caret = document.createElement("span");
+  const boundedOffset = Math.max(0, Math.min(offset, textarea.value.length));
+
+  mirror.style.position = "absolute";
+  mirror.style.visibility = "hidden";
+  mirror.style.pointerEvents = "none";
+  mirror.style.left = "0";
+  mirror.style.top = "0";
+  mirror.style.width = `${textarea.clientWidth}px`;
+  mirror.style.boxSizing = computed.boxSizing;
+  mirror.style.padding = computed.padding;
+  mirror.style.border = computed.border;
+  mirror.style.font = computed.font;
+  mirror.style.fontFamily = computed.fontFamily;
+  mirror.style.fontSize = computed.fontSize;
+  mirror.style.fontWeight = computed.fontWeight;
+  mirror.style.lineHeight = computed.lineHeight;
+  mirror.style.letterSpacing = computed.letterSpacing;
+  mirror.style.whiteSpace = "pre-wrap";
+  mirror.style.overflowWrap = "break-word";
+  mirror.style.wordBreak = computed.wordBreak;
+  mirror.style.tabSize = computed.tabSize;
+
+  mirror.textContent = textarea.value.slice(0, boundedOffset);
+  caret.textContent = textarea.value.slice(boundedOffset, boundedOffset + 1) || "\u200b";
+  mirror.appendChild(caret);
+  document.body.appendChild(mirror);
+
+  const metrics = {
+    top: caret.offsetTop,
+    height: Number.parseFloat(computed.lineHeight) || textarea.clientHeight,
+  };
+
+  mirror.remove();
+  return metrics;
+}
+
 export default function ReaderPage() {
   const { novelId, chapterId } = useParams<{
     novelId: string;
@@ -54,6 +94,7 @@ export default function ReaderPage() {
   const [editTranslatedText, setEditTranslatedText] = useState("");
   const [editTarget, setEditTarget] = useState<EditTarget>("raw");
   const [editSelectionOffset, setEditSelectionOffset] = useState(0);
+  const [cursorIndicator, setCursorIndicator] = useState<{ target: EditTarget; top: number; height: number } | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
@@ -73,6 +114,8 @@ export default function ReaderPage() {
   const chapterListRef = useRef<HTMLDivElement | null>(null);
   const rawEditorRef = useRef<HTMLTextAreaElement | null>(null);
   const translatedEditorRef = useRef<HTMLTextAreaElement | null>(null);
+  const editorBodyRef = useRef<HTMLDivElement | null>(null);
+  const cursorIndicatorTimerRef = useRef<number | null>(null);
 
 
   useEffect(() => {
@@ -99,16 +142,31 @@ export default function ReaderPage() {
     if (!isContentEditing) return;
     const textarea = editTarget === "raw" ? rawEditorRef.current : translatedEditorRef.current;
     if (!textarea) return;
+
+    let innerFrame = 0;
     const frame = window.requestAnimationFrame(() => {
       const offset = Math.max(0, Math.min(editSelectionOffset, textarea.value.length));
+      const metrics = getTextareaCaretMetrics(textarea, offset);
       textarea.focus();
       textarea.setSelectionRange(offset, offset);
-      const linesBeforeOffset = textarea.value.slice(0, offset).split("\n").length;
-      const lineHeightPx = fontSize * lineHeight;
-      textarea.scrollTop = Math.max(0, (linesBeforeOffset - 5) * lineHeightPx);
+      textarea.scrollTop = Math.max(0, metrics.top - metrics.height * 4);
+
+      innerFrame = window.requestAnimationFrame(() => {
+        const visibleTop = Math.max(12, textarea.offsetTop + metrics.top - textarea.scrollTop);
+        setCursorIndicator({ target: editTarget, top: visibleTop, height: Math.max(24, metrics.height) });
+        if (cursorIndicatorTimerRef.current) window.clearTimeout(cursorIndicatorTimerRef.current);
+        cursorIndicatorTimerRef.current = window.setTimeout(() => setCursorIndicator(null), 3200);
+      });
     });
-    return () => window.cancelAnimationFrame(frame);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (innerFrame) window.cancelAnimationFrame(innerFrame);
+    };
   }, [editSelectionOffset, editTarget, fontSize, isContentEditing, lineHeight]);
+
+  useEffect(() => () => {
+    if (cursorIndicatorTimerRef.current) window.clearTimeout(cursorIndicatorTimerRef.current);
+  }, []);
   useEffect(() => {
     const list = chapterListRef.current;
     if (!list) return;
@@ -474,22 +532,22 @@ export default function ReaderPage() {
           <>
             <button
               type="button"
-              onClick={cancelContentEdit}
-              className="flex h-12 items-center gap-3 rounded-full border border-neutral-200 bg-white/95 px-4 text-sm font-semibold text-neutral-800 shadow-[0_18px_60px_rgba(0,0,0,0.16)] backdrop-blur transition hover:-translate-y-0.5 hover:border-neutral-950 hover:bg-white"
-              aria-label="Cancel chapter edit"
-            >
-              <X aria-hidden="true" className="h-5 w-5" />
-              <span className="hidden sm:inline">Cancel</span>
-            </button>
-            <button
-              type="button"
               onClick={saveContentEdit}
               disabled={!editRawText.trim() || (Boolean(currentTranslation) && !editTranslatedText.trim())}
-              className="flex h-12 items-center gap-3 rounded-full border border-neutral-950 bg-neutral-950 px-4 text-sm font-semibold text-white shadow-[0_18px_60px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-200 disabled:text-neutral-500"
-              aria-label="Save chapter edit"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-neutral-950 px-4 text-sm font-semibold text-white shadow-[0_14px_45px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-neutral-800 disabled:translate-y-0 disabled:bg-neutral-200 disabled:text-neutral-500"
+              aria-label="Save chapter edits"
             >
               <Save aria-hidden="true" className="h-5 w-5" />
               <span className="hidden sm:inline">Save</span>
+            </button>
+            <button
+              type="button"
+              onClick={cancelContentEdit}
+              className="inline-flex h-12 items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 text-sm font-semibold text-neutral-800 shadow-[0_14px_45px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:border-neutral-950"
+              aria-label="Cancel chapter edits"
+            >
+              <X aria-hidden="true" className="h-5 w-5" />
+              <span className="hidden sm:inline">Cancel</span>
             </button>
           </>
         ) : (
@@ -497,17 +555,16 @@ export default function ReaderPage() {
             <button
               type="button"
               onClick={() => setIsGlossaryOpen(true)}
-              className="group flex h-12 items-center gap-3 rounded-full border border-neutral-200 bg-white/95 px-4 text-sm font-semibold text-neutral-900 shadow-[0_18px_60px_rgba(0,0,0,0.16)] backdrop-blur transition hover:-translate-y-0.5 hover:border-neutral-950 hover:bg-white"
-              aria-label="Open glossary"
+              className="inline-flex h-12 items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 text-sm font-semibold text-neutral-800 shadow-[0_14px_45px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:border-neutral-950"
+              aria-label="Open reader glossary"
             >
               <BookOpenText aria-hidden="true" className="h-5 w-5" />
               <span className="hidden sm:inline">Glossary</span>
-              <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500 transition group-hover:bg-neutral-950 group-hover:text-white">{currentNovel.glossary.length}</span>
             </button>
             <button
               type="button"
               onClick={startContentEdit}
-              className="flex h-12 items-center gap-3 rounded-full border border-neutral-950 bg-neutral-950 px-4 text-sm font-semibold text-white shadow-[0_18px_60px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-neutral-800"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-neutral-950 px-4 text-sm font-semibold text-white shadow-[0_14px_45px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-neutral-800"
               aria-label="Edit chapter content"
             >
               <Edit3 aria-hidden="true" className="h-5 w-5" />
@@ -518,26 +575,33 @@ export default function ReaderPage() {
       </div>
 
       {isContentEditing ? (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-[#f7f7f5]/95 text-neutral-950 backdrop-blur-md animate-page">
-          <div className="border-b border-neutral-200 bg-white/75 px-5 py-4 shadow-[0_12px_45px_rgba(0,0,0,0.06)] backdrop-blur sm:px-8">
+        <div className="fixed inset-0 z-[60] flex flex-col bg-[#f7f7f5] text-neutral-950 animate-page">
+          <div className="border-b border-neutral-200 bg-[#f7f7f5]/95 px-5 py-4 backdrop-blur sm:px-8">
             <div className="mr-28 sm:mr-48">
               <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Editing chapter</p>
               <h2 className="mt-1 truncate font-serif text-2xl font-semibold">{currentChapter.title}</h2>
             </div>
             {currentTranslation ? (
               <div className="mt-4 w-fit">
-                <Mode modes={["raw", "translated"]} value={editTarget} onChange={(value) => setEditTarget(value as EditTarget)} />
+                <Mode
+                  modes={["raw", "translated"]}
+                  value={editTarget}
+                  onChange={(value) => {
+                    setEditSelectionOffset(0);
+                    setEditTarget(value as EditTarget);
+                  }}
+                />
               </div>
             ) : null}
           </div>
-          <div className="min-h-0 flex-1 p-4 pt-5 sm:p-8">
+          <div ref={editorBodyRef} className="relative min-h-0 flex-1 px-4 pb-4 pt-5 sm:px-10 sm:pb-10 sm:pt-8">
             {editTarget === "raw" ? (
               <textarea
                 ref={rawEditorRef}
                 aria-label="Raw Chinese text"
                 value={editRawText}
                 onChange={(event) => setEditRawText(event.target.value)}
-                className="h-full w-full resize-none rounded-lg border border-neutral-200 bg-white/90 px-5 py-4 font-serif text-neutral-950 shadow-[0_18px_60px_rgba(0,0,0,0.08)] outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
+                className="h-full w-full resize-none border-0 bg-transparent px-0 py-4 font-serif text-neutral-950 outline-none selection:bg-neutral-950 selection:text-white placeholder:text-neutral-400"
                 style={{ fontSize, lineHeight, tabSize: 2 }}
                 spellCheck={false}
               />
@@ -547,11 +611,18 @@ export default function ReaderPage() {
                 aria-label="Translated text"
                 value={editTranslatedText}
                 onChange={(event) => setEditTranslatedText(event.target.value)}
-                className="h-full w-full resize-none rounded-lg border border-neutral-200 bg-white/90 px-5 py-4 font-serif text-neutral-950 shadow-[0_18px_60px_rgba(0,0,0,0.08)] outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
+                className="h-full w-full resize-none border-0 bg-transparent px-0 py-4 font-serif text-neutral-950 outline-none selection:bg-neutral-950 selection:text-white placeholder:text-neutral-400"
                 style={{ fontSize, lineHeight, tabSize: 2 }}
                 spellCheck={false}
               />
             )}
+            {cursorIndicator?.target === editTarget ? (
+              <div
+                className="pointer-events-none absolute inset-x-4 rounded-md bg-neutral-950/10 animate-cursor-row-highlight sm:inset-x-10"
+                style={{ top: cursorIndicator.top, height: cursorIndicator.height }}
+                aria-hidden="true"
+              />
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -784,6 +855,16 @@ function ChapterNavigation({
     </nav>
   );
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
