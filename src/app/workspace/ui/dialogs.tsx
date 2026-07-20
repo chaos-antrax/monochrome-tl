@@ -58,11 +58,13 @@ export function Modal({
   open,
   onClose,
   children,
+  overflow = "auto",
 }: {
   title: string;
   open: boolean;
   onClose: () => void;
   children: ReactNode;
+  overflow?: "auto" | "visible";
 }) {
   if (!open) return null;
   return (
@@ -72,7 +74,7 @@ export function Modal({
       aria-modal="true"
       aria-label={title}
     >
-      <div className="animate-scale-in max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-neutral-200 bg-white p-5 shadow-[0_32px_100px_rgba(0,0,0,0.22)] sm:p-6">
+      <div className={`animate-scale-in max-h-[90vh] w-full max-w-2xl rounded-lg border border-neutral-200 bg-white p-5 shadow-[0_32px_100px_rgba(0,0,0,0.22)] sm:p-6 ${overflow === "visible" ? "overflow-visible" : "overflow-y-auto"}`}>
         <div className="flex items-start justify-between gap-4 border-b border-neutral-200 pb-4">
           <h2 className="font-serif text-2xl font-semibold">{title}</h2>
           <button

@@ -374,6 +374,7 @@ export default function ReaderPage() {
         title="Publish chapter"
         open={Boolean(publishingChapter)}
         onClose={() => setPublishingChapter(null)}
+        overflow="visible"
       >
         <form onSubmit={submitPublishVersion} className="space-y-4">
           <p className="text-sm leading-6 text-neutral-500">
