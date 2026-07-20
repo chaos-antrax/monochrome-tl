@@ -78,6 +78,18 @@ export default function ReaderPage() {
     return () => { cancelled = true; };
   }, [chapter, chapterId, chapterLoadError?.chapterId, loadChapter, novelId]);
   useEffect(() => {
+    if (!isGlossaryOpen) return;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [isGlossaryOpen]);
+
+  useEffect(() => {
     const list = chapterListRef.current;
     if (!list) return;
     const saved = window.sessionStorage.getItem(`reader-chapter-list:${novelId}`);
@@ -459,9 +471,9 @@ export default function ReaderPage() {
       </div>
 
       {isGlossaryOpen ? (
-        <div className="fixed inset-0 z-50 flex justify-end bg-neutral-950/25 backdrop-blur-sm animate-page" role="dialog" aria-modal="true" aria-label="Reader glossary">
+        <div className="fixed inset-0 z-[70] flex justify-end bg-neutral-950/25 backdrop-blur-sm animate-page" role="dialog" aria-modal="true" aria-label="Reader glossary">
           <button type="button" className="absolute inset-0 cursor-default" aria-label="Close glossary" onClick={() => setIsGlossaryOpen(false)} />
-          <aside className="relative flex h-full w-[min(100vw,31rem)] flex-col border-l border-neutral-200 bg-white shadow-[0_32px_100px_rgba(0,0,0,0.24)] animate-slide-in-right">
+          <aside className="relative flex h-full w-[min(100vw,31rem)] max-w-full flex-col border-l border-neutral-200 bg-white shadow-[0_32px_100px_rgba(0,0,0,0.24)] animate-slide-in-right">
             <div className="border-b border-neutral-200 p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -477,7 +489,7 @@ export default function ReaderPage() {
                 <label className="relative block text-sm font-medium text-neutral-700">
                   Search
                   <Search aria-hidden="true" className="absolute left-3 top-[2.45rem] h-4 w-4 text-neutral-400" />
-                  <input type="search" value={glossarySearch} onChange={(event) => setGlossarySearch(event.target.value)} placeholder="Source, translation, pinyin, notes" className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-9 py-2.5 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5" />
+                  <input type="text" value={glossarySearch} onChange={(event) => setGlossarySearch(event.target.value)} placeholder="Source, translation, pinyin, notes" className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-9 py-2.5 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5" />
                   {glossarySearch ? <button type="button" onClick={() => setGlossarySearch("")} className="absolute right-2 top-[2.2rem] grid h-7 w-7 place-items-center rounded-md text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label="Clear glossary search"><X aria-hidden="true" className="h-4 w-4" /></button> : null}
                 </label>
                 <button type="button" onClick={() => setIsAddingTerm((current) => !current)} className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950">
@@ -485,7 +497,7 @@ export default function ReaderPage() {
                 </button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-5">
+            <div className="min-h-0 flex-1 overflow-y-auto p-5 pb-24 sm:pb-5">
               {isAddingTerm ? (
                 <form onSubmit={submitGlossaryTerm} className="mb-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
                   <div className="grid gap-3">
@@ -538,6 +550,15 @@ export default function ReaderPage() {
                 })}
                 {glossaryTerms.length === 0 ? <Empty title="No terms here" body="No glossary terms match the selected status and search." /> : null}
               </div>
+            </div>
+            <div className="border-t border-neutral-200 bg-white p-4 sm:hidden">
+              <button
+                type="button"
+                onClick={() => setIsGlossaryOpen(false)}
+                className="w-full rounded-lg border border-neutral-950 bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800"
+              >
+                Close glossary
+              </button>
             </div>
           </aside>
         </div>

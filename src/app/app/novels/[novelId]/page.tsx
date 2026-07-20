@@ -707,7 +707,7 @@ export default function NovelPage() {
                 Search
                 <Search aria-hidden="true" className="absolute left-3 top-[2.45rem] h-4 w-4 text-neutral-400" />
                 <input
-                  type="search"
+                  type="text"
                   value={glossarySearch}
                   onChange={(event) => setGlossarySearch(event.target.value)}
                   placeholder="Source, translation, pinyin, notes"
