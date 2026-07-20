@@ -118,6 +118,11 @@ html {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes chapter-sort {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .animate-page {
   animation: fade-in 220ms ease-out both;
 }
@@ -145,6 +150,10 @@ html {
 
 .animate-toast-in {
   animation: toast-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-chapter-sort {
+  animation: chapter-sort 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .motion-surface {
@@ -226,3 +235,4 @@ html {
     transition-duration: 0.001ms !important;
   }
 }
+

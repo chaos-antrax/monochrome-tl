@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { DragEvent, FormEvent, useState } from "react";
+import { DragEvent, FormEvent, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, Edit2, GripVertical, LoaderCircle, Trash2 } from "lucide-react";
 import { DEFAULT_MAX_CHAPTER_CHARACTERS } from "@/lib/constants";
@@ -77,6 +77,8 @@ export default function NovelPage() {
   const novel = getNovel(novelId);
   const [mainTab, setMainTab] = useState<MainTab>("chapters");
   const [chapterSortOrder, setChapterSortOrder] = useState<ChapterSortOrder>("desc");
+  const [isChapterSortAnimating, setIsChapterSortAnimating] = useState(false);
+  const chapterSortAnimationTimerRef = useRef<number | null>(null);
   const [descriptionMode, setDescriptionMode] =
     useState<DescriptionMode>("english");
   const [isEditNovelOpen, setIsEditNovelOpen] = useState(false);
@@ -144,6 +146,16 @@ export default function NovelPage() {
       ? "Re-translate"
       : "Translate description";
   const descriptionProgress = translationProgress?.target === "description" && translationProgress.novelId === currentNovel.id ? translationProgress : null;
+
+  function toggleChapterSortOrder() {
+    if (chapterSortAnimationTimerRef.current) window.clearTimeout(chapterSortAnimationTimerRef.current);
+    setIsChapterSortAnimating(true);
+    setChapterSortOrder((current) => current === "asc" ? "desc" : "asc");
+    chapterSortAnimationTimerRef.current = window.setTimeout(() => {
+      setIsChapterSortAnimating(false);
+      chapterSortAnimationTimerRef.current = null;
+    }, 420);
+  }
 
   async function pasteChapter() {
     try {
@@ -470,7 +482,7 @@ export default function NovelPage() {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => setChapterSortOrder((current) => current === "asc" ? "desc" : "asc")}
+                onClick={toggleChapterSortOrder}
                 className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950 hover:text-neutral-950"
                 aria-label={`Show chapters in ${chapterSortOrder === "asc" ? "descending" : "ascending"} order`}
                 title={`Show ${chapterSortOrder === "asc" ? "latest" : "oldest"} chapters first`}
@@ -500,11 +512,11 @@ export default function NovelPage() {
         {mainTab === "chapters" ? (
           <>
             <p className="mt-4 text-sm text-neutral-500">
-              Drag the handle beside a chapter to change reading and export
-              order.
+              Toggle display order here. Drag the handle beside a chapter to
+              change saved reading and export order.
             </p>
             <div className="mt-3 divide-y divide-neutral-100">
-              {sortedChapters.map((chapter) => (
+              {sortedChapters.map((chapter, index) => (
                 <div
                   key={chapter.id}
                   onDragOver={(event) => dragChapterOver(event, chapter.id)}
@@ -514,7 +526,8 @@ export default function NovelPage() {
                     )
                   }
                   onDrop={(event) => dropChapter(event, chapter.id)}
-                  className={`flex flex-col gap-3 rounded-lg py-4 transition sm:flex-row sm:items-center sm:justify-between ${dragOverChapterId === chapter.id ? "bg-neutral-50 ring-1 ring-neutral-300" : ""} ${draggedChapterId === chapter.id ? "opacity-50" : ""}`}
+                  className={`flex flex-col gap-3 rounded-lg py-4 transition sm:flex-row sm:items-center sm:justify-between ${isChapterSortAnimating ? "animate-chapter-sort" : ""} ${dragOverChapterId === chapter.id ? "bg-neutral-50 ring-1 ring-neutral-300" : ""} ${draggedChapterId === chapter.id ? "opacity-50" : ""}`}
+                  style={isChapterSortAnimating ? { animationDelay: `${Math.min(index * 28, 180)}ms` } : undefined}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-2">
                     <button
@@ -891,6 +904,12 @@ export default function NovelPage() {
     </div>
   );
 }
+
+
+
+
+
+
 
 
 
