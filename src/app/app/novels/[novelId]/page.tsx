@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { DragEvent, FormEvent, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, Edit2, Globe2, GlobeLock, GripVertical, LoaderCircle, Trash2 } from "lucide-react";
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Edit2, Globe2, GlobeLock, GripVertical, LoaderCircle, Search, Trash2, X } from "lucide-react";
 import { DEFAULT_MAX_CHAPTER_CHARACTERS } from "@/lib/constants";
 import {
   GlossaryCategorySchema,
@@ -101,6 +101,7 @@ export default function NovelPage() {
   const [categoryFilter, setCategoryFilter] = useState<
     "all" | GlossaryCategory
   >("all");
+  const [glossarySearch, setGlossarySearch] = useState("");
   const [isAddTermOpen, setIsAddTermOpen] = useState(false);
   const [sourceTerm, setSourceTerm] = useState("");
   const [translation, setTranslation] = useState("");
@@ -132,11 +133,15 @@ export default function NovelPage() {
   const sortedChapters = [...currentNovel.chapters].sort((a, b) =>
     chapterSortOrder === "asc" ? a.order - b.order : b.order - a.order,
   );
-  const terms = currentNovel.glossary.filter(
-    (term) =>
-      term.status === glossaryTab &&
-      (categoryFilter === "all" || term.category === categoryFilter),
-  );
+  const glossarySearchQuery = glossarySearch.trim().toLowerCase();
+  const terms = currentNovel.glossary.filter((term) => {
+    const matchesSearch =
+      !glossarySearchQuery ||
+      [term.sourceTerm, term.translation, term.category, term.pinyin, term.notes, term.conflict]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(glossarySearchQuery));
+    return term.status === glossaryTab && (categoryFilter === "all" || term.category === categoryFilter) && matchesSearch;
+  });
   const isDescriptionTranslating = jobs.some(
     (job) =>
       job.novelId === currentNovel.id &&
@@ -677,7 +682,7 @@ export default function NovelPage() {
           </>
         ) : (
           <div className="mt-4">
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <Mode
                 modes={["approved", "pending", "rejected"]}
                 value={glossaryTab}
@@ -698,6 +703,27 @@ export default function NovelPage() {
                   })),
                 ]}
               />
+              <label className="relative block min-w-0 flex-1 text-sm font-medium text-neutral-700 sm:min-w-64">
+                Search
+                <Search aria-hidden="true" className="absolute left-3 top-[2.45rem] h-4 w-4 text-neutral-400" />
+                <input
+                  type="search"
+                  value={glossarySearch}
+                  onChange={(event) => setGlossarySearch(event.target.value)}
+                  placeholder="Source, translation, pinyin, notes"
+                  className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-9 py-2.5 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
+                />
+                {glossarySearch ? (
+                  <button
+                    type="button"
+                    onClick={() => setGlossarySearch("")}
+                    className="absolute right-2 top-[2.2rem] grid h-7 w-7 place-items-center rounded-md text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-950"
+                    aria-label="Clear glossary search"
+                  >
+                    <X aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </label>
             </div>
             <div className="grid gap-3">
               {terms.map((term) => (
@@ -768,7 +794,7 @@ export default function NovelPage() {
               {terms.length === 0 ? (
                 <Empty
                   title="No terms here"
-                  body="No glossary terms match the selected status and category."
+                  body="No glossary terms match the selected status, category, and search."
                   action={
                     <button
                       type="button"

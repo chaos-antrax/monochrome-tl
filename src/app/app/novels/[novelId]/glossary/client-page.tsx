@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Search, X } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useParams } from "next/navigation";
 import { GlossaryCategorySchema, type GlossaryCategory } from "@/lib/schemas/translation";
@@ -15,6 +16,7 @@ export default function GlossaryPage() {
   const novel = getNovel(novelId);
   const [tab, setTab] = useState<GlossaryStatus>("pending");
   const [categoryFilter, setCategoryFilter] = useState<"all" | GlossaryCategory>("all");
+  const [glossarySearch, setGlossarySearch] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [sourceTerm, setSourceTerm] = useState("");
   const [translation, setTranslation] = useState("");
@@ -101,7 +103,15 @@ export default function GlossaryPage() {
     });
   }
 
-  const terms = currentNovel.glossary.filter((term) => term.status === tab && (categoryFilter === "all" || term.category === categoryFilter));
+  const glossarySearchQuery = glossarySearch.trim().toLowerCase();
+  const terms = currentNovel.glossary.filter((term) => {
+    const matchesSearch =
+      !glossarySearchQuery ||
+      [term.sourceTerm, term.translation, term.category, term.pinyin, term.notes, term.conflict]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(glossarySearchQuery));
+    return term.status === tab && (categoryFilter === "all" || term.category === categoryFilter) && matchesSearch;
+  });
   const addTermForm = (
     <form onSubmit={submit} className="space-y-4">
       <Input label="Source term" value={sourceTerm} onChange={setSourceTerm} />
@@ -132,7 +142,31 @@ export default function GlossaryPage() {
       <Card>
         <div className="flex flex-col gap-3 border-b border-neutral-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="font-serif text-2xl font-semibold">Terms</h2>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center"><Mode modes={["approved", "pending", "rejected"]} value={tab} onChange={(value) => setTab(value as GlossaryStatus)} /><CustomSelect label="Category" value={categoryFilter} onChange={(value) => setCategoryFilter(value as "all" | GlossaryCategory)} className="min-w-44" options={[{ value: "all", label: "All categories" }, ...GlossaryCategorySchema.options.map((option) => ({ value: option, label: option }))]} /></div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <Mode modes={["approved", "pending", "rejected"]} value={tab} onChange={(value) => setTab(value as GlossaryStatus)} />
+            <CustomSelect label="Category" value={categoryFilter} onChange={(value) => setCategoryFilter(value as "all" | GlossaryCategory)} className="min-w-44" options={[{ value: "all", label: "All categories" }, ...GlossaryCategorySchema.options.map((option) => ({ value: option, label: option }))]} />
+            <label className="relative block min-w-0 flex-1 text-sm font-medium text-neutral-700 sm:min-w-64">
+              Search
+              <Search aria-hidden="true" className="absolute left-3 top-[2.45rem] h-4 w-4 text-neutral-400" />
+              <input
+                type="search"
+                value={glossarySearch}
+                onChange={(event) => setGlossarySearch(event.target.value)}
+                placeholder="Source, translation, pinyin, notes"
+                className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-9 py-2.5 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
+              />
+              {glossarySearch ? (
+                <button
+                  type="button"
+                  onClick={() => setGlossarySearch("")}
+                  className="absolute right-2 top-[2.2rem] grid h-7 w-7 place-items-center rounded-md text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-950"
+                  aria-label="Clear glossary search"
+                >
+                  <X aria-hidden="true" className="h-4 w-4" />
+                </button>
+              ) : null}
+            </label>
+          </div>
         </div>
         <div className="mt-4 grid gap-3">
           {terms.map((term) => (
@@ -153,7 +187,7 @@ export default function GlossaryPage() {
               </div>
             </div>
           ))}
-          {terms.length === 0 ? <Empty title="No terms here" body="No glossary terms match the selected status and category." action={<button type="button" onClick={() => setIsAddOpen(true)} className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800">Add term</button>} /> : null}
+          {terms.length === 0 ? <Empty title="No terms here" body="No glossary terms match the selected status, category, and search." action={<button type="button" onClick={() => setIsAddOpen(true)} className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800">Add term</button>} /> : null}
         </div>
       </Card>
 
