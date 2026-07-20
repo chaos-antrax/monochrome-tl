@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { DragEvent, FormEvent, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Edit2, GripVertical, LoaderCircle, Trash2 } from "lucide-react";
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Edit2, GripVertical, LoaderCircle, Trash2 } from "lucide-react";
 import { DEFAULT_MAX_CHAPTER_CHARACTERS } from "@/lib/constants";
 import {
   GlossaryCategorySchema,
@@ -34,6 +34,7 @@ import {
 
 type MainTab = "chapters" | "glossary";
 type DescriptionMode = "english" | "chinese";
+type ChapterSortOrder = "asc" | "desc";
 type ConfirmAction = {
   title: string;
   body: string;
@@ -75,6 +76,7 @@ export default function NovelPage() {
   const { styles, getStyle } = useSettings();
   const novel = getNovel(novelId);
   const [mainTab, setMainTab] = useState<MainTab>("chapters");
+  const [chapterSortOrder, setChapterSortOrder] = useState<ChapterSortOrder>("desc");
   const [descriptionMode, setDescriptionMode] =
     useState<DescriptionMode>("english");
   const [isEditNovelOpen, setIsEditNovelOpen] = useState(false);
@@ -122,6 +124,9 @@ export default function NovelPage() {
     effectiveMode === "english"
       ? currentNovel.descriptionTranslated?.trim()
       : currentNovel.description.trim();
+  const sortedChapters = [...currentNovel.chapters].sort((a, b) =>
+    chapterSortOrder === "asc" ? a.order - b.order : b.order - a.order,
+  );
   const terms = currentNovel.glossary.filter(
     (term) =>
       term.status === glossaryTab &&
@@ -462,13 +467,25 @@ export default function NovelPage() {
             onChange={(value) => setMainTab(value as MainTab)}
           />
           {mainTab === "chapters" ? (
-            <button
-              type="button"
-              onClick={() => setIsAddChapterOpen(true)}
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
-            >
-              Add chapter
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setChapterSortOrder((current) => current === "asc" ? "desc" : "asc")}
+                className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950 hover:text-neutral-950"
+                aria-label={`Show chapters in ${chapterSortOrder === "asc" ? "descending" : "ascending"} order`}
+                title={`Show ${chapterSortOrder === "asc" ? "latest" : "oldest"} chapters first`}
+              >
+                {chapterSortOrder === "asc" ? <ArrowUpNarrowWide aria-hidden="true" className="h-4 w-4" /> : <ArrowDownWideNarrow aria-hidden="true" className="h-4 w-4" />}
+                <span>{chapterSortOrder === "asc" ? "Oldest first" : "Latest first"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAddChapterOpen(true)}
+                className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+              >
+                Add chapter
+              </button>
+            </div>
           ) : (
             <button
               type="button"
@@ -487,7 +504,7 @@ export default function NovelPage() {
               order.
             </p>
             <div className="mt-3 divide-y divide-neutral-100">
-              {currentNovel.chapters.map((chapter) => (
+              {sortedChapters.map((chapter) => (
                 <div
                   key={chapter.id}
                   onDragOver={(event) => dragChapterOver(event, chapter.id)}
@@ -874,6 +891,10 @@ export default function NovelPage() {
     </div>
   );
 }
+
+
+
+
 
 
 
