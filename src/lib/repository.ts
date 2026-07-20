@@ -182,7 +182,8 @@ export async function applyWorkspaceMutations(userId: string, mutations: Workspa
 
   for (const mutation of mutations) {
     if (mutation.type === "novel:upsert") {
-      await novelsCollection.updateOne({ userId, id: mutation.novel.id }, { $set: splitNovel(mutation.novel, userId), $setOnInsert: { createdAt: now } }, { upsert: true });
+      const novelUpdate = mutation.novel.published ? { $set: splitNovel(mutation.novel, userId), $setOnInsert: { createdAt: now } } : { $set: splitNovel(mutation.novel, userId), $unset: { publishedAt: "" as const }, $setOnInsert: { createdAt: now } };
+      await novelsCollection.updateOne({ userId, id: mutation.novel.id }, novelUpdate, { upsert: true });
     }
     if (mutation.type === "novel:delete") {
       await Promise.all([
@@ -194,7 +195,8 @@ export async function applyWorkspaceMutations(userId: string, mutations: Workspa
       ]);
     }
     if (mutation.type === "chapter:upsert") {
-      await chaptersCollection.updateOne({ userId, id: mutation.chapter.id }, { $set: splitChapter(mutation.novelId, mutation.chapter, userId) }, { upsert: true });
+      const chapterUpdate = mutation.chapter.published ? { $set: splitChapter(mutation.novelId, mutation.chapter, userId) } : { $set: splitChapter(mutation.novelId, mutation.chapter, userId), $unset: { publishedVersion: "" as const, publishedAt: "" as const } };
+      await chaptersCollection.updateOne({ userId, id: mutation.chapter.id }, chapterUpdate, { upsert: true });
       for (const version of mutation.chapter.translations) {
         await versionsCollection.updateOne({ userId, chapterId: mutation.chapter.id, version: version.version }, { $set: splitVersion(mutation.novelId, mutation.chapter.id, version, userId) }, { upsert: true });
       }

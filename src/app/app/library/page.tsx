@@ -102,7 +102,7 @@ export default function LibraryPage() {
                   {novel.title}
                 </h2>
                 <p className="mt-1 text-sm text-neutral-500">
-                  {novel.chapters.length} chapters /{" "}
+                  {novel.chapters.length} chapters / {novel.chapters.filter((chapter) => chapter.published).length} published /{" "}
                   {
                     novel.glossary.filter((term) => term.status === "pending")
                       .length
@@ -110,21 +110,26 @@ export default function LibraryPage() {
                   pending terms
                 </p>
               </div>
-              <Status
-                status={
-                  novel.chapters.length === 0
-                    ? "untranslated"
-                    : novel.chapters.some(
-                          (chapter) => chapter.status === "failed",
-                        )
-                      ? "failed"
-                      : novel.chapters.every(
-                            (chapter) => chapter.status === "translated",
+              <div className="flex flex-col items-end gap-2">
+                <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${novel.published ? "border-neutral-950 bg-neutral-950 text-white" : "border-neutral-200 bg-white text-neutral-500"}`}>
+                  {novel.published ? "Published" : "Draft"}
+                </span>
+                <Status
+                  status={
+                    novel.chapters.length === 0
+                      ? "untranslated"
+                      : novel.chapters.some(
+                            (chapter) => chapter.status === "failed",
                           )
-                        ? "translated"
-                        : "untranslated"
-                }
-              />
+                        ? "failed"
+                        : novel.chapters.every(
+                              (chapter) => chapter.status === "translated",
+                            )
+                          ? "translated"
+                          : "untranslated"
+                  }
+                />
+              </div>
             </div>
             <p className="mt-4 line-clamp-3 text-sm leading-6 text-neutral-600">
               {(novel.descriptionTranslated ?? novel.description) ||

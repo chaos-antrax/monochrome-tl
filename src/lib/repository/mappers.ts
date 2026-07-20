@@ -23,6 +23,8 @@ export function splitNovel(novel: Novel, userId: string): StoredNovel {
     description: novel.description,
     descriptionTranslated: novel.descriptionTranslated,
     styleGuideId: novel.styleGuideId,
+    published: novel.published,
+    publishedAt: novel.publishedAt,
     updatedAt: new Date(),
   });
 }
@@ -38,6 +40,9 @@ export function splitChapter(novelId: string, chapter: Chapter, userId: string):
     rawTextHash: chapter.rawTextHash,
     status: chapter.status,
     currentVersion: chapter.currentVersion,
+    published: chapter.published,
+    publishedVersion: chapter.publishedVersion,
+    publishedAt: chapter.publishedAt,
     error: chapter.error,
     updatedAt: new Date(),
   });
@@ -69,6 +74,9 @@ export function toChapter(chapter: StoredChapter, versions: TranslationVersion[]
     status: chapter.status,
     translations: versions.sort((a, b) => a.version - b.version),
     currentVersion: chapter.currentVersion,
+    published: chapter.published,
+    publishedVersion: chapter.publishedVersion,
+    publishedAt: chapter.publishedAt,
     error: chapter.error,
   };
 }
@@ -80,6 +88,8 @@ export function toNovel(novel: StoredNovel, chapters: Chapter[], glossary: Gloss
     description: novel.description,
     descriptionTranslated: novel.descriptionTranslated,
     styleGuideId: novel.styleGuideId,
+    published: novel.published,
+    publishedAt: novel.publishedAt,
     glossary,
     chapters: chapters.sort((a, b) => a.order - b.order),
   };

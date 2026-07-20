@@ -9,7 +9,9 @@ async function createIndexes() {
   await Promise.all([
     db.collection<UserDocument>("users").createIndex({ email: 1 }, { unique: true }),
     db.collection<StoredNovel>("novels").createIndex({ userId: 1, id: 1 }, { unique: true }),
+    db.collection<StoredNovel>("novels").createIndex({ userId: 1, published: 1 }),
     db.collection<StoredChapter>("chapters").createIndex({ userId: 1, novelId: 1, order: 1 }),
+    db.collection<StoredChapter>("chapters").createIndex({ userId: 1, novelId: 1, published: 1, order: 1 }),
     db.collection<StoredChapter>("chapters").createIndex({ userId: 1, id: 1 }, { unique: true }),
     db.collection<StoredGlossaryTerm>("glossaryTerms").createIndex({ userId: 1, novelId: 1, sourceTerm: 1 }, { unique: true }),
     db.collection<StoredGlossaryTerm>("glossaryTerms").createIndex({ userId: 1, id: 1 }, { unique: true }),

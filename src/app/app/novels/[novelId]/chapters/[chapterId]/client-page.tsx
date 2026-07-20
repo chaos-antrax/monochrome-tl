@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { useLibrary, useReader, type ReaderMode } from "../../../../../workspace/state";
+import { useLibrary, useReader, type Chapter, type ReaderMode } from "../../../../../workspace/state";
 import { ChapterPanel } from "../../../../../workspace/chapter-panel";
 import {
   Card,
@@ -33,7 +33,7 @@ export default function ReaderPage() {
     chapterId: string;
   }>();
   const router = useRouter();
-  const { getNovel, getChapter, deleteChapter, editChapter, editChapterContent } = useLibrary();
+  const { getNovel, getChapter, deleteChapter, editChapter, editChapterContent, setChapterPublished } = useLibrary();
   const { translateChapter, translationProgress, revertVersion, loadChapter } = useReader();
   const novel = getNovel(novelId);
   const chapter = getChapter(novelId, chapterId);
@@ -41,6 +41,8 @@ export default function ReaderPage() {
   const [fontSize, setFontSize] = useState(16);
   const [lineHeight, setLineHeight] = useState(1.4);
   const [isMetaOpen, setIsMetaOpen] = useState(false);
+  const [publishingChapter, setPublishingChapter] = useState<Chapter | null>(null);
+  const [publishVersion, setPublishVersion] = useState("");
   const [editTitle, setEditTitle] = useState("");
   const [isContentEditing, setIsContentEditing] = useState(false);
   const [editRawText, setEditRawText] = useState("");
@@ -193,6 +195,43 @@ export default function ReaderPage() {
       },
     });
   }
+  function requestSetChapterPublished(targetChapter: Chapter, published: boolean, version?: number) {
+    setConfirmAction({
+      title: published ? "Publish chapter?" : "Unpublish chapter?",
+      body: published
+        ? `Publish "${targetChapter.title}" using translation version ${version ?? targetChapter.currentVersion}.`
+        : `Remove "${targetChapter.title}" from the reader app.`,
+      confirmLabel: published ? "Publish chapter" : "Unpublish chapter",
+      destructive: !published,
+      onConfirm: () => {
+        setChapterPublished(currentNovel.id, targetChapter.id, { published, version });
+        setConfirmAction(null);
+      },
+    });
+  }
+
+  function requestPublishChapter() {
+    const versions = currentChapter.translations.filter((version) => version.text.trim());
+    if (versions.length === 0) return;
+    const defaultVersion = versions.some((version) => version.version === currentChapter.currentVersion)
+      ? currentChapter.currentVersion
+      : versions[versions.length - 1].version;
+    if (versions.length > 1) {
+      setPublishingChapter(currentChapter);
+      setPublishVersion(String(defaultVersion));
+      return;
+    }
+    requestSetChapterPublished(currentChapter, true, versions[0].version);
+  }
+
+  function submitPublishVersion(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!publishingChapter) return;
+    const version = Number(publishVersion);
+    if (!Number.isFinite(version)) return;
+    setPublishingChapter(null);
+    requestSetChapterPublished(publishingChapter, true, version);
+  }
   function requestDeleteChapter() {
     setConfirmAction({
       title: "Delete chapter?",
@@ -277,6 +316,8 @@ export default function ReaderPage() {
             }
             onDelete={requestDeleteChapter}
             onEdit={editMeta}
+            onPublish={requestPublishChapter}
+            onUnpublish={() => requestSetChapterPublished(currentChapter, false)}
             isEditingContent={isContentEditing}
             editRawText={editRawText}
             editTranslatedText={editTranslatedText}
@@ -325,6 +366,45 @@ export default function ReaderPage() {
               className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
             >
               Save changes
+            </button>
+          </div>
+        </form>
+      </Modal>
+      <Modal
+        title="Publish chapter"
+        open={Boolean(publishingChapter)}
+        onClose={() => setPublishingChapter(null)}
+      >
+        <form onSubmit={submitPublishVersion} className="space-y-4">
+          <p className="text-sm leading-6 text-neutral-500">
+            Choose the translation version that should be visible in the reader app.
+          </p>
+          <CustomSelect
+            label="Published version"
+            value={publishVersion}
+            onChange={setPublishVersion}
+            options={(publishingChapter?.translations ?? [])
+              .filter((version) => version.text.trim())
+              .map((version) => ({
+                value: String(version.version),
+                label: `Version ${version.version}${version.version === publishingChapter?.currentVersion ? " (current)" : ""}`,
+                description: `${version.provider} / ${version.model}`,
+              }))}
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setPublishingChapter(null)}
+              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!publishVersion}
+              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+            >
+              Continue
             </button>
           </div>
         </form>

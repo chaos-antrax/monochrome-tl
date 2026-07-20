@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { DragEvent, FormEvent, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, Edit2, GripVertical, LoaderCircle, Trash2 } from "lucide-react";
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Edit2, Globe2, GlobeLock, GripVertical, LoaderCircle, Trash2 } from "lucide-react";
 import { DEFAULT_MAX_CHAPTER_CHARACTERS } from "@/lib/constants";
 import {
   GlossaryCategorySchema,
@@ -14,6 +14,7 @@ import {
   useLibrary,
   useReader,
   useSettings,
+  type Chapter,
   type GlossaryStatus,
   type GlossaryTerm,
 } from "../../../workspace/state";
@@ -71,7 +72,7 @@ export default function NovelPage() {
   const { novelId } = useParams<{ novelId: string }>();
   const router = useRouter();
   const { account } = useAuth();
-  const { jobs, getNovel, editNovel, deleteNovel, addChapter, deleteChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm } = useLibrary();
+  const { jobs, getNovel, editNovel, deleteNovel, setNovelPublished, addChapter, deleteChapter, reorderChapter, setChapterPublished, addTerm, editTerm, setTermStatus, deleteTerm } = useLibrary();
   const { translationProgress, translateDescription } = useReader();
   const { styles, getStyle } = useSettings();
   const novel = getNovel(novelId);
@@ -88,6 +89,8 @@ export default function NovelPage() {
     useState("");
   const [editNovelStyleGuideId, setEditNovelStyleGuideId] = useState("");
   const [isAddChapterOpen, setIsAddChapterOpen] = useState(false);
+  const [publishingChapter, setPublishingChapter] = useState<Chapter | null>(null);
+  const [publishVersion, setPublishVersion] = useState("");
   const [chapterTitle, setChapterTitle] = useState("");
   const [rawText, setRawText] = useState("");
   const [draggedChapterId, setDraggedChapterId] = useState<string | null>(null);
@@ -232,6 +235,59 @@ export default function NovelPage() {
     });
   }
 
+  function requestToggleNovelPublished() {
+    const nextPublished = !currentNovel.published;
+    setConfirmAction({
+      title: nextPublished ? "Publish novel?" : "Unpublish novel?",
+      body: nextPublished
+        ? `Make "${currentNovel.title}" available to the reader app. Only published chapters will be visible there.`
+        : `Remove "${currentNovel.title}" from the reader app without changing chapter publish settings.`,
+      confirmLabel: nextPublished ? "Publish novel" : "Unpublish novel",
+      destructive: !nextPublished,
+      onConfirm: () => {
+        setNovelPublished(currentNovel.id, nextPublished);
+        setConfirmAction(null);
+      },
+    });
+  }
+
+  function requestSetChapterPublished(chapter: Chapter, published: boolean, version?: number) {
+    setConfirmAction({
+      title: published ? "Publish chapter?" : "Unpublish chapter?",
+      body: published
+        ? `Publish "${chapter.title}" using translation version ${version ?? chapter.currentVersion}.`
+        : `Remove "${chapter.title}" from the reader app.`,
+      confirmLabel: published ? "Publish chapter" : "Unpublish chapter",
+      destructive: !published,
+      onConfirm: () => {
+        setChapterPublished(currentNovel.id, chapter.id, { published, version });
+        setConfirmAction(null);
+      },
+    });
+  }
+
+  function requestPublishChapter(chapter: Chapter) {
+    const versions = chapter.translations.filter((version) => version.text.trim());
+    if (versions.length === 0) return;
+    const defaultVersion = versions.some((version) => version.version === chapter.currentVersion)
+      ? chapter.currentVersion
+      : versions[versions.length - 1].version;
+    if (versions.length > 1) {
+      setPublishingChapter(chapter);
+      setPublishVersion(String(defaultVersion));
+      return;
+    }
+    requestSetChapterPublished(chapter, true, versions[0].version);
+  }
+
+  function submitPublishVersion(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!publishingChapter) return;
+    const version = Number(publishVersion);
+    if (!Number.isFinite(version)) return;
+    setPublishingChapter(null);
+    requestSetChapterPublished(publishingChapter, true, version);
+  }
   function submitChapter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!rawText.trim()) return;
@@ -390,13 +446,26 @@ export default function NovelPage() {
             <h1 className="mt-2 font-serif text-4xl font-semibold">
               {currentNovel.title}
             </h1>
-            <p className="mt-2 text-sm text-neutral-500">
-              Style: {getStyle(currentNovel)?.name ?? "Plain"} /{" "}
-              {currentNovel.chapters.length} chapters /{" "}
-              {currentNovel.glossary.length} terms
+            <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-neutral-500">
+              <span>
+                Style: {getStyle(currentNovel)?.name ?? "Plain"} /{" "}
+                {currentNovel.chapters.length} chapters /{" "}
+                {currentNovel.glossary.length} terms
+              </span>
+              <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] ${currentNovel.published ? "border-neutral-950 bg-neutral-950 text-white" : "border-neutral-200 bg-white text-neutral-500"}`}>
+                {currentNovel.published ? "Published" : "Draft"}
+              </span>
             </p>
           </div>
           <div className="flex absolute top-0 right-0 max-w-fit sm:relative flex-col-reverse gap-2 sm:w-auto sm:flex-row">
+            <button
+              type="button"
+              onClick={requestToggleNovelPublished}
+              className={`rounded-lg border p-4 text-center text-sm font-semibold transition ${currentNovel.published ? "border-neutral-950 bg-neutral-950 text-white hover:bg-neutral-800" : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-950"}`}
+              title={currentNovel.published ? "Unpublish novel" : "Publish novel"}
+            >
+              {currentNovel.published ? <GlobeLock size={16} /> : <Globe2 size={16} />}
+            </button>
             <button
               type="button"
               onClick={openEditNovel}
@@ -555,6 +624,28 @@ export default function NovelPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-2 pl-12 sm:pl-0">
                     <Status status={chapter.status} />
+                    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${chapter.published ? "border-neutral-950 bg-neutral-950 text-white" : "border-neutral-200 bg-white text-neutral-500"}`}>
+                      {chapter.published ? `Published v${chapter.publishedVersion ?? chapter.currentVersion}` : "Draft"}
+                    </span>
+                    {chapter.published ? (
+                      <button
+                        type="button"
+                        onClick={() => requestSetChapterPublished(chapter, false)}
+                        className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-950 hover:text-neutral-950"
+                      >
+                        Unpublish
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => requestPublishChapter(chapter)}
+                        disabled={!chapter.translations.some((version) => version.text.trim())}
+                        title={chapter.translations.some((version) => version.text.trim()) ? "Publish chapter" : "Translate this chapter before publishing."}
+                        className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-950 hover:text-neutral-950 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400"
+                      >
+                        Publish
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() =>
@@ -888,6 +979,45 @@ export default function NovelPage() {
               className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
             >
               Save changes
+            </button>
+          </div>
+        </form>
+      </Modal>
+      <Modal
+        title="Publish chapter"
+        open={Boolean(publishingChapter)}
+        onClose={() => setPublishingChapter(null)}
+      >
+        <form onSubmit={submitPublishVersion} className="space-y-4">
+          <p className="text-sm leading-6 text-neutral-500">
+            Choose the translation version that should be visible in the reader app.
+          </p>
+          <CustomSelect
+            label="Published version"
+            value={publishVersion}
+            onChange={setPublishVersion}
+            options={(publishingChapter?.translations ?? [])
+              .filter((version) => version.text.trim())
+              .map((version) => ({
+                value: String(version.version),
+                label: `Version ${version.version}${version.version === publishingChapter?.currentVersion ? " (current)" : ""}`,
+                description: `${version.provider} / ${version.model}`,
+              }))}
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setPublishingChapter(null)}
+              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!publishVersion}
+              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+            >
+              Continue
             </button>
           </div>
         </form>

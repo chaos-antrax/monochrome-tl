@@ -1,4 +1,4 @@
-import { Edit3, Save, Trash, X } from "lucide-react";
+import { Edit3, Globe2, GlobeLock, Save, Trash, X } from "lucide-react";
 import { Empty, Mode, Reader, Status, TranslationProgressOverlay, type TranslationProgressView } from "./ui";
 import type { Chapter, ReaderMode } from "./types";
 
@@ -22,6 +22,8 @@ export function ChapterPanel({
   onRegenerate,
   onDelete,
   onEdit,
+  onPublish,
+  onUnpublish,
   isEditingContent,
   editRawText,
   editTranslatedText,
@@ -43,6 +45,8 @@ export function ChapterPanel({
   onRegenerate: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onPublish: () => void;
+  onUnpublish: () => void;
   isEditingContent: boolean;
   editRawText: string;
   editTranslatedText: string;
@@ -111,6 +115,25 @@ export function ChapterPanel({
           >
             <Edit3 size={16} /> Content
           </button>
+          {chapter.published ? (
+            <button
+              type="button"
+              onClick={onUnpublish}
+              className={`${secondaryButton} flex items-center gap-2`}
+            >
+              <GlobeLock size={16} /> Unpublish
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onPublish}
+              disabled={!translation}
+              title={translation ? "Publish chapter" : "Translate this chapter before publishing."}
+              className={`${secondaryButton} flex items-center gap-2 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400`}
+            >
+              <Globe2 size={16} /> Publish
+            </button>
+          )}
           <button type="button" onClick={onDelete} className={secondaryButton}>
             <Trash size={16} />
           </button>

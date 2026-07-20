@@ -26,6 +26,9 @@ export type Chapter = {
   status: ChapterStatus;
   translations: TranslationVersion[];
   currentVersion: number;
+  published?: boolean;
+  publishedVersion?: number;
+  publishedAt?: string;
   error?: string;
 };
 
@@ -55,6 +58,8 @@ export type Novel = {
   description: string;
   descriptionTranslated?: string;
   styleGuideId?: string;
+  published?: boolean;
+  publishedAt?: string;
   glossary: GlossaryTerm[];
   chapters: Chapter[];
 };
