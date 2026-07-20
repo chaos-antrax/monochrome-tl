@@ -29,7 +29,6 @@ export function ChapterPanel({
   editTranslatedText,
   onEditRawText,
   onEditTranslatedText,
-  onStartEditContent,
   onCancelEditContent,
   onSaveContent,
   canSaveContent,
@@ -52,7 +51,6 @@ export function ChapterPanel({
   editTranslatedText: string;
   onEditRawText: (value: string) => void;
   onEditTranslatedText: (value: string) => void;
-  onStartEditContent: () => void;
   onCancelEditContent: () => void;
   onSaveContent: () => void;
   canSaveContent: boolean;
@@ -108,13 +106,7 @@ export function ChapterPanel({
           >
             <Edit3 size={16} /> Title
           </button>
-          <button
-            type="button"
-            onClick={onStartEditContent}
-            className={`${secondaryButton} flex items-center gap-2`}
-          >
-            <Edit3 size={16} /> Content
-          </button>
+
           {chapter.published ? (
             <button
               type="button"

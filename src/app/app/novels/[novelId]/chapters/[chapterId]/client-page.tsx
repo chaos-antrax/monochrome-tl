@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpenText, Check, ChevronLeft, ChevronRight, Edit3, Plus, Search, Trash2, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { useLibrary, useReader, type Chapter, type ReaderMode } from "../../../../../workspace/state";
+import { useLibrary, useReader, type Chapter, type GlossaryStatus, type GlossaryTerm, type ReaderMode } from "../../../../../workspace/state";
 import { ChapterPanel } from "../../../../../workspace/chapter-panel";
+import { GlossaryCategorySchema, type GlossaryCategory } from "@/lib/schemas/translation";
 import {
   Card,
   ConfirmDialog,
@@ -13,7 +14,9 @@ import {
   Empty,
   formatChangedFields,
   Input,
+  Textarea,
   Modal,
+  Mode,
 } from "../../../../../workspace/ui";
 
 type ConfirmAction = {
@@ -33,7 +36,7 @@ export default function ReaderPage() {
     chapterId: string;
   }>();
   const router = useRouter();
-  const { getNovel, getChapter, deleteChapter, editChapter, editChapterContent, setChapterPublished } = useLibrary();
+  const { getNovel, getChapter, deleteChapter, editChapter, editChapterContent, setChapterPublished, addTerm, editTerm, setTermStatus, deleteTerm } = useLibrary();
   const { translateChapter, translationProgress, revertVersion, loadChapter } = useReader();
   const novel = getNovel(novelId);
   const chapter = getChapter(novelId, chapterId);
@@ -50,6 +53,18 @@ export default function ReaderPage() {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
+  const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
+  const [glossarySearch, setGlossarySearch] = useState("");
+  const [glossaryStatus, setGlossaryStatus] = useState<GlossaryStatus>("approved");
+  const [isAddingTerm, setIsAddingTerm] = useState(false);
+  const [sourceTerm, setSourceTerm] = useState("");
+  const [translation, setTranslation] = useState("");
+  const [category, setCategory] = useState<GlossaryCategory>("character");
+  const [pinyin, setPinyin] = useState("");
+  const [notes, setNotes] = useState("");
+  const [editingTerm, setEditingTerm] = useState<GlossaryTerm | null>(null);
+  const [editTranslation, setEditTranslation] = useState("");
+  const [editNotes, setEditNotes] = useState("");
   const [chapterLoadError, setChapterLoadError] = useState<{ chapterId: string; message: string } | null>(null);
   const chapterListRef = useRef<HTMLDivElement | null>(null);
 
@@ -111,6 +126,15 @@ export default function ReaderPage() {
       : undefined;
   const chapterProgress = translationProgress?.target === "chapter" && translationProgress.novelId === currentNovel.id && translationProgress.chapterId === currentChapter.id ? translationProgress : null;
   const currentTranslation = currentChapter.translations.find((item) => item.version === currentChapter.currentVersion);
+  const glossarySearchQuery = glossarySearch.trim().toLowerCase();
+  const glossaryTerms = currentNovel.glossary.filter((term) => {
+    const matchesSearch =
+      !glossarySearchQuery ||
+      [term.sourceTerm, term.translation, term.category, term.pinyin, term.notes, term.conflict]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(glossarySearchQuery));
+    return term.status === glossaryStatus && matchesSearch;
+  });
 
   function saveChapterListScroll() {
     const list = chapterListRef.current;
@@ -232,6 +256,76 @@ export default function ReaderPage() {
     setPublishingChapter(null);
     requestSetChapterPublished(publishingChapter, true, version);
   }
+  function resetGlossaryForm() {
+    setSourceTerm("");
+    setTranslation("");
+    setCategory("character");
+    setPinyin("");
+    setNotes("");
+    setIsAddingTerm(false);
+  }
+
+  function submitGlossaryTerm(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!sourceTerm.trim() || !translation.trim()) return;
+    addTerm(currentNovel.id, {
+      sourceTerm,
+      translation,
+      category,
+      pinyin: pinyin || undefined,
+      notes: notes || undefined,
+    });
+    resetGlossaryForm();
+    setGlossaryStatus("approved");
+  }
+
+  function openEditTerm(term: GlossaryTerm) {
+    setEditingTerm(term);
+    setEditTranslation(term.translation);
+    setEditNotes(term.notes ?? "");
+  }
+
+  function submitGlossaryEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingTerm || !editTranslation.trim()) return;
+    const term = editingTerm;
+    const nextNotes = editNotes.trim() || undefined;
+    setConfirmAction({
+      title: "Save glossary term?",
+      body: `Update glossary entry "${term.sourceTerm}" while staying in the reader.`,
+      confirmLabel: "Save changes",
+      onConfirm: () => {
+        editTerm(currentNovel.id, term.id, { translation: editTranslation.trim(), notes: nextNotes });
+        setEditingTerm(null);
+        setConfirmAction(null);
+      },
+    });
+  }
+
+  function requestGlossaryStatus(term: GlossaryTerm, status: GlossaryStatus) {
+    setConfirmAction({
+      title: `${status === "approved" ? "Approve" : "Reject"} term?`,
+      body: `Mark "${term.sourceTerm}" as ${status}.`,
+      confirmLabel: status === "approved" ? "Approve" : "Reject",
+      onConfirm: () => {
+        setTermStatus(currentNovel.id, term.id, status);
+        setConfirmAction(null);
+      },
+    });
+  }
+
+  function requestDeleteGlossaryTerm(term: GlossaryTerm) {
+    setConfirmAction({
+      title: "Delete glossary term?",
+      body: `Delete the glossary entry for "${term.sourceTerm}".`,
+      confirmLabel: "Delete term",
+      destructive: true,
+      onConfirm: () => {
+        deleteTerm(currentNovel.id, term.id);
+        setConfirmAction(null);
+      },
+    });
+  }
   function requestDeleteChapter() {
     setConfirmAction({
       title: "Delete chapter?",
@@ -323,7 +417,6 @@ export default function ReaderPage() {
             editTranslatedText={editTranslatedText}
             onEditRawText={setEditRawText}
             onEditTranslatedText={setEditTranslatedText}
-            onStartEditContent={startContentEdit}
             onCancelEditContent={cancelContentEdit}
             onSaveContent={saveContentEdit}
             canSaveContent={Boolean(editRawText.trim()) && (!currentTranslation || Boolean(editTranslatedText.trim()))}
@@ -342,6 +435,113 @@ export default function ReaderPage() {
         </div>
       </Card>
 
+      <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+        <button
+          type="button"
+          onClick={() => setIsGlossaryOpen(true)}
+          className="group flex h-12 items-center gap-3 rounded-full border border-neutral-200 bg-white/95 px-4 text-sm font-semibold text-neutral-900 shadow-[0_18px_60px_rgba(0,0,0,0.16)] backdrop-blur transition hover:-translate-y-0.5 hover:border-neutral-950 hover:bg-white"
+          aria-label="Open glossary"
+        >
+          <BookOpenText aria-hidden="true" className="h-5 w-5" />
+          <span className="hidden sm:inline">Glossary</span>
+          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500 transition group-hover:bg-neutral-950 group-hover:text-white">{currentNovel.glossary.length}</span>
+        </button>
+        <button
+          type="button"
+          onClick={startContentEdit}
+          disabled={isContentEditing}
+          className="flex h-12 items-center gap-3 rounded-full border border-neutral-950 bg-neutral-950 px-4 text-sm font-semibold text-white shadow-[0_18px_60px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-200 disabled:text-neutral-500"
+          aria-label="Edit chapter content"
+        >
+          <Edit3 aria-hidden="true" className="h-5 w-5" />
+          <span className="hidden sm:inline">Edit chapter</span>
+        </button>
+      </div>
+
+      {isGlossaryOpen ? (
+        <div className="fixed inset-0 z-50 flex justify-end bg-neutral-950/25 backdrop-blur-sm animate-page" role="dialog" aria-modal="true" aria-label="Reader glossary">
+          <button type="button" className="absolute inset-0 cursor-default" aria-label="Close glossary" onClick={() => setIsGlossaryOpen(false)} />
+          <aside className="relative flex h-full w-[min(100vw,31rem)] flex-col border-l border-neutral-200 bg-white shadow-[0_32px_100px_rgba(0,0,0,0.24)] animate-slide-in-right">
+            <div className="border-b border-neutral-200 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Reader glossary</p>
+                  <h2 className="mt-1 font-serif text-2xl font-semibold">{currentNovel.title}</h2>
+                </div>
+                <button type="button" onClick={() => setIsGlossaryOpen(false)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label="Close glossary">
+                  <X aria-hidden="true" className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="mt-4 space-y-3">
+                <Mode modes={["approved", "pending", "rejected"]} value={glossaryStatus} onChange={(value) => setGlossaryStatus(value as GlossaryStatus)} />
+                <label className="relative block text-sm font-medium text-neutral-700">
+                  Search
+                  <Search aria-hidden="true" className="absolute left-3 top-[2.45rem] h-4 w-4 text-neutral-400" />
+                  <input type="search" value={glossarySearch} onChange={(event) => setGlossarySearch(event.target.value)} placeholder="Source, translation, pinyin, notes" className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-9 py-2.5 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5" />
+                  {glossarySearch ? <button type="button" onClick={() => setGlossarySearch("")} className="absolute right-2 top-[2.2rem] grid h-7 w-7 place-items-center rounded-md text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label="Clear glossary search"><X aria-hidden="true" className="h-4 w-4" /></button> : null}
+                </label>
+                <button type="button" onClick={() => setIsAddingTerm((current) => !current)} className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950">
+                  <Plus aria-hidden="true" className="h-4 w-4" /> {isAddingTerm ? "Hide add form" : "Add term"}
+                </button>
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
+              {isAddingTerm ? (
+                <form onSubmit={submitGlossaryTerm} className="mb-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+                  <div className="grid gap-3">
+                    <Input label="Source term" value={sourceTerm} onChange={setSourceTerm} />
+                    <Input label="Translation" value={translation} onChange={setTranslation} />
+                    <CustomSelect label="Category" value={category} onChange={(value) => setCategory(value as GlossaryCategory)} options={GlossaryCategorySchema.options.map((option) => ({ value: option, label: option }))} />
+                    <Input label="Pinyin" value={pinyin} onChange={setPinyin} />
+                    <Textarea label="Notes" value={notes} onChange={setNotes} rows={3} />
+                  </div>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button type="button" onClick={resetGlossaryForm} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-950">Cancel</button>
+                    <button type="submit" disabled={!sourceTerm.trim() || !translation.trim()} className="rounded-lg bg-neutral-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500">Save term</button>
+                  </div>
+                </form>
+              ) : null}
+              <div className="space-y-3">
+                {glossaryTerms.map((term) => {
+                  const isEditing = editingTerm?.id === term.id;
+                  return (
+                    <div key={term.id} className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition hover:border-neutral-300">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="font-serif text-xl font-semibold text-neutral-950">{term.sourceTerm}</h3>
+                          <p className="mt-1 break-words text-sm text-neutral-600">{term.translation}</p>
+                          <p className="mt-2 text-xs uppercase tracking-[0.14em] text-neutral-500">{term.category}{term.pinyin ? ` / ${term.pinyin}` : ""}</p>
+                        </div>
+                        <div className="flex shrink-0 gap-1">
+                          <button type="button" onClick={() => openEditTerm(term)} className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label={`Edit ${term.sourceTerm}`}><Edit3 aria-hidden="true" className="h-4 w-4" /></button>
+                          <button type="button" onClick={() => requestDeleteGlossaryTerm(term)} className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label={`Delete ${term.sourceTerm}`}><Trash2 aria-hidden="true" className="h-4 w-4" /></button>
+                        </div>
+                      </div>
+                      {term.notes ? <p className="mt-3 text-sm leading-6 text-neutral-600">{term.notes}</p> : null}
+                      {term.conflict ? <p className="mt-3 rounded-lg bg-neutral-100 px-3 py-2 text-sm text-neutral-700">Conflict: {term.conflict}</p> : null}
+                      {isEditing ? (
+                        <form onSubmit={submitGlossaryEdit} className="mt-4 space-y-3 border-t border-neutral-200 pt-4">
+                          <Input label="Translation" value={editTranslation} onChange={setEditTranslation} />
+                          <Textarea label="Notes" value={editNotes} onChange={setEditNotes} rows={3} />
+                          <div className="flex justify-end gap-2">
+                            <button type="button" onClick={() => setEditingTerm(null)} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-950">Cancel</button>
+                            <button type="submit" disabled={!editTranslation.trim()} className="rounded-lg bg-neutral-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500">Save</button>
+                          </div>
+                        </form>
+                      ) : null}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {term.status !== "approved" ? <button type="button" onClick={() => requestGlossaryStatus(term, "approved")} className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-xs font-semibold transition hover:border-neutral-950"><Check aria-hidden="true" className="h-3.5 w-3.5" />Approve</button> : null}
+                        {term.status !== "rejected" ? <button type="button" onClick={() => requestGlossaryStatus(term, "rejected")} className="rounded-lg border border-neutral-200 px-2.5 py-1.5 text-xs font-semibold transition hover:border-neutral-950">Reject</button> : null}
+                      </div>
+                    </div>
+                  );
+                })}
+                {glossaryTerms.length === 0 ? <Empty title="No terms here" body="No glossary terms match the selected status and search." /> : null}
+              </div>
+            </div>
+          </aside>
+        </div>
+      ) : null}
       <Modal
         title="Edit chapter details"
         open={isMetaOpen}
