@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { AuthError } from "./auth";
 import { DatabaseUnavailableError } from "./db";
 
 export function apiErrorResponse(error: unknown, fallback = "Request failed.") {
+  if (error instanceof AuthError) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
+  }
   if (error instanceof DatabaseUnavailableError) {
     return NextResponse.json({ error: error.message }, { status: 503 });
   }

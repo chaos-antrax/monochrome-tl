@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-errors";
 import { TRANSLATION_SYSTEM_PROMPT } from "@/lib/constants";
 import { getProviderConfig } from "@/lib/repository";
-import { getSession } from "@/lib/session";
+import { requirePortalUser } from "@/lib/auth";
 import { TranslationRequestSchema } from "@/lib/schemas/translation";
 import { translateWithProvider } from "@/lib/providers";
 
@@ -23,8 +23,7 @@ function sanitizeGlossary(value: unknown) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Sign in before calling a provider." }, { status: 401 });
+    const { session } = await requirePortalUser();
 
     const config = await getProviderConfig(session.userId);
     if (!config) return NextResponse.json({ error: "Provider API key is not configured." }, { status: 400 });
@@ -49,3 +48,4 @@ export async function POST(request: Request) {
     return apiErrorResponse(error, "Translation failed.");
   }
 }
+

@@ -28,7 +28,7 @@ function isUsableProviderTerm(term: NewTerm, sourceText: string) {
   return true;
 }
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const [account, setAccount] = useState<Account>(() => ({ email: "", sessionExpiresAt: "", provider: "deepseek", selectedModel: PROVIDER_DEFAULTS.deepseek.defaultModel, verified: false }));
+  const [account, setAccount] = useState<Account>(() => ({ email: "", role: "reader", sessionExpiresAt: "", provider: "deepseek", selectedModel: PROVIDER_DEFAULTS.deepseek.defaultModel, verified: false }));
   const [isPersistReady, setIsPersistReady] = useState(false);
   const persistenceErrorShownRef = useRef(false);
   const [novels, setNovels] = useState(novelSeed);
@@ -45,7 +45,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         const data = await bootstrapWorkspace();
         if (cancelled) return;
         if (data.user) {
-          setAccount((current) => ({ ...current, email: data.user?.email ?? current.email, provider: data.user?.provider ?? current.provider, selectedModel: data.user?.selectedModel ?? current.selectedModel, apiKeyMasked: data.user?.hasApiKey ? "stored securely" : current.apiKeyMasked, verified: Boolean(data.user?.hasApiKey), sessionExpiresAt: new Date(Date.now() + 604800000).toISOString() }));
+          setAccount((current) => ({ ...current, email: data.user?.email ?? current.email, role: data.user?.role ?? current.role, provider: data.user?.provider ?? current.provider, selectedModel: data.user?.selectedModel ?? current.selectedModel, apiKeyMasked: data.user?.hasApiKey ? "stored securely" : current.apiKeyMasked, verified: Boolean(data.user?.hasApiKey), sessionExpiresAt: new Date(Date.now() + 604800000).toISOString() }));
           if (data.appState) {
             setNovels(data.appState.novels ?? novelSeed);
             setStyles(data.appState.styles ?? styleSeed);
@@ -473,7 +473,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
     try {
       const data = await submitAuthRequest(mode, email, password);
-      setAccount((current) => ({ ...current, email: data.user?.email ?? email, sessionExpiresAt: new Date(Date.now() + 604800000).toISOString() }));
+      setAccount((current) => ({ ...current, email: data.user?.email ?? email, role: data.user?.role ?? current.role, sessionExpiresAt: new Date(Date.now() + 604800000).toISOString() }));
       setMessage(mode === "signup" ? "Account created and signed in." : "Signed in with a 7-day session.");
       return true;
     } catch (error) {
@@ -554,6 +554,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
 
 
 

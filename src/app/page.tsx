@@ -1,9 +1,13 @@
 import Link from "next/link";
+import { getSafeUser } from "@/lib/repository";
+import { canAccessTranslationPortal } from "@/lib/roles";
 import { getSession } from "@/lib/session";
 import Image from "next/image";
 
 export default async function Home() {
   const session = await getSession();
+  const user = session ? await getSafeUser(session.userId) : null;
+  const canOpenPortal = Boolean(user && canAccessTranslationPortal(user.role));
 
   return (
     <main className="min-h-screen bg-[#f7f7f5] text-neutral-950">
@@ -22,13 +26,10 @@ export default async function Home() {
             </div>
           </Link>
           <div className="flex items-center gap-8">
-            {session ? (
-              <Link
-                href="/app/account"
-                className="max-w-55 rounded-lg px-4 py-2 text-sm font-semibold text-neutral-500 transition hover:border-neutral-950 hover:text-neutral-950"
-              >
-                {session.email}
-              </Link>
+            {user ? (
+              <span className="max-w-55 rounded-lg px-4 py-2 text-sm font-semibold text-neutral-500">
+                {user.email}
+              </span>
             ) : (
               <Link
                 href="/login"
@@ -37,12 +38,14 @@ export default async function Home() {
                 Log in
               </Link>
             )}
-            <Link
-              href="/app/library"
-              className="rounded-full hidden sm:block bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
-            >
-              Open app
-            </Link>
+            {canOpenPortal ? (
+              <Link
+                href="/app/library"
+                className="rounded-full hidden sm:block bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+              >
+                Open app
+              </Link>
+            ) : null}
           </div>
         </nav>
 
@@ -61,17 +64,19 @@ export default async function Home() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                href={session ? "/app/library" : "/login"}
+                href={canOpenPortal ? "/app/library" : "/login"}
                 className="rounded bg-neutral-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800"
               >
-                {session ? "Continue translating" : "Start translating"}
+                {canOpenPortal ? "Continue translating" : "Portal login"}
               </Link>
-              <Link
-                href="/app/library"
-                className="rounded border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950"
-              >
-                View library
-              </Link>
+              {canOpenPortal ? (
+                <Link
+                  href="/app/library"
+                  className="rounded border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950"
+                >
+                  View library
+                </Link>
+              ) : null}
             </div>
           </div>
 

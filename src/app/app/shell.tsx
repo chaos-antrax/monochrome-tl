@@ -13,13 +13,14 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PenLine,
+  ShieldCheck,
   User,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { WorkspaceProvider, useAuth, useLibrary, useToast } from "../workspace/state";
 
-const nav: Array<{ href: string; label: string; Icon: LucideIcon }> = [
+const baseNav: Array<{ href: string; label: string; Icon: LucideIcon }> = [
   { href: "/app/library", label: "Library", Icon: Library },
   { href: "/app/styles", label: "Styles", Icon: PenLine },
   { href: "/app/export", label: "Export", Icon: Download },
@@ -117,6 +118,7 @@ function Sidebar({
   const pathname = usePathname();
   const { novels, jobs } = useLibrary();
   const { account } = useAuth();
+  const nav = account.role === "admin" ? [...baseNav, { href: "/app/admin/users", label: "Users", Icon: ShieldCheck }] : baseNav;
   const activeJobs = jobs.filter(
     (job) => job.status === "queued" || job.status === "processing",
   ).length;
@@ -416,3 +418,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </WorkspaceProvider>
   );
 }
+
+
+

@@ -4,6 +4,7 @@ export type JobStatus = "queued" | "processing" | "completed" | "failed";
 export type ReaderMode = "raw" | "translated" | "diff";
 export type Tokens = { input: number; output: number };
 
+import type { UserRole } from "@/lib/roles";
 import type { GlossaryCategory, Provider } from "@/lib/schemas/translation";
 
 export type TranslationVersion = {
@@ -91,6 +92,7 @@ export type TranslationProgress = {
 
 export type Account = {
   email: string;
+  role: UserRole;
   sessionExpiresAt: string;
   provider: Provider;
   selectedModel: string;
@@ -100,5 +102,8 @@ export type Account = {
 
 export type ExportFormat = "txt" | "html" | "epub";
 export type NewTerm = { sourceTerm: string; translation: string; category: GlossaryCategory; notes?: string };
+
+
+
 
 

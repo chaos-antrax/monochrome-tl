@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-errors";
 import { getAppState, saveAppState } from "@/lib/repository";
-import { getSession } from "@/lib/session";
+import { requirePortalUser } from "@/lib/auth";
 
 export async function GET() {
   try {
-    const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { session } = await requirePortalUser();
     return NextResponse.json({ appState: await getAppState(session.userId) });
   } catch (error) {
     return apiErrorResponse(error, "Failed to load app state.");
@@ -15,8 +14,7 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { session } = await requirePortalUser();
     const body = await request.json();
     await saveAppState(session.userId, body.appState);
     return NextResponse.json({ ok: true });
@@ -24,3 +22,4 @@ export async function PUT(request: Request) {
     return apiErrorResponse(error, "Failed to save app state.");
   }
 }
+

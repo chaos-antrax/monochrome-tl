@@ -8,6 +8,7 @@ async function createIndexes() {
   const db = await getDatabase();
   await Promise.all([
     db.collection<UserDocument>("users").createIndex({ email: 1 }, { unique: true }),
+    db.collection<UserDocument>("users").createIndex({ role: 1 }),
     db.collection<StoredNovel>("novels").createIndex({ userId: 1, id: 1 }, { unique: true }),
     db.collection<StoredNovel>("novels").createIndex({ userId: 1, published: 1 }),
     db.collection<StoredChapter>("chapters").createIndex({ userId: 1, novelId: 1, order: 1 }),
@@ -34,3 +35,4 @@ export async function collection<T extends object>(name: string): Promise<Collec
   await ensureIndexes();
   return (await getDatabase()).collection<T>(name);
 }
+

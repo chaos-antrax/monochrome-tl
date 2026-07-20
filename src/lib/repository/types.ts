@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import type { UserRole } from "../roles";
 import type { Provider } from "../schemas/translation";
 import type { Chapter, GlossaryTerm, Job, Novel, StyleGuide, TranslationVersion } from "@/app/workspace/types";
 
@@ -6,6 +7,7 @@ export type UserDocument = {
   _id?: ObjectId;
   email: string;
   passwordHash: string;
+  role?: UserRole;
   provider?: Provider;
   encryptedApiKey?: { iv: string; authTag: string; ciphertext: string };
   selectedModel?: string;
@@ -35,3 +37,4 @@ export type WorkspaceMutation =
   | { type: "style:upsert"; style: StyleGuide }
   | { type: "style:delete"; styleId: string }
   | { type: "job:upsert"; job: Job };
+

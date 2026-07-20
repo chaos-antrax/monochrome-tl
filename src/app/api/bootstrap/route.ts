@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-errors";
-import { getBootstrapState } from "@/lib/repository";
+import { getBootstrapState, getSafeUser } from "@/lib/repository";
+import { canAccessTranslationPortal } from "@/lib/roles";
 import { getSession } from "@/lib/session";
 
 type BootstrapAppState = {
@@ -31,9 +32,14 @@ export async function GET() {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ user: null, appState: null, appStateSummary: summarizeAppState(null) });
+    const user = await getSafeUser(session.userId);
+    if (!user) return NextResponse.json({ user: null, appState: null, appStateSummary: summarizeAppState(null) });
+    if (!canAccessTranslationPortal(user.role)) return NextResponse.json({ error: "Writer access is required for the translation portal." }, { status: 403 });
     const bootstrap = await getBootstrapState(session.userId);
     return NextResponse.json({ ...bootstrap, appStateSummary: summarizeAppState(bootstrap.appState) });
   } catch (error) {
     return apiErrorResponse(error, "Failed to bootstrap workspace.");
   }
 }
+
+

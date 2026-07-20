@@ -1,10 +1,11 @@
 import type { Dispatch, SetStateAction } from "react";
+import type { UserRole } from "@/lib/roles";
 import type { Provider } from "@/lib/schemas/translation";
 import type { Account, Chapter, ExportFormat, GlossaryStatus, GlossaryTerm, Job, Novel, StyleGuide, Tokens, TranslationProgress } from "../types";
 
 export type BootstrapResponse = {
   error?: string;
-  user: null | { email: string; provider?: Provider; selectedModel?: string; hasApiKey?: boolean };
+  user: null | { email: string; role?: UserRole; provider?: Provider; selectedModel?: string; hasApiKey?: boolean };
   appState: null | { novels?: Novel[]; styles?: StyleGuide[]; jobs?: Job[] };
 };
 
@@ -71,6 +72,7 @@ export type LibraryContextValue = Pick<WorkspaceContextValue, "novels" | "jobs" 
 export type ReaderContextValue = Pick<WorkspaceContextValue, "translationProgress" | "translateChapter" | "translateDescription" | "revertVersion" | "loadChapter">;
 export type SettingsContextValue = Pick<WorkspaceContextValue, "styles" | "getStyle" | "addStyle" | "editStyle" | "deleteStyle">;
 export type ToastContextValue = Pick<WorkspaceContextValue, "message" | "setMessage">;
+
 
 
 

@@ -1,10 +1,12 @@
 import type { Chapter, GlossaryTerm, Job, Novel, StyleGuide, TranslationVersion } from "@/app/workspace/types";
+import { normalizeUserRole } from "../roles";
 import type { ReadMode, StoredChapter, StoredGlossaryTerm, StoredJob, StoredNovel, StoredStyleGuide, StoredTranslationVersion, UserDocument } from "./types";
 
 export function safeUser(user: UserDocument, fallbackId: string) {
   return {
     id: user._id?.toHexString() ?? fallbackId,
     email: user.email,
+    role: normalizeUserRole(user.role),
     provider: user.provider,
     selectedModel: user.selectedModel,
     hasApiKey: Boolean(user.encryptedApiKey),
@@ -143,5 +145,6 @@ export function toJob(job: StoredJob): Job {
     completedAt: job.completedAt,
   };
 }
+
 
 

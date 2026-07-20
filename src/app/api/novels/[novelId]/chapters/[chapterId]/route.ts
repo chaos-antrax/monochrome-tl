@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-errors";
 import { getFullChapter } from "@/lib/repository";
-import { getSession } from "@/lib/session";
+import { requirePortalUser } from "@/lib/auth";
 
 export async function GET(_request: Request, context: { params: Promise<{ novelId: string; chapterId: string }> }) {
   try {
-    const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { session } = await requirePortalUser();
     const { novelId, chapterId } = await context.params;
     const chapter = await getFullChapter(session.userId, novelId, chapterId);
     if (!chapter) return NextResponse.json({ error: "Chapter not found" }, { status: 404 });
@@ -15,3 +14,4 @@ export async function GET(_request: Request, context: { params: Promise<{ novelI
     return apiErrorResponse(error, "Failed to load chapter.");
   }
 }
+

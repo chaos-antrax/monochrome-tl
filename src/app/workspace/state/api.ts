@@ -53,7 +53,7 @@ export async function translateDescriptionRequest(input: { description: string; 
 
 export async function submitAuthRequest(mode: "signup" | "login", email: string, password: string) {
   const response = await fetch(`/api/auth/${mode}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password }) });
-  const data = (await response.json()) as { error?: string; user?: { email: string } };
+  const data = (await response.json()) as { error?: string; user?: { email: string; role?: import("@/lib/roles").UserRole } };
   if (!response.ok) throw new Error(data.error ?? "Authentication failed.");
   return data;
 }
@@ -66,3 +66,4 @@ export async function saveProviderRequest(provider: Provider, apiKey: string, mo
   const response = await fetch("/api/provider", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ provider, apiKey, model }) });
   if (!response.ok) throw new Error(await readJsonError(response, "Provider save failed."));
 }
+

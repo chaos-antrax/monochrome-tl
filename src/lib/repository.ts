@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { decryptSecret, encryptSecret } from "./crypto";
+import { normalizeUserRole, type UserRole } from "./roles";
 import type { Provider } from "./schemas/translation";
 import type { Chapter, GlossaryTerm, TranslationVersion } from "@/app/workspace/types";
 import { collection } from "./repository/indexes";
@@ -20,8 +21,9 @@ export async function findUserByEmail(email: string) {
 export async function createUser(email: string, passwordHash: string) {
   const users = await usersCollection();
   const now = new Date();
-  const result = await users.insertOne({ email: email.toLowerCase(), passwordHash, createdAt: now, updatedAt: now });
-  return { _id: result.insertedId, email: email.toLowerCase() };
+  const normalizedEmail = email.toLowerCase();
+  const result = await users.insertOne({ email: normalizedEmail, passwordHash, role: "reader", createdAt: now, updatedAt: now });
+  return { _id: result.insertedId, email: normalizedEmail, role: "reader" as UserRole };
 }
 
 export async function getSafeUser(userId: string) {
@@ -116,7 +118,7 @@ export async function replaceCollectionAppState(userId: string, appState: Worksp
 export async function getBootstrapState(userId: string) {
   const user = await (await usersCollection()).findOne(
     { _id: new ObjectId(userId) },
-    { projection: { email: 1, provider: 1, selectedModel: 1, encryptedApiKey: 1, appState: 1 } },
+    { projection: { email: 1, role: 1, provider: 1, selectedModel: 1, encryptedApiKey: 1, appState: 1 } },
   );
   if (!user) return { user: null, appState: null };
 
@@ -232,6 +234,32 @@ export async function applyWorkspaceMutations(userId: string, mutations: Workspa
   }
 }
 
+
+export async function listUsersForAdmin() {
+  const users = await (await usersCollection()).find(
+    {},
+    { projection: { email: 1, role: 1, createdAt: 1, updatedAt: 1 }, sort: { createdAt: -1 } },
+  ).toArray();
+  return users.map((user) => ({
+    id: user._id?.toHexString() ?? "",
+    email: user.email,
+    role: normalizeUserRole(user.role),
+    createdAt: user.createdAt?.toISOString?.() ?? new Date().toISOString(),
+    updatedAt: user.updatedAt?.toISOString?.() ?? new Date().toISOString(),
+  }));
+}
+
+export async function setUserWriterRole(userId: string, enabled: boolean) {
+  const users = await usersCollection();
+  const _id = new ObjectId(userId);
+  const existing = await users.findOne({ _id }, { projection: { role: 1 } });
+  if (!existing) return null;
+  const currentRole = normalizeUserRole(existing.role);
+  if (currentRole === "admin") return { id: userId, role: "admin" as UserRole };
+  const role: UserRole = enabled ? "writer" : "reader";
+  await users.updateOne({ _id }, { $set: { role, updatedAt: new Date() } });
+  return { id: userId, role };
+}
 export async function saveProviderConfig(userId: string, provider: Provider, apiKey: string, selectedModel: string) {
   await (await usersCollection()).updateOne(
     { _id: new ObjectId(userId) },
@@ -248,4 +276,6 @@ export async function getProviderConfig(userId: string) {
     apiKey: decryptSecret(user.encryptedApiKey),
   };
 }
+
+
 
