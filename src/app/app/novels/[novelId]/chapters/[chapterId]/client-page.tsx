@@ -152,7 +152,7 @@ export default function ReaderPage() {
       textarea.scrollTop = Math.max(0, metrics.top - metrics.height * 4);
 
       innerFrame = window.requestAnimationFrame(() => {
-        const visibleTop = Math.max(12, textarea.offsetTop + metrics.top - textarea.scrollTop);
+        const visibleTop = Math.max(12, textarea.offsetTop + metrics.top - textarea.scrollTop - 1);
         setCursorIndicator({ target: editTarget, top: visibleTop, height: Math.max(24, metrics.height) });
         if (cursorIndicatorTimerRef.current) window.clearTimeout(cursorIndicatorTimerRef.current);
         cursorIndicatorTimerRef.current = window.setTimeout(() => setCursorIndicator(null), 3200);
@@ -618,7 +618,7 @@ export default function ReaderPage() {
             )}
             {cursorIndicator?.target === editTarget ? (
               <div
-                className="pointer-events-none absolute inset-x-4 rounded-md bg-neutral-950/10 animate-cursor-row-highlight sm:inset-x-10"
+                className="pointer-events-none absolute inset-x-0 bg-neutral-950/10 animate-cursor-row-highlight"
                 style={{ top: cursorIndicator.top, height: cursorIndicator.height }}
                 aria-hidden="true"
               />
@@ -855,6 +855,8 @@ function ChapterNavigation({
     </nav>
   );
 }
+
+
 
 
 
