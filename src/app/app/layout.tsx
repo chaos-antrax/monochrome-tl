@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSafeUser } from "@/lib/repository";
 import { canAccessTranslationPortal } from "@/lib/roles";
-import { clearSessionCookie, getSession } from "@/lib/session";
+import { getSession } from "@/lib/session";
 import { AppShell } from "./shell";
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
@@ -10,8 +10,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
   const user = await getSafeUser(session.userId);
   if (!user || !canAccessTranslationPortal(user.role)) {
-    await clearSessionCookie();
-    redirect("/login");
+    redirect("/api/auth/clear-session?reason=access-revoked");
   }
 
   return <AppShell>{children}</AppShell>;

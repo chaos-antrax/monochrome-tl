@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WorkspaceProvider, useAuth, useToast } from "../workspace/state";
 import { Input, LoadingButton } from "../workspace/ui";
 
-function LoginForm() {
+function LoginForm({ initialMessage = "" }: { initialMessage?: string }) {
   const router = useRouter();
   const { submitAuth } = useAuth();
   const { message, setMessage } = useToast();
@@ -14,6 +14,10 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (initialMessage) setMessage(initialMessage);
+  }, [initialMessage, setMessage]);
 
   function updateEmail(value: string) {
     setEmail(value);
@@ -50,7 +54,7 @@ function LoginForm() {
         <Input label="Email" value={email} onChange={updateEmail} />
         <Input label="Password" type="password" value={password} onChange={updatePassword} />
       </div>
-      {message ? <p className="mt-4 rounded-lg bg-neutral-100 p-3 text-sm text-neutral-600">{message}</p> : null}
+      {message ? <p className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm leading-6 text-neutral-600">{message}</p> : null}
       <LoadingButton type="submit" loading={isSubmitting} loadingLabel={mode === "login" ? "Logging in ..." : "Creating account ..."} className="mt-6 w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500">{mode === "login" ? "Log in" : "Sign up"}</LoadingButton>
       <button type="button" onClick={toggleMode} disabled={isSubmitting} className="mt-3 w-full rounded-lg px-4 py-3 text-sm font-semibold text-neutral-600 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-300">
         {mode === "login" ? "Need an account? Sign up" : "Already have an account? Log in"}
@@ -59,13 +63,13 @@ function LoginForm() {
   );
 }
 
-export function LoginClient() {
+export function LoginClient({ initialMessage = "" }: { initialMessage?: string }) {
   return (
     <WorkspaceProvider>
       <main className="grid min-h-screen place-items-center bg-[#f7f7f5] px-6 py-10 text-neutral-950">
         <div className="w-full max-w-md">
           <Link href="/" className="mb-6 block text-center font-serif text-2xl font-semibold">Monochrome</Link>
-          <LoginForm />
+          <LoginForm initialMessage={initialMessage} />
         </div>
       </main>
     </WorkspaceProvider>
