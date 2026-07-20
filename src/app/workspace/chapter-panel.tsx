@@ -1,4 +1,4 @@
-import { Edit3, Globe2, GlobeLock, Save, Trash, X } from "lucide-react";
+import { Edit3, Globe2, GlobeLock, Trash } from "lucide-react";
 import { Empty, Mode, Reader, Status, TranslationProgressOverlay, type TranslationProgressView } from "./ui";
 import type { Chapter, ReaderMode } from "./types";
 
@@ -9,8 +9,6 @@ const secondaryButton =
   "rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 transition hover:border-neutral-950 hover:text-neutral-950";
 const primaryButton =
   "rounded-lg border border-neutral-950 bg-neutral-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-200 disabled:text-neutral-500";
-const editorTextarea =
-  "mt-2 w-full resize-y rounded-lg border border-neutral-200 bg-white px-4 py-3 font-serif text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5";
 
 export function ChapterPanel({
   chapter,
@@ -24,14 +22,6 @@ export function ChapterPanel({
   onEdit,
   onPublish,
   onUnpublish,
-  isEditingContent,
-  editRawText,
-  editTranslatedText,
-  onEditRawText,
-  onEditTranslatedText,
-  onCancelEditContent,
-  onSaveContent,
-  canSaveContent,
   onRevert,
   progress,
 }: {
@@ -46,43 +36,12 @@ export function ChapterPanel({
   onEdit: () => void;
   onPublish: () => void;
   onUnpublish: () => void;
-  isEditingContent: boolean;
-  editRawText: string;
-  editTranslatedText: string;
-  onEditRawText: (value: string) => void;
-  onEditTranslatedText: (value: string) => void;
-  onCancelEditContent: () => void;
-  onSaveContent: () => void;
-  canSaveContent: boolean;
   onRevert: (version: number) => void;
   progress?: TranslationProgressView | null;
 }) {
   const translation = chapter.translations.find(
     (item) => item.version === chapter.currentVersion,
   );
-
-  const editActions = isEditingContent ? (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
-      <p className="text-sm font-medium text-neutral-600">Editing chapter content</p>
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={onCancelEditContent}
-          className={`${secondaryButton} flex items-center gap-2`}
-        >
-          <X size={16} /> Cancel
-        </button>
-        <button
-          type="button"
-          onClick={onSaveContent}
-          disabled={!canSaveContent}
-          className={`${primaryButton} flex items-center gap-2`}
-        >
-          <Save size={16} /> Save
-        </button>
-      </div>
-    </div>
-  ) : null;
 
   return (
     <>
@@ -106,7 +65,6 @@ export function ChapterPanel({
           >
             <Edit3 size={16} /> Title
           </button>
-
           {chapter.published ? (
             <button
               type="button"
@@ -161,61 +119,20 @@ export function ChapterPanel({
 
       <div className="mt-5 border-t border-neutral-200 pt-5">
         {readerMode === "raw" ? (
-          isEditingContent ? (
-            <>
-              {editActions}
-              <label className="block text-sm font-medium text-neutral-700">
-                Raw Chinese text
-                <textarea
-                  value={editRawText}
-                  onChange={(event) => onEditRawText(event.target.value)}
-                  rows={18}
-                  className={editorTextarea}
-                  style={{ fontSize, lineHeight }}
-                />
-              </label>
-            </>
-          ) : (
-            <Reader
-              text={chapter.rawText}
-              fontSize={fontSize}
-              lineHeight={lineHeight}
-            />
-          )
+          <Reader text={chapter.rawText} fontSize={fontSize} lineHeight={lineHeight} />
         ) : null}
+
         {readerMode === "translated" || readerMode === "diff" ? (
           <div className={`relative overflow-hidden rounded-lg ${readerMode === "diff" ? "xl:hidden" : ""}`}>
             <div className={`transition duration-300 ${progress ? "blur-[2px] opacity-45" : ""}`}>
-              {isEditingContent && readerMode === "translated" && translation ? (
-                <>
-                  {editActions}
-                  <label className="block text-sm font-medium text-neutral-700">
-                    Translated text
-                    <textarea
-                      value={editTranslatedText}
-                      onChange={(event) => onEditTranslatedText(event.target.value)}
-                      rows={18}
-                      className={editorTextarea}
-                      style={{ fontSize, lineHeight }}
-                    />
-                  </label>
-                </>
-              ) : translation ? (
-                <Reader
-                  text={translation.text}
-                  fontSize={fontSize}
-                  lineHeight={lineHeight}
-                />
+              {translation ? (
+                <Reader text={translation.text} fontSize={fontSize} lineHeight={lineHeight} />
               ) : (
                 <Empty
                   title="This chapter has not been translated yet"
                   body="Run a translation to create the first version."
                   action={
-                    <button
-                      type="button"
-                      onClick={onTranslate}
-                      className={primaryButton}
-                    >
+                    <button type="button" onClick={onTranslate} className={primaryButton}>
                       Translate this chapter
                     </button>
                   }
@@ -225,56 +142,25 @@ export function ChapterPanel({
             <TranslationProgressOverlay progress={progress} />
           </div>
         ) : null}
+
         {readerMode === "diff" ? (
           <div className="hidden gap-4 xl:grid xl:grid-cols-2">
             <div>
               <p className="mb-2 text-xs uppercase tracking-[0.16em] text-neutral-500">
                 Raw
               </p>
-              {isEditingContent ? (
-                <textarea
-                  aria-label="Raw Chinese text"
-                  value={editRawText}
-                  onChange={(event) => onEditRawText(event.target.value)}
-                  rows={22}
-                  className={editorTextarea}
-                  style={{ fontSize: fontSize - 1, lineHeight }}
-                />
-              ) : (
-                <Reader
-                  text={chapter.rawText}
-                  fontSize={fontSize - 1}
-                  lineHeight={lineHeight}
-                />
-              )}
+              <Reader text={chapter.rawText} fontSize={fontSize - 1} lineHeight={lineHeight} />
             </div>
             <div>
               <p className="mb-2 text-xs uppercase tracking-[0.16em] text-neutral-500">
                 Translated
               </p>
-              {isEditingContent && translation ? (
-                <textarea
-                  aria-label="Translated text"
-                  value={editTranslatedText}
-                  onChange={(event) => onEditTranslatedText(event.target.value)}
-                  rows={22}
-                  className={editorTextarea}
-                  style={{ fontSize: fontSize - 1, lineHeight }}
-                />
-              ) : translation ? (
-                <Reader
-                  text={translation.text}
-                  fontSize={fontSize - 1}
-                  lineHeight={lineHeight}
-                />
+              {translation ? (
+                <Reader text={translation.text} fontSize={fontSize - 1} lineHeight={lineHeight} />
               ) : (
-                <Empty
-                  title="No translation"
-                  body="Translate first to compare side by side."
-                />
+                <Empty title="No translation" body="Translate first to compare side by side." />
               )}
             </div>
-            {isEditingContent ? <div className="xl:col-span-2">{editActions}</div> : null}
           </div>
         ) : null}
       </div>
@@ -302,4 +188,3 @@ export function ChapterPanel({
     </>
   );
 }
-

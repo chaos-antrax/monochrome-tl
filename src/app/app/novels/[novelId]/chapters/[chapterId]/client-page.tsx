@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpenText, Check, ChevronLeft, ChevronRight, Edit3, Plus, Search, Trash2, X } from "lucide-react";
+import { BookOpenText, Check, ChevronLeft, ChevronRight, Edit3, Plus, Save, Search, Trash2, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useLibrary, useReader, type Chapter, type GlossaryStatus, type GlossaryTerm, type ReaderMode } from "../../../../../workspace/state";
@@ -18,6 +18,8 @@ import {
   Modal,
   Mode,
 } from "../../../../../workspace/ui";
+
+type EditTarget = "raw" | "translated";
 
 type ConfirmAction = {
   title: string;
@@ -50,6 +52,8 @@ export default function ReaderPage() {
   const [isContentEditing, setIsContentEditing] = useState(false);
   const [editRawText, setEditRawText] = useState("");
   const [editTranslatedText, setEditTranslatedText] = useState("");
+  const [editTarget, setEditTarget] = useState<EditTarget>("raw");
+  const [editSelectionOffset, setEditSelectionOffset] = useState(0);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
@@ -67,6 +71,8 @@ export default function ReaderPage() {
   const [editNotes, setEditNotes] = useState("");
   const [chapterLoadError, setChapterLoadError] = useState<{ chapterId: string; message: string } | null>(null);
   const chapterListRef = useRef<HTMLDivElement | null>(null);
+  const rawEditorRef = useRef<HTMLTextAreaElement | null>(null);
+  const translatedEditorRef = useRef<HTMLTextAreaElement | null>(null);
 
 
   useEffect(() => {
@@ -78,7 +84,7 @@ export default function ReaderPage() {
     return () => { cancelled = true; };
   }, [chapter, chapterId, chapterLoadError?.chapterId, loadChapter, novelId]);
   useEffect(() => {
-    if (!isGlossaryOpen) return;
+    if (!isGlossaryOpen && !isContentEditing) return;
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
@@ -87,8 +93,22 @@ export default function ReaderPage() {
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
     };
-  }, [isGlossaryOpen]);
+  }, [isGlossaryOpen, isContentEditing]);
 
+  useEffect(() => {
+    if (!isContentEditing) return;
+    const textarea = editTarget === "raw" ? rawEditorRef.current : translatedEditorRef.current;
+    if (!textarea) return;
+    const frame = window.requestAnimationFrame(() => {
+      const offset = Math.max(0, Math.min(editSelectionOffset, textarea.value.length));
+      textarea.focus();
+      textarea.setSelectionRange(offset, offset);
+      const linesBeforeOffset = textarea.value.slice(0, offset).split("\n").length;
+      const lineHeightPx = fontSize * lineHeight;
+      textarea.scrollTop = Math.max(0, (linesBeforeOffset - 5) * lineHeightPx);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [editSelectionOffset, editTarget, fontSize, isContentEditing, lineHeight]);
   useEffect(() => {
     const list = chapterListRef.current;
     if (!list) return;
@@ -187,12 +207,22 @@ export default function ReaderPage() {
     });
   }
   function startContentEdit() {
+    const selectedText = window.getSelection()?.toString().trim() ?? "";
+    const rawOffset = selectedText ? currentChapter.rawText.indexOf(selectedText) : -1;
+    const translatedOffset = selectedText && currentTranslation ? currentTranslation.text.indexOf(selectedText) : -1;
+    let nextTarget: EditTarget = mode === "raw" ? "raw" : "translated";
+    if (mode === "diff") {
+      nextTarget = rawOffset >= 0 && translatedOffset < 0 ? "raw" : "translated";
+    }
+    if (!currentTranslation && nextTarget === "translated") nextTarget = "raw";
+    const nextOffset = nextTarget === "raw" ? rawOffset : translatedOffset;
     if (mode === "translated" && !currentTranslation) setMode("raw");
+    setEditTarget(nextTarget);
+    setEditSelectionOffset(nextOffset >= 0 ? nextOffset : 0);
     setEditRawText(currentChapter.rawText);
     setEditTranslatedText(currentTranslation?.text ?? "");
     setIsContentEditing(true);
   }
-
   function cancelContentEdit() {
     setIsContentEditing(false);
     setEditRawText("");
@@ -424,14 +454,6 @@ export default function ReaderPage() {
             onEdit={editMeta}
             onPublish={requestPublishChapter}
             onUnpublish={() => requestSetChapterPublished(currentChapter, false)}
-            isEditingContent={isContentEditing}
-            editRawText={editRawText}
-            editTranslatedText={editTranslatedText}
-            onEditRawText={setEditRawText}
-            onEditTranslatedText={setEditTranslatedText}
-            onCancelEditContent={cancelContentEdit}
-            onSaveContent={saveContentEdit}
-            canSaveContent={Boolean(editRawText.trim()) && (!currentTranslation || Boolean(editTranslatedText.trim()))}
             onRevert={(version) =>
               revertVersion(currentNovel.id, currentChapter.id, version)
             }
@@ -447,28 +469,92 @@ export default function ReaderPage() {
         </div>
       </Card>
 
-      <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
-        <button
-          type="button"
-          onClick={() => setIsGlossaryOpen(true)}
-          className="group flex h-12 items-center gap-3 rounded-full border border-neutral-200 bg-white/95 px-4 text-sm font-semibold text-neutral-900 shadow-[0_18px_60px_rgba(0,0,0,0.16)] backdrop-blur transition hover:-translate-y-0.5 hover:border-neutral-950 hover:bg-white"
-          aria-label="Open glossary"
-        >
-          <BookOpenText aria-hidden="true" className="h-5 w-5" />
-          <span className="hidden sm:inline">Glossary</span>
-          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500 transition group-hover:bg-neutral-950 group-hover:text-white">{currentNovel.glossary.length}</span>
-        </button>
-        <button
-          type="button"
-          onClick={startContentEdit}
-          disabled={isContentEditing}
-          className="flex h-12 items-center gap-3 rounded-full border border-neutral-950 bg-neutral-950 px-4 text-sm font-semibold text-white shadow-[0_18px_60px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-200 disabled:text-neutral-500"
-          aria-label="Edit chapter content"
-        >
-          <Edit3 aria-hidden="true" className="h-5 w-5" />
-          <span className="hidden sm:inline">Edit chapter</span>
-        </button>
+      <div className={`fixed right-5 z-[80] flex flex-col items-end gap-3 sm:right-6 ${isContentEditing ? "top-5 bottom-auto sm:top-auto sm:bottom-6" : "bottom-5 sm:bottom-6"}`}>
+        {isContentEditing ? (
+          <>
+            <button
+              type="button"
+              onClick={cancelContentEdit}
+              className="flex h-12 items-center gap-3 rounded-full border border-neutral-200 bg-white/95 px-4 text-sm font-semibold text-neutral-800 shadow-[0_18px_60px_rgba(0,0,0,0.16)] backdrop-blur transition hover:-translate-y-0.5 hover:border-neutral-950 hover:bg-white"
+              aria-label="Cancel chapter edit"
+            >
+              <X aria-hidden="true" className="h-5 w-5" />
+              <span className="hidden sm:inline">Cancel</span>
+            </button>
+            <button
+              type="button"
+              onClick={saveContentEdit}
+              disabled={!editRawText.trim() || (Boolean(currentTranslation) && !editTranslatedText.trim())}
+              className="flex h-12 items-center gap-3 rounded-full border border-neutral-950 bg-neutral-950 px-4 text-sm font-semibold text-white shadow-[0_18px_60px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-200 disabled:text-neutral-500"
+              aria-label="Save chapter edit"
+            >
+              <Save aria-hidden="true" className="h-5 w-5" />
+              <span className="hidden sm:inline">Save</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => setIsGlossaryOpen(true)}
+              className="group flex h-12 items-center gap-3 rounded-full border border-neutral-200 bg-white/95 px-4 text-sm font-semibold text-neutral-900 shadow-[0_18px_60px_rgba(0,0,0,0.16)] backdrop-blur transition hover:-translate-y-0.5 hover:border-neutral-950 hover:bg-white"
+              aria-label="Open glossary"
+            >
+              <BookOpenText aria-hidden="true" className="h-5 w-5" />
+              <span className="hidden sm:inline">Glossary</span>
+              <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500 transition group-hover:bg-neutral-950 group-hover:text-white">{currentNovel.glossary.length}</span>
+            </button>
+            <button
+              type="button"
+              onClick={startContentEdit}
+              className="flex h-12 items-center gap-3 rounded-full border border-neutral-950 bg-neutral-950 px-4 text-sm font-semibold text-white shadow-[0_18px_60px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-neutral-800"
+              aria-label="Edit chapter content"
+            >
+              <Edit3 aria-hidden="true" className="h-5 w-5" />
+              <span className="hidden sm:inline">Edit chapter</span>
+            </button>
+          </>
+        )}
       </div>
+
+      {isContentEditing ? (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-[#f7f7f5]/95 text-neutral-950 backdrop-blur-md animate-page">
+          <div className="border-b border-neutral-200 bg-white/75 px-5 py-4 shadow-[0_12px_45px_rgba(0,0,0,0.06)] backdrop-blur sm:px-8">
+            <div className="mr-28 sm:mr-48">
+              <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Editing chapter</p>
+              <h2 className="mt-1 truncate font-serif text-2xl font-semibold">{currentChapter.title}</h2>
+            </div>
+            {currentTranslation ? (
+              <div className="mt-4 w-fit">
+                <Mode modes={["raw", "translated"]} value={editTarget} onChange={(value) => setEditTarget(value as EditTarget)} />
+              </div>
+            ) : null}
+          </div>
+          <div className="min-h-0 flex-1 p-4 pt-5 sm:p-8">
+            {editTarget === "raw" ? (
+              <textarea
+                ref={rawEditorRef}
+                aria-label="Raw Chinese text"
+                value={editRawText}
+                onChange={(event) => setEditRawText(event.target.value)}
+                className="h-full w-full resize-none rounded-lg border border-neutral-200 bg-white/90 px-5 py-4 font-serif text-neutral-950 shadow-[0_18px_60px_rgba(0,0,0,0.08)] outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
+                style={{ fontSize, lineHeight, tabSize: 2 }}
+                spellCheck={false}
+              />
+            ) : (
+              <textarea
+                ref={translatedEditorRef}
+                aria-label="Translated text"
+                value={editTranslatedText}
+                onChange={(event) => setEditTranslatedText(event.target.value)}
+                className="h-full w-full resize-none rounded-lg border border-neutral-200 bg-white/90 px-5 py-4 font-serif text-neutral-950 shadow-[0_18px_60px_rgba(0,0,0,0.08)] outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
+                style={{ fontSize, lineHeight, tabSize: 2 }}
+                spellCheck={false}
+              />
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {isGlossaryOpen ? (
         <div className="fixed inset-0 z-[70] flex justify-end bg-neutral-950/25 backdrop-blur-sm animate-page" role="dialog" aria-modal="true" aria-label="Reader glossary">

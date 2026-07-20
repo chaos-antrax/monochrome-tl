@@ -22,7 +22,7 @@ export function ConfirmDialog({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-[60] grid place-items-center bg-neutral-950/30 px-4 py-8 backdrop-blur-sm animate-page"
+      className="fixed inset-0 z-[90] grid place-items-center bg-neutral-950/30 px-4 py-8 backdrop-blur-sm animate-page"
       role="alertdialog"
       aria-modal="true"
       aria-label={title}
