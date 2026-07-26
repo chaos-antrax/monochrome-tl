@@ -506,12 +506,14 @@ export default function ReaderPage() {
       </aside>
 
       <Card className="flex min-h-[calc(100vh-2rem)] min-w-0 max-w-full flex-col overflow-hidden xl:h-[calc(100vh-2rem)] xl:min-h-0">
+        <div className="xl:hidden">
         <ChapterNavigation
           novelId={currentNovel.id}
           previousChapter={previousChapter}
           nextChapter={nextChapter}
         />
-        <div className="mt-5 min-h-0 flex-1 overflow-y-auto border-t border-foreground/10 pt-5">
+        </div>
+        <div className="mt-5 min-h-0 flex-1 overflow-y-auto border-t border-foreground/10 pt-5 xl:mt-0 xl:border-t-0 xl:pt-0">
           <ChapterPanel
             chapter={currentChapter}
             readerMode={mode}
