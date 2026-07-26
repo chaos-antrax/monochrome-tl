@@ -505,15 +505,15 @@ export function WorkspaceProvider({ children, initialBootstrap = null }: { child
     setNovels((current) => current.map((novel) => novel.styleGuideId === styleId ? { ...novel, styleGuideId: undefined } : novel));
     persistWorkspaceMutations([{ type: "style:delete", styleId }]);
   }, [persistWorkspaceMutations]);
-  const submitAuth = useCallback(async (mode: "signup" | "login", email: string, password: string) => {
+  const submitAuth = useCallback(async (email: string, password: string) => {
     if (!email.trim() || !password) {
       setMessage("Email and password are required.");
       return false;
     }
     try {
-      const data = await submitAuthRequest(mode, email, password);
+      const data = await submitAuthRequest(email, password);
       setAccount((current) => ({ ...current, email: data.user?.email ?? email, role: data.user?.role ?? current.role, sessionExpiresAt: new Date(Date.now() + 604800000).toISOString() }));
-      setMessage(mode === "signup" ? "Account created and signed in." : "Signed in with a 7-day session.");
+      setMessage("Signed in with a 7-day session.");
       return true;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Authentication failed. Check MongoDB configuration.");

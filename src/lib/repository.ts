@@ -18,13 +18,6 @@ export async function findUserByEmail(email: string) {
   return (await usersCollection()).findOne({ email: email.toLowerCase() });
 }
 
-export async function createUser(email: string, passwordHash: string) {
-  const users = await usersCollection();
-  const now = new Date();
-  const normalizedEmail = email.toLowerCase();
-  const result = await users.insertOne({ email: normalizedEmail, passwordHash, role: "reader", createdAt: now, updatedAt: now });
-  return { _id: result.insertedId, email: normalizedEmail, role: "reader" as UserRole };
-}
 
 export async function getSafeUser(userId: string) {
   const user = await (await usersCollection()).findOne({ _id: new ObjectId(userId) });

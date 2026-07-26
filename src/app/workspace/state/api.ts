@@ -51,8 +51,8 @@ export async function translateDescriptionRequest(input: { description: string; 
   return data.response;
 }
 
-export async function submitAuthRequest(mode: "signup" | "login", email: string, password: string) {
-  const response = await fetch(`/api/auth/${mode}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password }) });
+export async function submitAuthRequest(email: string, password: string) {
+  const response = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password }) });
   const data = (await response.json()) as { error?: string; user?: { email: string; role?: import("@/lib/roles").UserRole } };
   if (!response.ok) throw new Error(data.error ?? "Authentication failed.");
   return data;
