@@ -120,46 +120,46 @@ export default function GlossaryPage() {
       <Input label="Pinyin" value={pinyin} onChange={setPinyin} />
       <Textarea label="Notes" value={notes} onChange={setNotes} rows={4} />
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={() => setIsAddOpen(false)} className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950">Cancel</button>
-        <button type="submit" disabled={!sourceTerm.trim() || !translation.trim()} className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500">Save term</button>
+        <button type="button" onClick={() => setIsAddOpen(false)} className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]">Cancel</button>
+        <button type="submit" disabled={!sourceTerm.trim() || !translation.trim()} className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40">Save term</button>
       </div>
     </form>
   );
 
   return (
     <div className="space-y-5">
-      <header className="rounded-lg border border-neutral-200 bg-white/90 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
+      <header className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Glossary</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">Glossary</p>
             <h1 className="mt-2 font-serif text-4xl font-semibold">{currentNovel.title}</h1>
-            <div className="mt-4 flex gap-2"><Link href={`/app/novels/${currentNovel.id}`} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold transition hover:border-neutral-950">Novel</Link></div>
+            <div className="mt-4 flex gap-2"><Link href={`/app/novels/${currentNovel.id}`} className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light transition hover:bg-foreground/[0.04]">Novel</Link></div>
           </div>
-          <button type="button" onClick={() => setIsAddOpen(true)} className="w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 sm:w-auto">Add term</button>
+          <button type="button" onClick={() => setIsAddOpen(true)} className="w-full inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-5 py-2.5 font-inter text-xs font-light text-background transition hover:bg-foreground/90 sm:w-auto">Add term</button>
         </div>
       </header>
 
       <Card>
-        <div className="flex flex-col gap-3 border-b border-neutral-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-foreground/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="font-serif text-2xl font-semibold">Terms</h2>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
             <Mode modes={["approved", "pending", "rejected"]} value={tab} onChange={(value) => setTab(value as GlossaryStatus)} />
             <CustomSelect label="Category" value={categoryFilter} onChange={(value) => setCategoryFilter(value as "all" | GlossaryCategory)} className="min-w-44" options={[{ value: "all", label: "All categories" }, ...GlossaryCategorySchema.options.map((option) => ({ value: option, label: option }))]} />
-            <label className="relative block min-w-0 flex-1 text-sm font-medium text-neutral-700 sm:min-w-64">
+            <label className="relative block min-w-0 flex-1 text-sm font-medium text-foreground/70 sm:min-w-64">
               Search
-              <Search aria-hidden="true" className="absolute left-3 top-[2.45rem] h-4 w-4 text-neutral-400" />
+              <Search aria-hidden="true" className="absolute left-3 top-[2.45rem] h-4 w-4 text-foreground/40" />
               <input
                 type="text"
                 value={glossarySearch}
                 onChange={(event) => setGlossarySearch(event.target.value)}
                 placeholder="Source, translation, pinyin, notes"
-                className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-9 py-2.5 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
+                className="mt-1.5 w-full rounded-lg border border-foreground/10 bg-[var(--surface)] px-9 py-2.5 text-sm text-foreground outline-none transition placeholder:text-foreground/40 focus:border-foreground focus:ring-4 focus:ring-foreground/5"
               />
               {glossarySearch ? (
                 <button
                   type="button"
                   onClick={() => setGlossarySearch("")}
-                  className="absolute right-2 top-[2.2rem] grid h-7 w-7 place-items-center rounded-md text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-950"
+                  className="absolute right-2 top-[2.2rem] grid h-7 w-7 place-items-center rounded-md text-foreground/40 transition hover:bg-foreground/[0.04] hover:text-foreground"
                   aria-label="Clear glossary search"
                 >
                   <X aria-hidden="true" className="h-4 w-4" />
@@ -170,24 +170,24 @@ export default function GlossaryPage() {
         </div>
         <div className="mt-4 grid gap-3">
           {terms.map((term) => (
-            <div key={term.id} className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition hover:border-neutral-300">
+            <div key={term.id} className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-4 shadow-sm transition hover:border-foreground/25">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h3 className="font-serif text-2xl font-semibold">{term.sourceTerm} <span className="font-sans text-base font-normal text-neutral-500">-&gt; {term.translation}</span></h3>
-                  <p className="mt-1 text-sm text-neutral-500">{term.category}{term.pinyin ? ` / ${term.pinyin}` : ""}</p>
-                  {term.notes ? <p className="mt-2 text-sm leading-6 text-neutral-600">{term.notes}</p> : null}
-                  {term.conflict ? <p className="mt-2 rounded-lg bg-neutral-100 px-3 py-2 text-sm">Conflict: {term.conflict}</p> : null}
+                  <h3 className="font-serif text-2xl font-semibold">{term.sourceTerm} <span className="font-sans text-base font-normal text-foreground/55">-&gt; {term.translation}</span></h3>
+                  <p className="mt-1 text-sm text-foreground/55">{term.category}{term.pinyin ? ` / ${term.pinyin}` : ""}</p>
+                  {term.notes ? <p className="mt-2 text-sm leading-6 text-foreground/60">{term.notes}</p> : null}
+                  {term.conflict ? <p className="mt-2 rounded-lg bg-foreground/[0.06] px-3 py-2 text-sm">Conflict: {term.conflict}</p> : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => openEdit(term)} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Edit</button>
-                  {term.status !== "approved" ? <button type="button" onClick={() => requestTermStatus(term, "approved")} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Approve</button> : null}
-                  {term.status !== "rejected" ? <button type="button" onClick={() => requestTermStatus(term, "rejected")} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950">Reject</button> : null}
-                  <button type="button" onClick={() => requestDeleteTerm(term)} className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950">Delete</button>
+                  <button type="button" onClick={() => openEdit(term)} className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light transition hover:bg-foreground/[0.04]">Edit</button>
+                  {term.status !== "approved" ? <button type="button" onClick={() => requestTermStatus(term, "approved")} className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light transition hover:bg-foreground/[0.04]">Approve</button> : null}
+                  {term.status !== "rejected" ? <button type="button" onClick={() => requestTermStatus(term, "rejected")} className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light transition hover:bg-foreground/[0.04]">Reject</button> : null}
+                  <button type="button" onClick={() => requestDeleteTerm(term)} className="inline-flex min-h-10 items-center justify-center border border-transparent px-4 py-2 font-inter text-xs font-light text-foreground/60 transition hover:bg-foreground/[0.04] hover:text-foreground">Delete</button>
                 </div>
               </div>
             </div>
           ))}
-          {terms.length === 0 ? <Empty title="No terms here" body="No glossary terms match the selected status, category, and search." action={<button type="button" onClick={() => setIsAddOpen(true)} className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800">Add term</button>} /> : null}
+          {terms.length === 0 ? <Empty title="No terms here" body="No glossary terms match the selected status, category, and search." action={<button type="button" onClick={() => setIsAddOpen(true)} className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90">Add term</button>} /> : null}
         </div>
       </Card>
 
@@ -195,12 +195,12 @@ export default function GlossaryPage() {
 
       <Modal title="Edit glossary term" open={Boolean(editing)} onClose={() => setEditing(null)}>
         <form onSubmit={submitEdit} className="space-y-4">
-          <div className="rounded-lg bg-neutral-100 p-3 text-sm text-neutral-600">Source term: <span className="font-serif text-lg font-semibold text-neutral-950">{editing?.sourceTerm}</span></div>
+          <div className="rounded-lg bg-foreground/[0.06] p-3 text-sm text-foreground/60">Source term: <span className="font-serif text-lg font-semibold text-foreground">{editing?.sourceTerm}</span></div>
           <Input label="Translation" value={editTranslation} onChange={setEditTranslation} />
           <Textarea label="Notes" value={editNotes} onChange={setEditNotes} rows={5} />
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setEditing(null)} className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950">Cancel</button>
-            <button type="submit" disabled={!editTranslation.trim()} className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500">Save changes</button>
+            <button type="button" onClick={() => setEditing(null)} className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]">Cancel</button>
+            <button type="submit" disabled={!editTranslation.trim()} className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40">Save changes</button>
           </div>
         </form>
       </Modal>

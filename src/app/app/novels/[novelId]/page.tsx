@@ -19,6 +19,7 @@ import {
   type GlossaryTerm,
 } from "../../../workspace/state";
 import {
+  Badge,
   Card,
   ConfirmDialog,
   CustomSelect,
@@ -442,31 +443,29 @@ export default function NovelPage() {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-lg border border-neutral-200 bg-white/90 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
+      <section className="border border-foreground/10 bg-[var(--surface)] p-6 shadow-none">
         <div className="flex relative flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">
+            <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">
               Novel
             </p>
             <h1 className="mt-2 font-serif text-4xl font-semibold">
               {currentNovel.title}
             </h1>
-            <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-neutral-500">
+            <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-foreground/55">
               <span>
                 Style: {getStyle(currentNovel)?.name ?? "Plain"} /{" "}
                 {currentNovel.chapters.length} chapters /{" "}
                 {currentNovel.glossary.length} terms
               </span>
-              <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] ${currentNovel.published ? "border-neutral-950 bg-neutral-950 text-white" : "border-neutral-200 bg-white text-neutral-500"}`}>
-                {currentNovel.published ? "Published" : "Draft"}
-              </span>
+              <Badge active={Boolean(currentNovel.published)}>{currentNovel.published ? "Published" : "Draft"}</Badge>
             </p>
           </div>
           <div className="flex absolute top-0 right-0 max-w-fit sm:relative flex-col-reverse gap-2 sm:w-auto sm:flex-row">
             <button
               type="button"
               onClick={requestToggleNovelPublished}
-              className={`rounded-lg border p-4 text-center text-sm font-semibold transition ${currentNovel.published ? "border-neutral-950 bg-neutral-950 text-white hover:bg-neutral-800" : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-950"}`}
+              className={`inline-flex min-h-10 items-center justify-center border p-3 font-inter text-xs font-light transition ${currentNovel.published ? "border-foreground bg-foreground text-background hover:bg-foreground/90" : "border-foreground/15 bg-transparent text-foreground hover:bg-foreground/[0.04]"}`}
               title={currentNovel.published ? "Unpublish novel" : "Publish novel"}
             >
               {currentNovel.published ? <GlobeLock size={16} /> : <Globe2 size={16} />}
@@ -474,25 +473,23 @@ export default function NovelPage() {
             <button
               type="button"
               onClick={openEditNovel}
-              className="rounded-lg border border-neutral-200 bg-white p-4 text-center text-sm font-semibold transition hover:border-neutral-950"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent p-3 font-inter text-xs font-light transition hover:bg-foreground/[0.04]"
             >
               <Edit2 size={16} />
             </button>
             <button
               type="button"
               onClick={requestDeleteNovel}
-              className="rounded-lg border border-neutral-200 bg-white p-4 text-center text-sm font-semibold text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent p-3 font-inter text-xs font-light text-foreground/60 transition hover:bg-foreground/[0.04] hover:text-foreground"
             >
               <Trash2 size={16} />
-            </button>
-            {/* <Link href="/app/library" className="rounded-lg border border-neutral-200 bg-white px-4 py-3 text-center text-sm font-semibold transition hover:border-neutral-950">Library</Link> */}
-          </div>
+            </button>          </div>
         </div>
 
-        <div className="mt-6 border-t border-neutral-200 pt-5">
+        <div className="mt-6 border-t border-foreground/10 pt-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+              <p className="text-xs uppercase tracking-[0.18em] text-foreground/55">
                 {effectiveMode === "english" ? "English" : "Chinese"}
               </p>
               <h2 className="mt-1 font-serif text-2xl font-semibold">
@@ -520,7 +517,7 @@ export default function NovelPage() {
                     ? descriptionButtonLabel
                     : "Add an API key in Account before translating."
                 }
-                className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400"
+                className="inline-flex items-center gap-2 inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04] disabled:cursor-not-allowed disabled:bg-foreground/[0.06] disabled:text-foreground/35"
               >
                 {isDescriptionTranslating ? (
                   <LoaderCircle
@@ -534,7 +531,7 @@ export default function NovelPage() {
           </div>
           <div className="relative mt-4 overflow-hidden rounded-lg">
             <article
-              className={`whitespace-pre-wrap text-base leading-7 text-neutral-800 transition duration-300 ${descriptionProgress ? "blur-[2px] opacity-45" : ""} ${effectiveMode === "chinese" ? "font-serif" : ""}`}
+              className={`whitespace-pre-wrap text-base leading-7 text-foreground/80 transition duration-300 ${descriptionProgress ? "blur-[2px] opacity-45" : ""} ${effectiveMode === "chinese" ? "font-serif" : ""}`}
             >
               {descriptionText
                 ? normalizeDisplayText(descriptionText)
@@ -546,7 +543,7 @@ export default function NovelPage() {
       </section>
 
       <Card>
-        <div className="flex flex-col gap-3 border-b border-neutral-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-foreground/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <Mode
             modes={["chapters", "glossary"]}
             value={mainTab}
@@ -557,7 +554,7 @@ export default function NovelPage() {
               <button
                 type="button"
                 onClick={toggleChapterSortOrder}
-                className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950 hover:text-neutral-950"
+                className="inline-flex min-h-10 items-center justify-center gap-2 border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
                 aria-label={`Show chapters in ${chapterSortOrder === "asc" ? "descending" : "ascending"} order`}
                 title={`Show ${chapterSortOrder === "asc" ? "latest" : "oldest"} chapters first`}
               >
@@ -567,7 +564,7 @@ export default function NovelPage() {
               <button
                 type="button"
                 onClick={() => setIsAddChapterOpen(true)}
-                className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
               >
                 Add chapter
               </button>
@@ -576,7 +573,7 @@ export default function NovelPage() {
             <button
               type="button"
               onClick={() => setIsAddTermOpen(true)}
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
             >
               Add term
             </button>
@@ -585,11 +582,11 @@ export default function NovelPage() {
 
         {mainTab === "chapters" ? (
           <>
-            <p className="mt-4 text-sm text-neutral-500">
+            <p className="mt-4 text-sm text-foreground/55">
               Toggle display order here. Drag the handle beside a chapter to
               change saved reading and export order.
             </p>
-            <div className="mt-3 divide-y divide-neutral-100">
+            <div className="mt-3 divide-y divide-foreground/10 border-y border-foreground/10">
               {sortedChapters.map((chapter, index) => (
                 <div
                   key={chapter.id}
@@ -600,7 +597,7 @@ export default function NovelPage() {
                     )
                   }
                   onDrop={(event) => dropChapter(event, chapter.id)}
-                  className={`flex flex-col gap-3 rounded-lg py-4 transition sm:flex-row sm:items-center sm:justify-between ${isChapterSortAnimating ? "animate-chapter-sort" : ""} ${dragOverChapterId === chapter.id ? "bg-neutral-50 ring-1 ring-neutral-300" : ""} ${draggedChapterId === chapter.id ? "opacity-50" : ""}`}
+                  className={`flex flex-col gap-3 rounded-lg py-4 transition sm:flex-row sm:items-center sm:justify-between ${isChapterSortAnimating ? "animate-chapter-sort" : ""} ${dragOverChapterId === chapter.id ? "bg-foreground/[0.035] ring-1 ring-foreground/20" : ""} ${draggedChapterId === chapter.id ? "opacity-50" : ""}`}
                   style={isChapterSortAnimating ? { animationDelay: `${Math.min(index * 28, 180)}ms` } : undefined}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -613,14 +610,14 @@ export default function NovelPage() {
                       onDragEnd={finishChapterDrag}
                       aria-label={`Drag ${chapter.title} to reorder`}
                       title="Drag to reorder"
-                      className="grid h-10 w-10 shrink-0 cursor-grab place-items-center rounded-lg border border-neutral-200 bg-white text-neutral-400 transition hover:border-neutral-950 hover:text-neutral-950 active:cursor-grabbing"
+                      className="grid h-10 w-10 shrink-0 cursor-grab place-items-center border border-foreground/10 bg-[var(--surface)] text-foreground/40 transition hover:border-foreground/30 hover:bg-foreground/[0.04] hover:text-foreground active:cursor-grabbing"
                     >
                       <GripVertical aria-hidden="true" className="h-4 w-4" />
                     </button>
                     <Link
                       href={`/app/novels/${currentNovel.id}/chapters/${chapter.id}`}
                       onClick={collapseSidebarForReader}
-                      className="flex min-h-10 min-w-0 flex-1 items-center rounded-lg px-2 py-1 transition hover:bg-neutral-50"
+                      className="flex min-h-10 min-w-0 flex-1 items-center px-2 py-1 transition hover:bg-foreground/[0.035]"
                     >
                       <h3 className="truncate font-serif text-xl font-semibold leading-tight">
                         {chapter.title}
@@ -629,14 +626,12 @@ export default function NovelPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-2 pl-12 sm:pl-0">
                     <Status status={chapter.status} />
-                    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${chapter.published ? "border-neutral-950 bg-neutral-950 text-white" : "border-neutral-200 bg-white text-neutral-500"}`}>
-                      {chapter.published ? `Published v${chapter.publishedVersion ?? chapter.currentVersion}` : "Draft"}
-                    </span>
+                    <Badge active={Boolean(chapter.published)}>{chapter.published ? `Published v${chapter.publishedVersion ?? chapter.currentVersion}` : "Draft"}</Badge>
                     {chapter.published ? (
                       <button
                         type="button"
                         onClick={() => requestSetChapterPublished(chapter, false)}
-                        className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-950 hover:text-neutral-950"
+                        className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
                       >
                         Unpublish
                       </button>
@@ -646,7 +641,7 @@ export default function NovelPage() {
                         onClick={() => requestPublishChapter(chapter)}
                         disabled={!chapter.translations.some((version) => version.text.trim())}
                         title={chapter.translations.some((version) => version.text.trim()) ? "Publish chapter" : "Translate this chapter before publishing."}
-                        className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-950 hover:text-neutral-950 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400"
+                        className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Publish
                       </button>
@@ -656,7 +651,7 @@ export default function NovelPage() {
                       onClick={() =>
                         requestDeleteChapter(chapter.id, chapter.title)
                       }
-                      className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950"
+                      className="inline-flex min-h-10 items-center justify-center border border-transparent px-4 py-2 font-inter text-xs font-light text-foreground/60 transition hover:bg-foreground/[0.04] hover:text-foreground"
                     >
                       Delete
                     </button>
@@ -671,7 +666,7 @@ export default function NovelPage() {
                     <button
                       type="button"
                       onClick={() => setIsAddChapterOpen(true)}
-                      className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                      className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
                     >
                       Add chapter
                     </button>
@@ -703,21 +698,21 @@ export default function NovelPage() {
                   })),
                 ]}
               />
-              <label className="relative block min-w-0 flex-1 text-sm font-medium text-neutral-700 sm:min-w-64">
+              <label className="relative block min-w-0 flex-1 text-sm font-medium text-foreground/70 sm:min-w-64">
                 Search
-                <Search aria-hidden="true" className="absolute left-3 top-[2.45rem] h-4 w-4 text-neutral-400" />
+                <Search aria-hidden="true" className="absolute left-3 top-[2.45rem] h-4 w-4 text-foreground/40" />
                 <input
                   type="text"
                   value={glossarySearch}
                   onChange={(event) => setGlossarySearch(event.target.value)}
                   placeholder="Source, translation, pinyin, notes"
-                  className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-9 py-2.5 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
+                  className="mt-1.5 w-full rounded-lg border border-foreground/10 bg-[var(--surface)] px-9 py-2.5 text-sm text-foreground outline-none transition placeholder:text-foreground/40 focus:border-foreground focus:ring-4 focus:ring-foreground/5"
                 />
                 {glossarySearch ? (
                   <button
                     type="button"
                     onClick={() => setGlossarySearch("")}
-                    className="absolute right-2 top-[2.2rem] grid h-7 w-7 place-items-center rounded-md text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-950"
+                    className="absolute right-2 top-[2.2rem] grid h-7 w-7 place-items-center rounded-md text-foreground/40 transition hover:bg-foreground/[0.04] hover:text-foreground"
                     aria-label="Clear glossary search"
                   >
                     <X aria-hidden="true" className="h-4 w-4" />
@@ -729,27 +724,27 @@ export default function NovelPage() {
               {terms.map((term) => (
                 <div
                   key={term.id}
-                  className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition hover:border-neutral-300"
+                  className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-4 shadow-sm transition hover:border-foreground/25"
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h3 className="font-serif text-2xl font-semibold">
                         {term.sourceTerm}{" "}
-                        <span className="font-sans text-base font-normal text-neutral-500">
+                        <span className="font-sans text-base font-normal text-foreground/55">
                           -&gt; {term.translation}
                         </span>
                       </h3>
-                      <p className="mt-1 text-sm text-neutral-500">
+                      <p className="mt-1 text-sm text-foreground/55">
                         {term.category}
                         {term.pinyin ? ` / ${term.pinyin}` : ""}
                       </p>
                       {term.notes ? (
-                        <p className="mt-2 text-sm leading-6 text-neutral-600">
+                        <p className="mt-2 text-sm leading-6 text-foreground/60">
                           {term.notes}
                         </p>
                       ) : null}
                       {term.conflict ? (
-                        <p className="mt-2 rounded-lg bg-neutral-100 px-3 py-2 text-sm">
+                        <p className="mt-2 rounded-lg bg-foreground/[0.06] px-3 py-2 text-sm">
                           Conflict: {term.conflict}
                         </p>
                       ) : null}
@@ -758,7 +753,7 @@ export default function NovelPage() {
                       <button
                         type="button"
                         onClick={() => openEditTerm(term)}
-                        className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950"
+                        className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light transition hover:bg-foreground/[0.04]"
                       >
                         Edit
                       </button>
@@ -766,7 +761,7 @@ export default function NovelPage() {
                         <button
                           type="button"
                           onClick={() => requestTermStatus(term, "approved")}
-                          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950"
+                          className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light transition hover:bg-foreground/[0.04]"
                         >
                           Approve
                         </button>
@@ -775,7 +770,7 @@ export default function NovelPage() {
                         <button
                           type="button"
                           onClick={() => requestTermStatus(term, "rejected")}
-                          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950"
+                          className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light transition hover:bg-foreground/[0.04]"
                         >
                           Reject
                         </button>
@@ -783,7 +778,7 @@ export default function NovelPage() {
                       <button
                         type="button"
                         onClick={() => requestDeleteTerm(term)}
-                        className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950"
+                        className="inline-flex min-h-10 items-center justify-center border border-transparent px-4 py-2 font-inter text-xs font-light text-foreground/60 transition hover:bg-foreground/[0.04] hover:text-foreground"
                       >
                         Delete
                       </button>
@@ -799,7 +794,7 @@ export default function NovelPage() {
                     <button
                       type="button"
                       onClick={() => setIsAddTermOpen(true)}
-                      className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                      className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
                     >
                       Add term
                     </button>
@@ -843,7 +838,7 @@ export default function NovelPage() {
               rows={6}
             />
           ) : (
-            <p className="rounded-lg bg-neutral-100 px-3 py-2 text-sm text-neutral-500">
+            <p className="rounded-lg bg-foreground/[0.06] px-3 py-2 text-sm text-foreground/55">
               Translate the description once to make the English version
               editable here.
             </p>
@@ -852,14 +847,14 @@ export default function NovelPage() {
             <button
               type="button"
               onClick={() => setIsEditNovelOpen(false)}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!editNovelTitle.trim()}
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40"
             >
               Save changes
             </button>
@@ -873,13 +868,13 @@ export default function NovelPage() {
       >
         <form onSubmit={submitChapter} className="space-y-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-foreground/55">
               Paste source text, then open the chapter to translate it.
             </p>
             <button
               type="button"
               onClick={pasteChapter}
-              className="rounded-lg border border-neutral-200 px-3 py-2 text-sm font-semibold transition hover:border-neutral-950"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
             >
               Paste
             </button>
@@ -898,7 +893,7 @@ export default function NovelPage() {
             rows={12}
             className="font-serif leading-7"
           />
-          <div className="text-sm text-neutral-500">
+          <div className="text-sm text-foreground/55">
             {rawText.length.toLocaleString()} /{" "}
             {DEFAULT_MAX_CHAPTER_CHARACTERS.toLocaleString()} characters
           </div>
@@ -906,7 +901,7 @@ export default function NovelPage() {
             <button
               type="button"
               onClick={() => setIsAddChapterOpen(false)}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
             >
               Cancel
             </button>
@@ -916,7 +911,7 @@ export default function NovelPage() {
                 !rawText.trim() ||
                 rawText.length > DEFAULT_MAX_CHAPTER_CHARACTERS
               }
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40"
             >
               Add chapter
             </button>
@@ -954,14 +949,14 @@ export default function NovelPage() {
             <button
               type="button"
               onClick={() => setIsAddTermOpen(false)}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!sourceTerm.trim() || !translation.trim()}
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40"
             >
               Save term
             </button>
@@ -974,9 +969,9 @@ export default function NovelPage() {
         onClose={() => setEditingTerm(null)}
       >
         <form onSubmit={submitEditTerm} className="space-y-4">
-          <div className="rounded-lg bg-neutral-100 p-3 text-sm text-neutral-600">
+          <div className="rounded-lg bg-foreground/[0.06] p-3 text-sm text-foreground/60">
             Source term:{" "}
-            <span className="font-serif text-lg font-semibold text-neutral-950">
+            <span className="font-serif text-lg font-semibold text-foreground">
               {editingTerm?.sourceTerm}
             </span>
           </div>
@@ -995,14 +990,14 @@ export default function NovelPage() {
             <button
               type="button"
               onClick={() => setEditingTerm(null)}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!editTranslation.trim()}
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40"
             >
               Save changes
             </button>
@@ -1016,7 +1011,7 @@ export default function NovelPage() {
         overflow="visible"
       >
         <form onSubmit={submitPublishVersion} className="space-y-4">
-          <p className="text-sm leading-6 text-neutral-500">
+          <p className="text-sm leading-6 text-foreground/55">
             Choose the translation version that should be visible in the reader app.
           </p>
           <CustomSelect
@@ -1035,14 +1030,14 @@ export default function NovelPage() {
             <button
               type="button"
               onClick={() => setPublishingChapter(null)}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!publishVersion}
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40"
             >
               Continue
             </button>

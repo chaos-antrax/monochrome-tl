@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useLibrary, useSettings } from "../../workspace/state";
 import {
+  Badge,
   Card,
   ConfirmDialog,
   CustomSelect,
@@ -70,10 +71,10 @@ export default function LibraryPage() {
 
   return (
     <div className="space-y-5">
-      <header className="rounded-lg border border-neutral-200 bg-white/90 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
+      <header className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">
+            <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">
               Library
             </p>
             <h1 className="mt-2 font-serif text-4xl font-semibold">Novels</h1>
@@ -81,12 +82,12 @@ export default function LibraryPage() {
           <button
             type="button"
             onClick={openCreate}
-            className="rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800"
+            className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-5 py-2.5 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
           >
             New novel
           </button>
         </div>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-500">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-foreground/55">
           Your collection of novels. Click &quot;New novel&quot; to create a new project,
           or select an existing novel to view its chapters, glossary terms, and
           translations.
@@ -101,7 +102,7 @@ export default function LibraryPage() {
                 <h2 className="font-serif text-2xl font-semibold">
                   {novel.title}
                 </h2>
-                <p className="mt-1 text-sm text-neutral-500">
+                <p className="mt-1 text-sm text-foreground/55">
                   {novel.chapters.length} chapters / {novel.chapters.filter((chapter) => chapter.published).length} published /{" "}
                   {
                     novel.glossary.filter((term) => term.status === "pending")
@@ -111,9 +112,7 @@ export default function LibraryPage() {
                 </p>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.12em] ${novel.published ? "border-neutral-950 bg-neutral-950 text-white" : "border-neutral-200 bg-white text-neutral-500"}`}>
-                  {novel.published ? "Published" : "Draft"}
-                </span>
+                <Badge active={Boolean(novel.published)}>{novel.published ? "Published" : "Draft"}</Badge>
                 <Status
                   status={
                     novel.chapters.length === 0
@@ -131,29 +130,29 @@ export default function LibraryPage() {
                 />
               </div>
             </div>
-            <p className="mt-4 line-clamp-3 text-sm leading-6 text-neutral-600">
+            <p className="mt-4 line-clamp-3 text-sm leading-6 text-foreground/60">
               {(novel.descriptionTranslated ?? novel.description) ||
                 "No description yet."}
             </p>
             {novel.descriptionTranslated ? (
-              <p className="mt-2 line-clamp-2 font-serif text-sm leading-6 text-neutral-500">
+              <p className="mt-2 line-clamp-2 font-serif text-sm leading-6 text-foreground/55">
                 Chinese: {novel.description || "No source description."}
               </p>
             ) : null}
-            <p className="mt-4 text-xs uppercase tracking-[0.16em] text-neutral-500">
+            <p className="mt-4 text-xs uppercase tracking-[0.16em] text-foreground/55">
               Style: {getStyle(novel)?.name ?? "Plain"}
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <Link
                 href={`/app/novels/${novel.id}`}
-                className="rounded-lg bg-neutral-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
               >
                 View
               </Link>
               <button
                 type="button"
                 onClick={() => setDeletingNovelId(novel.id)}
-                className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950"
+                className="inline-flex min-h-10 items-center justify-center border border-transparent px-4 py-2 font-inter text-xs font-light text-foreground/60 transition hover:bg-foreground/[0.04] hover:text-foreground"
               >
                 Delete
               </button>
@@ -168,7 +167,7 @@ export default function LibraryPage() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
               >
                 New novel
               </button>
@@ -200,14 +199,14 @@ export default function LibraryPage() {
             <button
               type="button"
               onClick={() => setIsCreateOpen(false)}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!title.trim()}
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40"
             >
               Create novel
             </button>

@@ -41,12 +41,12 @@ export default function AccountPage() {
 
   return (
     <div className="space-y-5">
-      <header className="rounded-lg border border-neutral-200 bg-white/90 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
-        <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">
+      <header className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
+        <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">
           Settings
         </p>
         <h1 className="mt-2 font-serif text-4xl font-semibold">Account</h1>
-        <p className="mt-3 max-w-4xl text-sm leading-6 text-neutral-500">
+        <p className="mt-3 max-w-4xl text-sm leading-6 text-foreground/55">
           Manage your account settings and API configurations.
         </p>
       </header>
@@ -61,7 +61,7 @@ export default function AccountPage() {
                 setAccount((current) => ({ ...current, email }))
               }
             />
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-foreground/60">
               Session expires: {labelDate(account.sessionExpiresAt)}
             </p>
             <LoadingButton
@@ -69,7 +69,7 @@ export default function AccountPage() {
               loading={isSigningOut}
               loadingLabel="Signing out ..."
               onClick={() => void handleSignOut()}
-              className="rounded-lg border border-neutral-200 px-4 py-3 text-sm font-semibold transition hover:border-neutral-950 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04] disabled:cursor-not-allowed disabled:bg-foreground/[0.06] disabled:text-foreground/35"
             >
               Sign out
             </LoadingButton>
@@ -77,7 +77,7 @@ export default function AccountPage() {
         </Card>
         <form
           onSubmit={submitProvider}
-          className="rounded-lg border border-neutral-200 bg-white p-5 shadow-[0_18px_60px_rgba(0,0,0,0.05)]"
+          className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.05)]"
         >
           <h2 className="font-serif text-2xl font-semibold">Provider</h2>
           <div className="mt-4 space-y-3">
@@ -102,7 +102,7 @@ export default function AccountPage() {
               type="password"
               placeholder={account.apiKeyMasked ?? "Paste key"}
             />
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-foreground/60">
               Saved key: {account.apiKeyMasked ?? "None"}
             </p>
           </div>
@@ -111,7 +111,7 @@ export default function AccountPage() {
             loading={isSavingProvider}
             loadingLabel="Saving provider ..."
             disabled={!apiKey.trim()}
-            className="mt-4 w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
+            className="mt-4 w-full inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-5 py-2.5 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:bg-foreground/10 disabled:text-foreground/40"
           >
             Save provider
           </LoadingButton>

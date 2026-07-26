@@ -6,9 +6,9 @@ const labelDate = (value?: string) =>
   value ? new Date(value).toLocaleString() : "Never";
 const cost = (value = 0) => `$${value.toFixed(4)}`;
 const secondaryButton =
-  "rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 transition hover:border-neutral-950 hover:text-neutral-950";
+  "inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04] disabled:cursor-not-allowed disabled:opacity-40";
 const primaryButton =
-  "rounded-lg border border-neutral-950 bg-neutral-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-200 disabled:text-neutral-500";
+  "inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40";
 
 export function ChapterPanel({
   chapter,
@@ -49,7 +49,7 @@ export function ChapterPanel({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <Status status={chapter.status} />
-            <span className="text-xs uppercase tracking-[0.16em] text-neutral-500">
+            <span className="text-xs uppercase tracking-[0.16em] text-foreground/55">
               Current chapter
             </span>
           </div>
@@ -79,7 +79,7 @@ export function ChapterPanel({
               onClick={onPublish}
               disabled={!translation}
               title={translation ? "Publish chapter" : "Translate this chapter before publishing."}
-              className={`${secondaryButton} flex items-center gap-2 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400`}
+              className={`${secondaryButton} flex items-center gap-2 disabled:cursor-not-allowed disabled:bg-foreground/[0.06] disabled:text-foreground/35`}
             >
               <Globe2 size={16} /> Publish
             </button>
@@ -111,13 +111,13 @@ export function ChapterPanel({
         <button
           type="button"
           onClick={onRegenerate}
-          className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950 hover:text-neutral-950"
+          className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
         >
           Regenerate
         </button>
       </div>
 
-      <div className="mt-5 border-t border-neutral-200 pt-5">
+      <div className="mt-5 border-t border-foreground/10 pt-5">
         {readerMode === "raw" ? (
           <Reader text={chapter.rawText} fontSize={fontSize} lineHeight={lineHeight} />
         ) : null}
@@ -146,13 +146,13 @@ export function ChapterPanel({
         {readerMode === "diff" ? (
           <div className="hidden gap-4 xl:grid xl:grid-cols-2">
             <div>
-              <p className="mb-2 text-xs uppercase tracking-[0.16em] text-neutral-500">
+              <p className="mb-2 text-xs uppercase tracking-[0.16em] text-foreground/55">
                 Raw
               </p>
               <Reader text={chapter.rawText} fontSize={fontSize - 1} lineHeight={lineHeight} />
             </div>
             <div>
-              <p className="mb-2 text-xs uppercase tracking-[0.16em] text-neutral-500">
+              <p className="mb-2 text-xs uppercase tracking-[0.16em] text-foreground/55">
                 Translated
               </p>
               {translation ? (
@@ -166,8 +166,8 @@ export function ChapterPanel({
       </div>
 
       {chapter.translations.length ? (
-        <div className="mt-5 border-t border-neutral-200 pt-4">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-neutral-500">
+        <div className="mt-5 border-t border-foreground/10 pt-4">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-foreground/55">
             Versions
           </h3>
           <div className="mt-3 space-y-2">
@@ -176,7 +176,7 @@ export function ChapterPanel({
                 key={version.version}
                 type="button"
                 onClick={() => onRevert(version.version)}
-                className={`w-full rounded-lg border p-3 text-left text-sm transition ${version.version === chapter.currentVersion ? "border-neutral-950 bg-neutral-50 shadow-sm" : "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50"}`}
+                className={`w-full rounded-lg border p-3 text-left text-sm transition ${version.version === chapter.currentVersion ? "border-foreground bg-foreground/[0.045]" : "border-foreground/10 bg-[var(--surface)] hover:border-foreground/25 hover:bg-foreground/[0.035]"}`}
               >
                 Version {version.version} / {version.provider} / {version.model}{" "}
                 / {cost(version.estimatedCost)} / {labelDate(version.createdAt)}

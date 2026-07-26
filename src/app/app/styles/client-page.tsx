@@ -109,14 +109,14 @@ export default function StylesPage() {
         rows={12}
       />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-foreground/55">
           {content.length} / {MAX_STYLE_GUIDE_CHARACTERS}
         </p>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => setIsCreateOpen(false)}
-            className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+            className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
           >
             Cancel
           </button>
@@ -127,7 +127,7 @@ export default function StylesPage() {
               !content.trim() ||
               content.length > MAX_STYLE_GUIDE_CHARACTERS
             }
-            className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+            className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40"
           >
             Create style
           </button>
@@ -138,10 +138,10 @@ export default function StylesPage() {
 
   return (
     <div className="space-y-5">
-      <header className="rounded-lg border border-neutral-200 bg-white/90 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
+      <header className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">
+            <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">
               Style Guides
             </p>
             <h1 className="mt-2 font-serif text-4xl font-semibold">
@@ -151,12 +151,12 @@ export default function StylesPage() {
           <button
             type="button"
             onClick={openCreate}
-            className="rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800"
+            className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-5 py-2.5 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
           >
             New style
           </button>
         </div>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-500">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-foreground/55">
           Your preferred of style guides. Create a new style guide to define a
           reusable literary tone for your translations, or select an existing
           style guide to edit its content.
@@ -167,24 +167,24 @@ export default function StylesPage() {
         {styles.map((style) => (
           <Card key={style.id}>
             <h2 className="font-serif text-2xl font-semibold">{style.name}</h2>
-            <p className="mt-3 text-sm leading-6 text-neutral-600">
+            <p className="mt-3 text-sm leading-6 text-foreground/60">
               {style.content}
             </p>
-            <p className="mt-4 text-xs uppercase tracking-[0.16em] text-neutral-500">
+            <p className="mt-4 text-xs uppercase tracking-[0.16em] text-foreground/55">
               Updated {labelDate(style.updatedAt)}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => openEdit(style)}
-                className="rounded-lg border border-neutral-200 px-3 py-2 text-sm transition hover:border-neutral-950"
+                className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light transition hover:bg-foreground/[0.04]"
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => requestDeleteStyle(style)}
-                className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950"
+                className="inline-flex min-h-10 items-center justify-center border border-transparent px-4 py-2 font-inter text-xs font-light text-foreground/60 transition hover:bg-foreground/[0.04] hover:text-foreground"
               >
                 Delete
               </button>
@@ -199,7 +199,7 @@ export default function StylesPage() {
               <button
                 type="button"
                 onClick={openCreate}
-                className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
               >
                 New style
               </button>
@@ -230,14 +230,14 @@ export default function StylesPage() {
             rows={12}
           />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-foreground/55">
               {editContent.length} / {MAX_STYLE_GUIDE_CHARACTERS}
             </p>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setEditing(null)}
-                className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+                className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
               >
                 Cancel
               </button>
@@ -248,7 +248,7 @@ export default function StylesPage() {
                   !editContent.trim() ||
                   editContent.length > MAX_STYLE_GUIDE_CHARACTERS
                 }
-                className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+                className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40"
               >
                 Save changes
               </button>

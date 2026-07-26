@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowRight, MessageSquareText, RefreshCw, Search } from "lucide-react";
 import type { AdminContributionListItem, AdminContributionListResponse, ContributionRequestStatus } from "@/lib/contributions/types";
-import { Card, CustomSelect, Empty, Input, LoadingButton, secondaryButton, Status, subtleButton } from "../../workspace/ui";
+import { Badge, Card, CustomSelect, Empty, Input, LoadingButton, secondaryButton, Status, subtleButton } from "../../workspace/ui";
 import { useToast } from "../../workspace/state";
 
 type Tab = "pending" | "active" | "rejected" | "all";
@@ -92,21 +92,25 @@ export function ContributionsClient() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Admin</p>
-          <h1 className="mt-1 font-serif text-4xl font-semibold text-neutral-950">Contributions</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-600">Review reader translation requests, accept work you will own, and continue accepted request chats.</p>
+      <header className="border border-foreground/10 bg-[var(--surface)] p-6 shadow-none">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">Admin</p>
+            <h1 className="mt-2 font-serif text-4xl font-semibold text-foreground">Contributions</h1>
+          </div>
+          <button type="button" onClick={() => load()} className={secondaryButton}>
+            <span className="inline-flex items-center gap-2"><RefreshCw className="h-4 w-4" />Refresh</span>
+          </button>
         </div>
-        <button type="button" onClick={() => load()} className={secondaryButton}>
-          <span className="inline-flex items-center gap-2"><RefreshCw className="h-4 w-4" />Refresh</span>
-        </button>
-      </div>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-foreground/55">
+          Review reader translation requests, accept work you will own, and continue accepted request chats.
+        </p>
+      </header>
 
       <Card className="space-y-4">
         <div className="flex flex-wrap gap-2">
           {tabs.map((item) => (
-            <button key={item.value} type="button" onClick={() => setTab(item.value)} className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${tab === item.value ? "bg-neutral-950 text-white" : "bg-neutral-100 text-neutral-600 hover:text-neutral-950"}`}>
+            <button key={item.value} type="button" onClick={() => setTab(item.value)} className={`border px-4 py-2 font-inter text-xs font-light transition ${tab === item.value ? "border-foreground bg-foreground text-background" : "border-foreground/15 bg-transparent text-foreground/60 hover:bg-foreground/[0.04] hover:text-foreground"}`}>
               {item.label}
             </button>
           ))}
@@ -114,7 +118,7 @@ export function ContributionsClient() {
         <div className="grid gap-3 lg:grid-cols-[1fr_220px_220px]">
           <div className="relative">
             <Input label="Search" value={search} onChange={setSearch} placeholder="Novel title, description, reader email" />
-            <Search aria-hidden="true" className="pointer-events-none absolute bottom-3 right-3 h-4 w-4 text-neutral-400" />
+            <Search aria-hidden="true" className="pointer-events-none absolute bottom-3 right-3 h-4 w-4 text-foreground/40" />
           </div>
           <CustomSelect label="Type" value={type} onChange={setType} options={typeOptions} />
           <CustomSelect label="Sort" value={sort} onChange={setSort} options={sortOptions} />
@@ -123,7 +127,7 @@ export function ContributionsClient() {
 
       <div className="grid gap-3">
         {loading ? (
-          <Card><p className="text-sm text-neutral-500">Loading contribution requests ...</p></Card>
+          <Card><p className="text-sm text-foreground/55">Loading contribution requests ...</p></Card>
         ) : items.length ? (
           items.map((item) => (
             <Card key={item.id} className="p-4 sm:p-5">
@@ -131,11 +135,11 @@ export function ContributionsClient() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Status status={item.status} />
-                    <span className="rounded-full border border-neutral-200 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">{item.type}</span>
+                    <Badge>{item.type}</Badge>
                   </div>
-                  <h2 className="mt-3 truncate font-serif text-2xl font-semibold text-neutral-950">{item.novelTitle}</h2>
-                  <p className="mt-2 max-h-16 overflow-hidden text-sm leading-6 text-neutral-600">{item.description}</p>
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+                  <h2 className="mt-3 truncate font-serif text-2xl font-semibold text-foreground">{item.novelTitle}</h2>
+                  <p className="mt-2 max-h-16 overflow-hidden text-sm leading-6 text-foreground/60">{item.description}</p>
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-foreground/55">
                     <span>Reader: {item.user.username || "Unnamed reader"}</span>
                     <span>Email: {item.user.email}</span>
                     <span>Submitted {formatDate(item.createdAt)}</span>

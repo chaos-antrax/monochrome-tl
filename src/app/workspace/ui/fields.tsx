@@ -16,43 +16,34 @@ type FieldProps = {
   type?: string;
 };
 
-export function Input({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-}: FieldProps) {
+const labelClass = "block text-xs font-light uppercase tracking-[0.14em] text-foreground/60";
+const fieldClass =
+  "mt-1.5 min-h-11 w-full border border-foreground/15 bg-background px-3 py-2.5 text-sm font-light text-foreground outline-none transition placeholder:text-foreground/35 focus:border-foreground/55 focus:ring-0 disabled:cursor-not-allowed disabled:bg-foreground/[0.04] disabled:text-foreground/35";
+
+export function Input({ label, value, onChange, placeholder, type = "text" }: FieldProps) {
   return (
-    <label className="block text-sm font-medium text-neutral-700">
+    <label className={labelClass}>
       {label}
       <input
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5"
+        className={fieldClass}
         placeholder={placeholder}
       />
     </label>
   );
 }
 
-export function Textarea({
-  label,
-  value,
-  onChange,
-  placeholder,
-  rows = 5,
-  className = "",
-}: FieldProps & { rows?: number; className?: string }) {
+export function Textarea({ label, value, onChange, placeholder, rows = 5, className = "" }: FieldProps & { rows?: number; className?: string }) {
   return (
-    <label className="mt-3 block text-sm font-medium text-neutral-700">
+    <label className={`mt-3 ${labelClass}`}>
       {label}
       <textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
         rows={rows}
-        className={`mt-1.5 w-full resize-y rounded-lg border border-neutral-200 bg-white px-3 py-2.5 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5 ${className}`}
+        className={`${fieldClass} resize-y normal-case tracking-normal ${className}`}
         placeholder={placeholder}
       />
     </label>
@@ -108,10 +99,7 @@ export function CustomSelect({
 
   return (
     <div ref={rootRef} className={`relative ${className}`}>
-      <label
-        id={`${id}-label`}
-        className="block text-sm font-medium text-neutral-700"
-      >
+      <label id={`${id}-label`} className={labelClass}>
         {label}
       </label>
       <button
@@ -121,29 +109,20 @@ export function CustomSelect({
         aria-haspopup="listbox"
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
-        className={`mt-1.5 flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-left text-sm text-neutral-950 outline-none transition duration-200 hover:border-neutral-300 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 ${buttonClassName}`}
+        className={`mt-1.5 flex min-h-11 w-full items-center justify-between gap-3 border border-foreground/15 bg-background px-3 py-2.5 text-left text-sm font-light text-foreground outline-none transition duration-200 hover:border-foreground/35 focus:border-foreground/55 disabled:cursor-not-allowed disabled:bg-foreground/[0.04] disabled:text-foreground/35 ${buttonClassName}`}
       >
-        <span className="min-w-0 truncate">
-          {selected?.label ?? placeholder}
-        </span>
-        <ChevronDown
-          aria-hidden="true"
-          className={`h-4 w-4 shrink-0 text-neutral-400 transition duration-200 ${open ? "rotate-180 text-neutral-950" : ""}`}
-        />
+        <span className="min-w-0 truncate">{selected?.label ?? placeholder}</span>
+        <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-foreground/40 transition duration-200 ${open ? "rotate-180 text-foreground" : ""}`} />
       </button>
       {open ? (
         <div
-          className={`absolute left-0 right-0 z-50 rounded-lg border border-neutral-200 bg-white p-1 shadow-[0_18px_55px_rgba(0,0,0,0.16)] ${
+          className={`absolute left-0 right-0 z-50 border border-foreground/15 bg-background p-1 shadow-[0_18px_55px_rgba(0,0,0,0.16)] ${
             dropdownPlacement === "up"
               ? "bottom-[calc(70%+2px)] origin-bottom animate-select-pop-up"
               : "top-[calc(100%+2px)] origin-top animate-select-pop"
           }`}
         >
-          <div
-            role="listbox"
-            aria-labelledby={`${id}-label`}
-            className="max-h-[11.75rem] overflow-y-auto overscroll-contain"
-          >
+          <div role="listbox" aria-labelledby={`${id}-label`} className="max-h-[11.75rem] overflow-y-auto overscroll-contain">
             {options.map((option) => {
               const active = option.value === value;
               return (
@@ -154,26 +133,17 @@ export function CustomSelect({
                   aria-selected={active}
                   disabled={option.disabled}
                   onClick={() => selectValue(option.value)}
-                  className={`flex w-full items-start justify-between gap-3 rounded-md px-3 py-2.5 text-left text-sm transition duration-150 ${active ? "bg-neutral-950 text-white" : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950"} disabled:cursor-not-allowed disabled:text-neutral-300 disabled:hover:bg-transparent`}
+                  className={`flex w-full items-start justify-between gap-3 px-3 py-2.5 text-left text-sm font-light transition duration-150 ${active ? "bg-foreground text-background" : "text-foreground/70 hover:bg-foreground/[0.06] hover:text-foreground"} disabled:cursor-not-allowed disabled:text-foreground/25 disabled:hover:bg-transparent`}
                 >
                   <span className="min-w-0">
-                    <span className="block truncate font-medium">
-                      {option.label}
-                    </span>
+                    <span className="block truncate">{option.label}</span>
                     {option.description ? (
-                      <span
-                        className={`mt-0.5 block text-xs leading-5 ${active ? "text-white/70" : "text-neutral-500"}`}
-                      >
+                      <span className={`mt-0.5 block text-xs leading-5 ${active ? "text-background/70" : "text-foreground/50"}`}>
                         {option.description}
                       </span>
                     ) : null}
                   </span>
-                  {active ? (
-                    <Check
-                      aria-hidden="true"
-                      className="mt-0.5 h-4 w-4 shrink-0"
-                    />
-                  ) : null}
+                  {active ? <Check aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" /> : null}
                 </button>
               );
             })}

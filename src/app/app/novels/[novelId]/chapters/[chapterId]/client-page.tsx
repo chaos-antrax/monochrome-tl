@@ -191,12 +191,12 @@ export default function ReaderPage() {
   if (!chapter.rawText && chapterLoadError?.chapterId !== chapter.id)
     return (
       <Card>
-        <div className="h-3 w-24 animate-pulse rounded bg-neutral-200" />
-        <div className="mt-4 h-8 w-72 max-w-full animate-pulse rounded bg-neutral-200" />
+        <div className="h-3 w-24 animate-pulse rounded bg-foreground/10" />
+        <div className="mt-4 h-8 w-72 max-w-full animate-pulse rounded bg-foreground/10" />
         <div className="mt-8 space-y-3">
-          <div className="h-4 animate-pulse rounded bg-neutral-100" />
-          <div className="h-4 animate-pulse rounded bg-neutral-100" />
-          <div className="h-4 w-2/3 animate-pulse rounded bg-neutral-100" />
+          <div className="h-4 animate-pulse rounded bg-foreground/[0.06]" />
+          <div className="h-4 animate-pulse rounded bg-foreground/[0.06]" />
+          <div className="h-4 w-2/3 animate-pulse rounded bg-foreground/[0.06]" />
         </div>
       </Card>
     );
@@ -441,33 +441,33 @@ export default function ReaderPage() {
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-2rem)] min-w-0 max-w-full gap-5 overflow-x-hidden xl:grid-cols-[280px_minmax(0,1fr)]">
-      <aside className="flex min-w-0 max-w-full flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.05)] xl:sticky xl:top-4 xl:h-[calc(100vh-2rem)]">
+    <div className="grid min-h-[calc(100vh-2rem)] min-w-0 max-w-full gap-5 overflow-x-hidden xl:h-[calc(100vh-2rem)] xl:min-h-0 xl:grid-cols-[280px_minmax(0,1fr)]">
+      <aside className="flex min-w-0 max-w-full flex-col overflow-hidden border border-foreground/10 bg-[var(--surface)] p-4 shadow-none xl:sticky xl:top-4 xl:h-[calc(100vh-2rem)] xl:min-h-0">
         <Link
           href={`/app/novels/${currentNovel.id}`}
-          className="w-fit text-sm font-semibold text-neutral-500 hover:text-neutral-950"
+          className="w-fit text-sm font-semibold text-foreground/55 transition hover:text-foreground"
         >
           Back to novel
         </Link>
         <h1 className="mt-4 min-w-0 truncate font-serif text-2xl font-semibold">
           {currentNovel.title}
         </h1>
-        <div ref={chapterListRef} onScroll={saveChapterListScroll} className="mt-4 flex max-h-[13rem] min-h-0 min-w-0 max-w-full flex-col gap-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 xl:max-h-none xl:flex-1">
+        <div ref={chapterListRef} onScroll={saveChapterListScroll} className="mt-4 flex max-h-[13rem] min-h-0 min-w-0 max-w-full flex-col gap-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 xl:max-h-none xl:flex-1 xl:pr-1">
           {currentNovel.chapters.map((item) => (
             <Link
               key={item.id}
               href={`/app/novels/${currentNovel.id}/chapters/${item.id}`}
               scroll={false}
               onClick={saveChapterListScroll}
-              className={`block min-h-16 min-w-0 max-w-full shrink-0 overflow-hidden rounded-lg px-3 py-2 text-sm transition ${item.id === currentChapter.id ? "bg-neutral-950 text-white" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"}`}
+              className={`block min-h-16 min-w-0 max-w-full shrink-0 overflow-hidden rounded-lg px-3 py-2 text-sm transition ${item.id === currentChapter.id ? "bg-foreground text-background" : "text-foreground/60 hover:bg-foreground/[0.045] hover:text-foreground"}`}
             >
               <span className="block min-w-0 max-w-full truncate font-medium">{item.title}</span>
               <span className="block truncate text-xs opacity-60">{item.status}</span>
             </Link>
           ))}
         </div>
-        <div className="mt-5 border-t border-neutral-200 pt-4 xl:mt-auto">
-          <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">
+        <div className="mt-5 border-t border-foreground/10 pt-4 xl:mt-auto">
+          <p className="text-xs uppercase tracking-[0.18em] text-foreground/55">
             Reader
           </p>
           <div className="mt-3 grid gap-3">
@@ -489,13 +489,13 @@ export default function ReaderPage() {
         </div>
       </aside>
 
-      <Card className="min-h-[calc(100vh-2rem)] min-w-0 max-w-full overflow-hidden">
+      <Card className="flex min-h-[calc(100vh-2rem)] min-w-0 max-w-full flex-col overflow-hidden xl:h-[calc(100vh-2rem)] xl:min-h-0">
         <ChapterNavigation
           novelId={currentNovel.id}
           previousChapter={previousChapter}
           nextChapter={nextChapter}
         />
-        <div className="mt-5 border-t border-neutral-200 pt-5">
+        <div className="mt-5 min-h-0 flex-1 overflow-y-auto border-t border-foreground/10 pt-5">
           <ChapterPanel
             chapter={currentChapter}
             readerMode={mode}
@@ -518,7 +518,7 @@ export default function ReaderPage() {
             progress={chapterProgress}
           />
         </div>
-        <div className="mt-6 border-t border-neutral-200 pt-5">
+        <div className="mt-6 border-t border-foreground/10 pt-5">
           <ChapterNavigation
             novelId={currentNovel.id}
             previousChapter={previousChapter}
@@ -534,7 +534,7 @@ export default function ReaderPage() {
               type="button"
               onClick={saveContentEdit}
               disabled={!editRawText.trim() || (Boolean(currentTranslation) && !editTranslatedText.trim())}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-neutral-950 px-4 text-sm font-semibold text-white shadow-[0_14px_45px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-neutral-800 disabled:translate-y-0 disabled:bg-neutral-200 disabled:text-neutral-500"
+              className="inline-flex min-h-11 items-center justify-center gap-2 border border-foreground bg-foreground px-5 py-2.5 font-inter text-xs font-light text-background shadow-[0_14px_45px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-foreground/90 disabled:translate-y-0 disabled:bg-foreground/10 disabled:text-foreground/40"
               aria-label="Save chapter edits"
             >
               <Save aria-hidden="true" className="h-5 w-5" />
@@ -543,7 +543,7 @@ export default function ReaderPage() {
             <button
               type="button"
               onClick={cancelContentEdit}
-              className="inline-flex h-12 items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 text-sm font-semibold text-neutral-800 shadow-[0_14px_45px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:border-neutral-950"
+              className="inline-flex min-h-11 items-center justify-center gap-2 border border-foreground/15 bg-background/90 px-5 py-2.5 font-inter text-xs font-light text-foreground shadow-[0_14px_45px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:bg-foreground/[0.04]"
               aria-label="Cancel chapter edits"
             >
               <X aria-hidden="true" className="h-5 w-5" />
@@ -555,7 +555,7 @@ export default function ReaderPage() {
             <button
               type="button"
               onClick={() => setIsGlossaryOpen(true)}
-              className="inline-flex h-12 items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 text-sm font-semibold text-neutral-800 shadow-[0_14px_45px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:border-neutral-950"
+              className="inline-flex min-h-11 items-center justify-center gap-2 border border-foreground/15 bg-background/90 px-5 py-2.5 font-inter text-xs font-light text-foreground shadow-[0_14px_45px_rgba(0,0,0,0.14)] transition hover:-translate-y-0.5 hover:bg-foreground/[0.04]"
               aria-label="Open reader glossary"
             >
               <BookOpenText aria-hidden="true" className="h-5 w-5" />
@@ -564,7 +564,7 @@ export default function ReaderPage() {
             <button
               type="button"
               onClick={startContentEdit}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-neutral-950 px-4 text-sm font-semibold text-white shadow-[0_14px_45px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-neutral-800"
+              className="inline-flex min-h-11 items-center justify-center gap-2 border border-foreground bg-foreground px-5 py-2.5 font-inter text-xs font-light text-background shadow-[0_14px_45px_rgba(0,0,0,0.22)] transition hover:-translate-y-0.5 hover:bg-foreground/90"
               aria-label="Edit chapter content"
             >
               <Edit3 aria-hidden="true" className="h-5 w-5" />
@@ -575,10 +575,10 @@ export default function ReaderPage() {
       </div>
 
       {isContentEditing ? (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-[#f7f7f5] text-neutral-950 animate-page">
-          <div className="border-b border-neutral-200 bg-[#f7f7f5]/95 px-5 py-4 backdrop-blur sm:px-8">
+        <div className="fixed inset-0 z-[60] flex flex-col bg-background text-foreground animate-page">
+          <div className="border-b border-foreground/10 bg-background/95 px-5 py-4 backdrop-blur sm:px-8">
             <div className="mr-28 sm:mr-48">
-              <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Editing chapter</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">Editing chapter</p>
               <h2 className="mt-1 truncate font-serif text-2xl font-semibold">{currentChapter.title}</h2>
             </div>
             {currentTranslation ? (
@@ -601,7 +601,7 @@ export default function ReaderPage() {
                 aria-label="Raw Chinese text"
                 value={editRawText}
                 onChange={(event) => setEditRawText(event.target.value)}
-                className="h-full w-full resize-none border-0 bg-transparent px-0 py-4 font-serif text-neutral-950 outline-none selection:bg-neutral-950 selection:text-white placeholder:text-neutral-400"
+                className="h-full w-full resize-none border-0 bg-transparent px-0 py-4 font-serif text-foreground outline-none selection:bg-foreground selection:text-background placeholder:text-foreground/40"
                 style={{ fontSize, lineHeight, tabSize: 2 }}
                 spellCheck={false}
               />
@@ -611,14 +611,14 @@ export default function ReaderPage() {
                 aria-label="Translated text"
                 value={editTranslatedText}
                 onChange={(event) => setEditTranslatedText(event.target.value)}
-                className="h-full w-full resize-none border-0 bg-transparent px-0 py-4 font-serif text-neutral-950 outline-none selection:bg-neutral-950 selection:text-white placeholder:text-neutral-400"
+                className="h-full w-full resize-none border-0 bg-transparent px-0 py-4 font-serif text-foreground outline-none selection:bg-foreground selection:text-background placeholder:text-foreground/40"
                 style={{ fontSize, lineHeight, tabSize: 2 }}
                 spellCheck={false}
               />
             )}
             {cursorIndicator?.target === editTarget ? (
               <div
-                className="pointer-events-none absolute inset-x-0 bg-neutral-950/10 animate-cursor-row-highlight"
+                className="pointer-events-none absolute inset-x-0 bg-foreground/10 animate-cursor-row-highlight"
                 style={{ top: cursorIndicator.top, height: cursorIndicator.height }}
                 aria-hidden="true"
               />
@@ -628,35 +628,35 @@ export default function ReaderPage() {
       ) : null}
 
       {isGlossaryOpen ? (
-        <div className="fixed inset-0 z-[70] flex justify-end bg-neutral-950/25 backdrop-blur-sm animate-page" role="dialog" aria-modal="true" aria-label="Reader glossary">
+        <div className="fixed inset-0 z-[70] flex justify-end bg-foreground/25 backdrop-blur-sm animate-page" role="dialog" aria-modal="true" aria-label="Reader glossary">
           <button type="button" className="absolute inset-0 cursor-default" aria-label="Close glossary" onClick={() => setIsGlossaryOpen(false)} />
-          <aside className="relative flex h-full w-[min(100vw,31rem)] max-w-full flex-col border-l border-neutral-200 bg-white shadow-[0_32px_100px_rgba(0,0,0,0.24)] animate-slide-in-right">
-            <div className="border-b border-neutral-200 p-5">
+          <aside className="relative flex h-full w-[min(100vw,31rem)] max-w-full flex-col border-l border-foreground/10 bg-[var(--surface)] shadow-[0_32px_100px_rgba(0,0,0,0.24)] animate-slide-in-right">
+            <div className="border-b border-foreground/10 p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Reader glossary</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">Reader glossary</p>
                   <h2 className="mt-1 font-serif text-2xl font-semibold">{currentNovel.title}</h2>
                 </div>
-                <button type="button" onClick={() => setIsGlossaryOpen(false)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label="Close glossary">
+                <button type="button" onClick={() => setIsGlossaryOpen(false)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-foreground/55 transition hover:bg-foreground/[0.04] hover:text-foreground" aria-label="Close glossary">
                   <X aria-hidden="true" className="h-4 w-4" />
                 </button>
               </div>
               <div className="mt-4 space-y-3">
                 <Mode modes={["approved", "pending", "rejected"]} value={glossaryStatus} onChange={(value) => setGlossaryStatus(value as GlossaryStatus)} />
-                <label className="relative block text-sm font-medium text-neutral-700">
+                <label className="relative block text-sm font-medium text-foreground/70">
                   Search
-                  <Search aria-hidden="true" className="absolute left-3 top-[2.45rem] h-4 w-4 text-neutral-400" />
-                  <input type="text" value={glossarySearch} onChange={(event) => setGlossarySearch(event.target.value)} placeholder="Source, translation, pinyin, notes" className="mt-1.5 w-full rounded-lg border border-neutral-200 bg-white px-9 py-2.5 text-sm text-neutral-950 outline-none transition placeholder:text-neutral-400 focus:border-neutral-950 focus:ring-4 focus:ring-neutral-950/5" />
-                  {glossarySearch ? <button type="button" onClick={() => setGlossarySearch("")} className="absolute right-2 top-[2.2rem] grid h-7 w-7 place-items-center rounded-md text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label="Clear glossary search"><X aria-hidden="true" className="h-4 w-4" /></button> : null}
+                  <Search aria-hidden="true" className="absolute left-3 top-[2.45rem] h-4 w-4 text-foreground/40" />
+                  <input type="text" value={glossarySearch} onChange={(event) => setGlossarySearch(event.target.value)} placeholder="Source, translation, pinyin, notes" className="mt-1.5 w-full rounded-lg border border-foreground/10 bg-[var(--surface)] px-9 py-2.5 text-sm text-foreground outline-none transition placeholder:text-foreground/40 focus:border-foreground focus:ring-4 focus:ring-foreground/5" />
+                  {glossarySearch ? <button type="button" onClick={() => setGlossarySearch("")} className="absolute right-2 top-[2.2rem] grid h-7 w-7 place-items-center rounded-md text-foreground/40 transition hover:bg-foreground/[0.04] hover:text-foreground" aria-label="Clear glossary search"><X aria-hidden="true" className="h-4 w-4" /></button> : null}
                 </label>
-                <button type="button" onClick={() => setIsAddingTerm((current) => !current)} className="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950">
+                <button type="button" onClick={() => setIsAddingTerm((current) => !current)} className="inline-flex items-center gap-2 inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]">
                   <Plus aria-hidden="true" className="h-4 w-4" /> {isAddingTerm ? "Hide add form" : "Add term"}
                 </button>
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-5 pb-24 sm:pb-5">
               {isAddingTerm ? (
-                <form onSubmit={submitGlossaryTerm} className="mb-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+                <form onSubmit={submitGlossaryTerm} className="mb-4 rounded-lg border border-foreground/10 bg-foreground/[0.025] p-4">
                   <div className="grid gap-3">
                     <Input label="Source term" value={sourceTerm} onChange={setSourceTerm} />
                     <Input label="Translation" value={translation} onChange={setTranslation} />
@@ -665,8 +665,8 @@ export default function ReaderPage() {
                     <Textarea label="Notes" value={notes} onChange={setNotes} rows={3} />
                   </div>
                   <div className="mt-4 flex justify-end gap-2">
-                    <button type="button" onClick={resetGlossaryForm} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-950">Cancel</button>
-                    <button type="submit" disabled={!sourceTerm.trim() || !translation.trim()} className="rounded-lg bg-neutral-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500">Save term</button>
+                    <button type="button" onClick={resetGlossaryForm} className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]">Cancel</button>
+                    <button type="submit" disabled={!sourceTerm.trim() || !translation.trim()} className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40">Save term</button>
                   </div>
                 </form>
               ) : null}
@@ -674,33 +674,33 @@ export default function ReaderPage() {
                 {glossaryTerms.map((term) => {
                   const isEditing = editingTerm?.id === term.id;
                   return (
-                    <div key={term.id} className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition hover:border-neutral-300">
+                    <div key={term.id} className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-4 shadow-sm transition hover:border-foreground/25">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <h3 className="font-serif text-xl font-semibold text-neutral-950">{term.sourceTerm}</h3>
-                          <p className="mt-1 break-words text-sm text-neutral-600">{term.translation}</p>
-                          <p className="mt-2 text-xs uppercase tracking-[0.14em] text-neutral-500">{term.category}{term.pinyin ? ` / ${term.pinyin}` : ""}</p>
+                          <h3 className="font-serif text-xl font-semibold text-foreground">{term.sourceTerm}</h3>
+                          <p className="mt-1 break-words text-sm text-foreground/60">{term.translation}</p>
+                          <p className="mt-2 text-xs uppercase tracking-[0.14em] text-foreground/55">{term.category}{term.pinyin ? ` / ${term.pinyin}` : ""}</p>
                         </div>
                         <div className="flex shrink-0 gap-1">
-                          <button type="button" onClick={() => openEditTerm(term)} className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label={`Edit ${term.sourceTerm}`}><Edit3 aria-hidden="true" className="h-4 w-4" /></button>
-                          <button type="button" onClick={() => requestDeleteGlossaryTerm(term)} className="grid h-8 w-8 place-items-center rounded-lg text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950" aria-label={`Delete ${term.sourceTerm}`}><Trash2 aria-hidden="true" className="h-4 w-4" /></button>
+                          <button type="button" onClick={() => openEditTerm(term)} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/55 transition hover:bg-foreground/[0.04] hover:text-foreground" aria-label={`Edit ${term.sourceTerm}`}><Edit3 aria-hidden="true" className="h-4 w-4" /></button>
+                          <button type="button" onClick={() => requestDeleteGlossaryTerm(term)} className="grid h-8 w-8 place-items-center rounded-lg text-foreground/55 transition hover:bg-foreground/[0.04] hover:text-foreground" aria-label={`Delete ${term.sourceTerm}`}><Trash2 aria-hidden="true" className="h-4 w-4" /></button>
                         </div>
                       </div>
-                      {term.notes ? <p className="mt-3 text-sm leading-6 text-neutral-600">{term.notes}</p> : null}
-                      {term.conflict ? <p className="mt-3 rounded-lg bg-neutral-100 px-3 py-2 text-sm text-neutral-700">Conflict: {term.conflict}</p> : null}
+                      {term.notes ? <p className="mt-3 text-sm leading-6 text-foreground/60">{term.notes}</p> : null}
+                      {term.conflict ? <p className="mt-3 rounded-lg bg-foreground/[0.06] px-3 py-2 text-sm text-foreground/70">Conflict: {term.conflict}</p> : null}
                       {isEditing ? (
-                        <form onSubmit={submitGlossaryEdit} className="mt-4 space-y-3 border-t border-neutral-200 pt-4">
+                        <form onSubmit={submitGlossaryEdit} className="mt-4 space-y-3 border-t border-foreground/10 pt-4">
                           <Input label="Translation" value={editTranslation} onChange={setEditTranslation} />
                           <Textarea label="Notes" value={editNotes} onChange={setEditNotes} rows={3} />
                           <div className="flex justify-end gap-2">
-                            <button type="button" onClick={() => setEditingTerm(null)} className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-950">Cancel</button>
-                            <button type="submit" disabled={!editTranslation.trim()} className="rounded-lg bg-neutral-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500">Save</button>
+                            <button type="button" onClick={() => setEditingTerm(null)} className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]">Cancel</button>
+                            <button type="submit" disabled={!editTranslation.trim()} className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40">Save</button>
                           </div>
                         </form>
                       ) : null}
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {term.status !== "approved" ? <button type="button" onClick={() => requestGlossaryStatus(term, "approved")} className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-xs font-semibold transition hover:border-neutral-950"><Check aria-hidden="true" className="h-3.5 w-3.5" />Approve</button> : null}
-                        {term.status !== "rejected" ? <button type="button" onClick={() => requestGlossaryStatus(term, "rejected")} className="rounded-lg border border-neutral-200 px-2.5 py-1.5 text-xs font-semibold transition hover:border-neutral-950">Reject</button> : null}
+                        {term.status !== "approved" ? <button type="button" onClick={() => requestGlossaryStatus(term, "approved")} className="inline-flex min-h-9 items-center justify-center gap-1.5 border border-foreground/15 bg-transparent px-3 py-1.5 font-inter text-xs font-light transition hover:bg-foreground/[0.04]"><Check aria-hidden="true" className="h-3.5 w-3.5" />Approve</button> : null}
+                        {term.status !== "rejected" ? <button type="button" onClick={() => requestGlossaryStatus(term, "rejected")} className="inline-flex min-h-9 items-center justify-center border border-foreground/15 bg-transparent px-3 py-1.5 font-inter text-xs font-light transition hover:bg-foreground/[0.04]">Reject</button> : null}
                       </div>
                     </div>
                   );
@@ -708,11 +708,11 @@ export default function ReaderPage() {
                 {glossaryTerms.length === 0 ? <Empty title="No terms here" body="No glossary terms match the selected status and search." /> : null}
               </div>
             </div>
-            <div className="border-t border-neutral-200 bg-white p-4 sm:hidden">
+            <div className="border-t border-foreground/10 bg-[var(--surface)] p-4 sm:hidden">
               <button
                 type="button"
                 onClick={() => setIsGlossaryOpen(false)}
-                className="w-full rounded-lg border border-neutral-950 bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                className="w-full inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-5 py-2.5 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
               >
                 Close glossary
               </button>
@@ -735,13 +735,13 @@ export default function ReaderPage() {
             <button
               type="button"
               onClick={() => setIsMetaOpen(false)}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
             >
               Save changes
             </button>
@@ -755,7 +755,7 @@ export default function ReaderPage() {
         overflow="visible"
       >
         <form onSubmit={submitPublishVersion} className="space-y-4">
-          <p className="text-sm leading-6 text-neutral-500">
+          <p className="text-sm leading-6 text-foreground/55">
             Choose the translation version that should be visible in the reader app.
           </p>
           <CustomSelect
@@ -774,14 +774,14 @@ export default function ReaderPage() {
             <button
               type="button"
               onClick={() => setPublishingChapter(null)}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-semibold transition hover:border-neutral-950"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!publishVersion}
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:bg-neutral-200 disabled:text-neutral-500"
+              className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40"
             >
               Continue
             </button>
@@ -815,9 +815,9 @@ function ChapterNavigation({
   const base =
     "flex min-h-11 w-full min-w-0 max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition sm:w-auto sm:max-w-[48%] sm:px-4";
   const enabled =
-    "border-neutral-200 bg-white text-neutral-800 hover:border-neutral-950";
+    "border-foreground/10 bg-[var(--surface)] text-foreground/75 hover:border-foreground/30 hover:bg-foreground/[0.035] hover:text-foreground";
   const disabled =
-    "cursor-not-allowed border-neutral-100 bg-neutral-50 text-neutral-300";
+    "cursor-not-allowed border-foreground/10 bg-foreground/[0.025] text-foreground/30";
 
   return (
     <nav

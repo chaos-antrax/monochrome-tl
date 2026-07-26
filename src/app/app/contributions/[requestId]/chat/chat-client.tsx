@@ -89,31 +89,31 @@ export function ContributionChatClient({ request }: { request: AdminContribution
       </Link>
 
       <Card className="space-y-4">
-        <div className="flex flex-col gap-3 border-b border-neutral-200 pb-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-3 border-b border-foreground/10 pb-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">{request.type} request</p>
-            <h1 className="mt-1 font-serif text-3xl font-semibold text-neutral-950">{request.novelTitle}</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">{request.description}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground/55">{request.type} request</p>
+            <h1 className="mt-1 font-serif text-3xl font-semibold text-foreground">{request.novelTitle}</h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-foreground/60">{request.description}</p>
           </div>
-          <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-500">
-            <p>Reader: <span className="font-semibold text-neutral-800">{request.user.username || "Unnamed reader"}</span></p>
+          <div className="rounded-lg border border-foreground/10 bg-foreground/[0.025] px-3 py-2 text-xs text-foreground/55">
+            <p>Reader: <span className="font-semibold text-foreground/80">{request.user.username || "Unnamed reader"}</span></p>
             <p className="mt-1 truncate">{request.user.email}</p>
             <p className="mt-1">{refreshing ? "Refreshing ..." : "Polling every 10 seconds"}</p>
           </div>
         </div>
 
-        <div className="min-h-[24rem] space-y-3 overflow-y-auto rounded-lg border border-neutral-200 bg-neutral-50 p-3 sm:p-4">
+        <div className="min-h-[24rem] space-y-3 overflow-y-auto rounded-lg border border-foreground/10 bg-foreground/[0.025] p-3 sm:p-4">
           {loading ? (
             <div className="space-y-3">
-              <div className="h-16 w-3/4 animate-pulse rounded-lg bg-neutral-200" />
-              <div className="ml-auto h-16 w-2/3 animate-pulse rounded-lg bg-neutral-200" />
+              <div className="h-16 w-3/4 animate-pulse rounded-lg bg-foreground/10" />
+              <div className="ml-auto h-16 w-2/3 animate-pulse rounded-lg bg-foreground/10" />
             </div>
           ) : messages.length ? (
             messages.map((message) => {
               const fromAdmin = message.senderRole === "admin";
               return (
                 <div key={message.id} className={`flex ${fromAdmin ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[min(36rem,88%)] rounded-lg border px-4 py-3 shadow-sm ${fromAdmin ? "border-neutral-950 bg-neutral-950 text-white" : "border-neutral-200 bg-white text-neutral-900"}`}>
+                  <div className={`max-w-[min(36rem,88%)] rounded-lg border px-4 py-3 shadow-sm ${fromAdmin ? "border-foreground bg-foreground text-background" : "border-foreground/10 bg-[var(--surface)] text-foreground/90"}`}>
                     <div className="flex items-center justify-between gap-4 text-[11px] font-semibold uppercase tracking-[0.14em] opacity-70">
                       <span>{fromAdmin ? "Admin" : message.sender?.username || message.sender?.email || "Reader"}</span>
                       <span>{formatTime(message.createdAt)}</span>

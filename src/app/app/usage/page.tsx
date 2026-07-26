@@ -8,12 +8,12 @@ export default function UsagePage() {
 
   return (
     <div className="space-y-5">
-      <header className="rounded-lg border border-neutral-200 bg-white/90 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
-        <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">
+      <header className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)]">
+        <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">
           Usage
         </p>
         <h1 className="mt-2 font-serif text-4xl font-semibold">API Activity</h1>
-        <p className="mt-3 max-w-4xl text-sm leading-6 text-neutral-500">
+        <p className="mt-3 max-w-4xl text-sm leading-6 text-foreground/55">
           Your usage of the translation API. This includes the number of input
           and output tokens processed, the estimated cost of the translations,
           and the number of chapters translated. The jobs section below shows a
@@ -34,9 +34,9 @@ export default function UsagePage() {
         ].map((item) => (
           <div
             key={item.label}
-            className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm"
+            className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-5 shadow-sm"
           >
-            <p className="text-xs uppercase tracking-[0.16em] text-neutral-500">
+            <p className="text-xs uppercase tracking-[0.16em] text-foreground/55">
               {item.label}
             </p>
             <p className="mt-2 font-serif text-3xl font-semibold">
@@ -52,7 +52,7 @@ export default function UsagePage() {
           {jobs.map((job) => (
             <div
               key={job.id}
-              className="rounded-lg border border-neutral-200 bg-white p-3 text-sm"
+              className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-3 text-sm"
             >
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span>
@@ -64,7 +64,7 @@ export default function UsagePage() {
                 </span>
               </div>
               {job.error ? (
-                <p className="mt-2 text-neutral-500">{job.error}</p>
+                <p className="mt-2 text-foreground/55">{job.error}</p>
               ) : null}
             </div>
           ))}

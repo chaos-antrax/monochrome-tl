@@ -40,7 +40,7 @@ function MobileMenuButton({
     <button
       type="button"
       onClick={onClick}
-      className="relative grid h-10 w-10 place-items-center rounded-lg border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:border-neutral-950 hover:text-neutral-950"
+      className="relative grid h-10 w-10 place-items-center border border-foreground/15 bg-background text-foreground/70 shadow-none transition hover:border-foreground/45 hover:text-foreground"
       aria-label={open ? "Close navigation" : "Open navigation"}
       aria-expanded={open}
     >
@@ -67,7 +67,7 @@ function CollapseButton({
     <button
       type="button"
       onClick={onClick}
-      className="group absolute -right-4 top-8 z-20 grid h-9 w-9 place-items-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-[0_12px_35px_rgba(0,0,0,0.12)] transition duration-200 hover:border-neutral-950 hover:text-neutral-950 hover:shadow-[0_16px_45px_rgba(0,0,0,0.16)]"
+      className="group absolute -right-4 top-8 z-20 grid h-9 w-9 place-items-center border border-foreground/15 bg-background text-foreground/70 shadow-[0_12px_35px_rgba(0,0,0,0.12)] transition duration-200 hover:border-foreground/45 hover:text-foreground"
       aria-label={compact ? "Expand navigation" : "Collapse navigation"}
       aria-expanded={!compact}
     >
@@ -138,15 +138,15 @@ function Sidebar({
 
   return (
     <div
-      className={`flex h-full ${shellWidth} flex-col rounded-lg border border-neutral-200 bg-white/95 p-3 shadow-[0_18px_60px_rgba(0,0,0,0.05)] transition-all duration-300 ease-out ${compact ? "items-center" : ""} ${alignRight ? "items-end text-right" : ""}`}
+      className={`flex h-full ${shellWidth} flex-col border border-foreground/10 bg-[var(--surface)] p-3 shadow-none transition-all duration-300 ease-out ${compact ? "items-center" : ""} ${alignRight ? "items-end text-right" : ""}`}
     >
       <Link
         href="/"
         onClick={onNavigate}
-        className={`block w-full border-b border-neutral-200 pb-4 transition-all duration-300 ${compact ? "text-center" : ""} ${alignRight ? "text-right" : ""}`}
+        className={`block w-full border-b border-foreground/10 pb-4 transition-all duration-300 ${compact ? "text-center" : ""} ${alignRight ? "text-right" : ""}`}
         title="Home"
       >
-        <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">
+        <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">
           {compact ? "MT" : "Monochrome"}
         </p>
         <h1
@@ -169,11 +169,11 @@ function Sidebar({
               style={
                 alignRight ? { animationDelay: `${index * 35}ms` } : undefined
               }
-              className={`group flex min-h-10 items-center rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 ${rowAlign} ${rowAnimation} ${active ? "bg-neutral-950 text-white" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"}`}
+              className={`group flex min-h-10 items-center rounded-lg px-3 py-2 text-sm font-light transition-all duration-200 ${rowAlign} ${rowAnimation} ${active ? "bg-foreground text-background" : "text-foreground/60 hover:bg-foreground/[0.06] hover:text-foreground"}`}
             >
               <Icon
                 aria-hidden="true"
-                className={`h-4 w-4 shrink-0 transition duration-200 ${active ? "text-white" : "text-neutral-500 group-hover:text-neutral-950"}`}
+                className={`h-4 w-4 shrink-0 transition duration-200 ${active ? "text-background" : "text-foreground/55 group-hover:text-foreground"}`}
               />
               <SidebarLabel compact={compact} alignRight={alignRight}>
                 {label}
@@ -184,10 +184,10 @@ function Sidebar({
       </nav>
 
       <div
-        className={`mt-6 w-full border-t border-neutral-200 pt-4 transition-all duration-300 ${compact ? "text-center" : ""} ${alignRight ? "text-right" : ""}`}
+        className={`mt-6 w-full border-t border-foreground/10 pt-4 transition-all duration-300 ${compact ? "text-center" : ""} ${alignRight ? "text-right" : ""}`}
       >
         <p
-          className={`px-3 text-xs uppercase tracking-[0.18em] text-neutral-500 transition-all duration-300 ${compact ? "max-h-0 overflow-hidden opacity-0" : "max-h-6 opacity-100"}`}
+          className={`px-3 text-xs uppercase tracking-[0.18em] text-foreground/55 transition-all duration-300 ${compact ? "max-h-0 overflow-hidden opacity-0" : "max-h-6 opacity-100"}`}
         >
           Novels
         </p>
@@ -206,11 +206,11 @@ function Sidebar({
                     ? { animationDelay: `${(index + nav.length) * 35}ms` }
                     : undefined
                 }
-                className={`group flex min-h-10 items-center rounded-lg px-3 py-2 text-sm transition-all duration-200 ${rowAlign} ${rowAnimation} ${pathname.includes(novel.id) ? "bg-neutral-100 text-neutral-950" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950"}`}
+                className={`group flex min-h-10 items-center rounded-lg px-3 py-2 text-sm transition-all duration-200 ${rowAlign} ${rowAnimation} ${pathname.includes(novel.id) ? "bg-foreground/[0.07] text-foreground" : "text-foreground/60 hover:bg-foreground/[0.06] hover:text-foreground"}`}
               >
                 <span
                   aria-hidden="true"
-                  className="grid h-5 w-5 shrink-0 place-items-center rounded-md border border-neutral-200 text-[11px] font-semibold text-neutral-600 transition group-hover:border-neutral-300 group-hover:text-neutral-950"
+                  className="grid h-5 w-5 shrink-0 place-items-center rounded-md border border-foreground/10 text-[11px] font-light text-foreground/60 transition group-hover:border-foreground/30 group-hover:text-foreground"
                 >
                   {compact ? initial : <FileText className="h-3.5 w-3.5" />}
                 </span>
@@ -218,7 +218,7 @@ function Sidebar({
                   <span className="block truncate font-medium">
                     {novel.title}
                   </span>
-                  <span className="block text-xs text-neutral-400">
+                  <span className="block text-xs text-foreground/40">
                     {novel.chapters.length} chapters
                   </span>
                 </SidebarLabel>
@@ -229,7 +229,7 @@ function Sidebar({
       </div>
 
       <div
-        className={`mt-auto w-full space-y-2 border-t border-neutral-200 pt-4 text-xs text-neutral-500 transition-all duration-300 ${compact ? "text-center" : ""} ${alignRight ? "text-right" : ""}`}
+        className={`mt-auto w-full space-y-2 border-t border-foreground/10 pt-4 text-xs text-foreground/55 transition-all duration-300 ${compact ? "text-center" : ""} ${alignRight ? "text-right" : ""}`}
       >
         <Link
           href="/app/account"
@@ -240,7 +240,7 @@ function Sidebar({
               ? { animationDelay: `${(nav.length + novels.length) * 35}ms` }
               : undefined
           }
-          className={`flex min-h-10 items-center rounded-lg bg-neutral-100 px-3 py-2 font-semibold text-neutral-700 transition hover:text-neutral-950 ${rowAlign} ${rowAnimation}`}
+          className={`flex min-h-10 items-center rounded-lg bg-foreground/[0.06] px-3 py-2 font-light text-foreground/70 transition hover:text-foreground ${rowAlign} ${rowAnimation}`}
         >
           <User aria-hidden="true" className="h-4 w-4 shrink-0" />
           <SidebarLabel compact={compact} alignRight={alignRight}>
@@ -267,7 +267,7 @@ function Sidebar({
 function LoadingOverlay() {
   return (
     <div
-      className="fixed inset-0 z-[90] grid place-items-center bg-white/55 px-6 backdrop-blur-2xl animate-page"
+      className="fixed inset-0 z-[90] grid place-items-center bg-background/55 px-6 backdrop-blur-2xl animate-page"
       role="status"
       aria-live="polite"
       aria-label="Loading workspace"
@@ -302,14 +302,14 @@ function ToastLayer() {
       aria-live="polite"
       aria-atomic="true"
     >
-      <div className="pointer-events-auto animate-toast-in rounded-lg border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-800 shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
+      <div className="pointer-events-auto animate-toast-in border border-foreground/10 bg-background px-4 py-3 text-sm text-foreground shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
         <div className="flex items-start gap-3">
-          <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-neutral-950" />
+          <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-foreground" />
           <p className="min-w-0 flex-1 leading-6">{message}</p>
           <button
             type="button"
             onClick={() => setMessage("")}
-            className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-md text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950"
+            className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-md text-foreground/55 transition hover:bg-foreground/[0.06] hover:text-foreground"
             aria-label="Dismiss notification"
           >
             <X aria-hidden="true" className="h-4 w-4" />
@@ -358,12 +358,12 @@ function ShellInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] text-neutral-950">
-      <div className="sticky top-0 z-40 border-b border-neutral-200 bg-[#f7f7f5]/90 px-4 py-3 backdrop-blur lg:hidden">
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="sticky top-0 z-40 border-b border-foreground/10 bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
         <div className="flex items-center justify-between">
           <Link
             href="/app/library"
-            className="font-serif text-xl font-semibold"
+            className="font-serif text-xl font-light"
           >
             Monochrome
           </Link>
@@ -375,7 +375,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
       </div>
 
       <div
-        className={`mx-auto grid min-h-screen w-full max-w-[1540px] gap-5 px-4 py-4 transition-[grid-template-columns] duration-300 ease-out sm:px-6 lg:px-8 ${desktopCollapsed ? "lg:grid-cols-[76px_minmax(0,1fr)]" : "lg:grid-cols-[280px_minmax(0,1fr)]"}`}
+        className={`grid min-h-screen w-full gap-5 px-4 py-4 transition-[grid-template-columns] duration-300 ease-out sm:px-6 lg:px-8 ${desktopCollapsed ? "lg:grid-cols-[76px_minmax(0,1fr)]" : "lg:grid-cols-[280px_minmax(0,1fr)]"}`}
       >
         <aside className="relative hidden transition-all duration-300 lg:sticky lg:top-4 lg:block lg:h-[calc(100vh-2rem)]">
           <CollapseButton
@@ -390,7 +390,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               aria-label="Close navigation"
-              className={`absolute inset-0 bg-neutral-950/30 backdrop-blur-sm ${drawerClosing ? "animate-mobile-backdrop-out" : "animate-mobile-backdrop"}`}
+              className={`absolute inset-0 bg-foreground/30 backdrop-blur-sm ${drawerClosing ? "animate-mobile-backdrop-out" : "animate-mobile-backdrop"}`}
               onClick={closeDrawer}
             />
             <aside
@@ -419,6 +419,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </WorkspaceProvider>
   );
 }
+
+
+
 
 
 

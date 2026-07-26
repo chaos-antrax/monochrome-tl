@@ -47,16 +47,16 @@ function LoginForm({ initialMessage = "" }: { initialMessage?: string }) {
   }
 
   return (
-    <form onSubmit={submit} className="animate-scale-in w-full max-w-md rounded-lg border border-neutral-200 bg-white p-6 shadow-[0_24px_80px_rgba(0,0,0,0.08)]">
-      <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Account</p>
+    <form onSubmit={submit} className="animate-scale-in w-full max-w-md rounded-lg border border-foreground/10 bg-[var(--surface)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.08)]">
+      <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">Account</p>
       <h1 className="mt-2 font-serif text-4xl font-semibold">{mode === "login" ? "Log in" : "Create account"}</h1>
       <div className="mt-6 space-y-4">
         <Input label="Email" value={email} onChange={updateEmail} />
         <Input label="Password" type="password" value={password} onChange={updatePassword} />
       </div>
-      {message ? <p className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm leading-6 text-neutral-600">{message}</p> : null}
-      <LoadingButton type="submit" loading={isSubmitting} loadingLabel={mode === "login" ? "Logging in ..." : "Creating account ..."} className="mt-6 w-full rounded-lg bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500">{mode === "login" ? "Log in" : "Sign up"}</LoadingButton>
-      <button type="button" onClick={toggleMode} disabled={isSubmitting} className="mt-3 w-full rounded-lg px-4 py-3 text-sm font-semibold text-neutral-600 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-300">
+      {message ? <p className="mt-4 rounded-lg border border-foreground/10 bg-foreground/[0.025] p-3 text-sm leading-6 text-foreground/60">{message}</p> : null}
+      <LoadingButton type="submit" loading={isSubmitting} loadingLabel={mode === "login" ? "Logging in ..." : "Creating account ..."} className="mt-6 w-full inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-5 py-2.5 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:bg-foreground/10 disabled:text-foreground/40">{mode === "login" ? "Log in" : "Sign up"}</LoadingButton>
+      <button type="button" onClick={toggleMode} disabled={isSubmitting} className="mt-3 w-full inline-flex min-h-10 w-full items-center justify-center border border-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground/60 transition hover:bg-foreground/[0.04] disabled:cursor-not-allowed disabled:opacity-40">
         {mode === "login" ? "Need an account? Sign up" : "Already have an account? Log in"}
       </button>
     </form>
@@ -66,7 +66,7 @@ function LoginForm({ initialMessage = "" }: { initialMessage?: string }) {
 export function LoginClient({ initialMessage = "" }: { initialMessage?: string }) {
   return (
     <WorkspaceProvider>
-      <main className="grid min-h-screen place-items-center bg-[#f7f7f5] px-6 py-10 text-neutral-950">
+      <main className="grid min-h-screen place-items-center bg-background px-6 py-10 text-foreground">
         <div className="w-full max-w-md">
           <Link href="/" className="mb-6 block text-center font-serif text-2xl font-semibold">Monochrome</Link>
           <LoginForm initialMessage={initialMessage} />

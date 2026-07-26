@@ -1,11 +1,11 @@
 import type { ButtonHTMLAttributes } from "react";
 
 export const primaryButton =
-  "rounded-lg border border-neutral-950 bg-neutral-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-200 disabled:text-neutral-500";
+  "inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-5 py-2.5 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40";
 export const secondaryButton =
-  "rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950 hover:text-neutral-950";
+  "inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04] disabled:cursor-not-allowed disabled:opacity-40";
 export const subtleButton =
-  "rounded-lg px-3 py-2 text-sm font-semibold text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950";
+  "inline-flex min-h-10 items-center justify-center border border-transparent px-4 py-2 font-inter text-xs font-light text-foreground/60 transition hover:bg-foreground/[0.04] hover:text-foreground";
 
 export function LoadingButton({
   loading,
@@ -24,7 +24,7 @@ export function LoadingButton({
         {loading ? (
           <span
             aria-hidden="true"
-            className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+            className="h-3.5 w-3.5 animate-spin rounded-full border border-current border-t-transparent"
           />
         ) : null}
         <span>{loading ? (loadingLabel ?? "Working ...") : children}</span>
