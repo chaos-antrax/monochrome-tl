@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { ThemeLogo } from "../theme/theme-logo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -382,12 +382,10 @@ function LoadingOverlay() {
       aria-label="Loading workspace"
     >
       <div className="grid place-items-center rounded-full">
-        <Image
-          src="/logo.png"
+        <ThemeLogo
           alt="Monochrome Translations"
           width={112}
           height={112}
-          loading="eager"
           className="h-24 w-24 animate-logo-shake object-contain sm:h-28 sm:w-28"
         />
       </div>

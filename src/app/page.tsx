@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getSafeUser } from "@/lib/repository";
 import { canAccessTranslationPortal } from "@/lib/roles";
 import { getSession } from "@/lib/session";
-import Image from "next/image";
+import { ThemeLogo } from "./theme/theme-logo";
 
 export default async function Home() {
   const session = await getSession();
@@ -14,15 +14,14 @@ export default async function Home() {
       <section className="animate-page mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-8">
         <nav className="sm:flex items-center justify-between">
           <Link href="/" className="font-serif text-2xl font-semibold">
-            <div className="flex space-x-2 items-center">
-              <Image
-                src="/favicon.ico"
+            <div className="flex space-x-4 items-center">
+              <ThemeLogo
                 alt=""
-                loading="eager"
                 width={40}
                 height={40}
+                className="h-10 w-10 object-contain"
               />
-              Monochrome Translations
+              <p className="mt-1">Monochrome Translations</p>
             </div>
           </Link>
           <div className="flex items-center gap-8">
@@ -91,12 +90,12 @@ export default async function Home() {
             </div>
             <div className="mt-5 grid gap-3 text-sm text-foreground/60">
               <div className="rounded-lg bg-foreground/[0.06] p-4">
-                <span className="font-semibold text-foreground">1.</span>{" "}
-                Create a novel and paste source chapters.
+                <span className="font-semibold text-foreground">1.</span> Create
+                a novel and paste source chapters.
               </div>
               <div className="rounded-lg bg-foreground/[0.06] p-4">
-                <span className="font-semibold text-foreground">2.</span>{" "}
-                Attach glossary terms and a style guide.
+                <span className="font-semibold text-foreground">2.</span> Attach
+                glossary terms and a style guide.
               </div>
               <div className="rounded-lg bg-foreground/[0.06] p-4">
                 <span className="font-semibold text-foreground">3.</span>{" "}
@@ -104,9 +103,15 @@ export default async function Home() {
               </div>
             </div>
             <div className="mt-6 grid grid-cols-3 gap-2 text-center text-xs uppercase tracking-[0.14em] text-foreground/55">
-              <span className="rounded-lg bg-foreground/[0.06] p-3">Glossary</span>
-              <span className="rounded-lg bg-foreground/[0.06] p-3">Versions</span>
-              <span className="rounded-lg bg-foreground/[0.06] p-3">Export</span>
+              <span className="rounded-lg bg-foreground/[0.06] p-3">
+                Glossary
+              </span>
+              <span className="rounded-lg bg-foreground/[0.06] p-3">
+                Versions
+              </span>
+              <span className="rounded-lg bg-foreground/[0.06] p-3">
+                Export
+              </span>
             </div>
           </div>
         </div>
