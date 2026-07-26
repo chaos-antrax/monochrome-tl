@@ -156,9 +156,6 @@ export async function getBootstrapState(userId: string) {
   return { user: safeUser(user, userId), appState: await getStructuredAppState(userId, "summary") };
 }
 
-export async function getAppState(userId: string) {
-  return getStructuredAppState(userId);
-}
 
 export async function getFullChapter(userId: string, novelId: string, chapterId: string) {
   const [chapter, versions] = await Promise.all([
@@ -191,10 +188,6 @@ export async function getFullNovel(userId: string, novelId: string) {
   );
 }
 
-export async function saveAppState(userId: string, appState: unknown) {
-  await replaceCollectionAppState(userId, appState as WorkspaceState);
-  await (await usersCollection()).updateOne({ _id: new ObjectId(userId) }, { $unset: { appState: "" }, $set: { updatedAt: new Date() } });
-}
 
 export async function applyWorkspaceMutations(userId: string, mutations: WorkspaceMutation[]) {
   const now = new Date();
