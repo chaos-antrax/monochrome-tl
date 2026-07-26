@@ -45,6 +45,10 @@ type ConfirmAction = {
   onConfirm: () => void;
 };
 
+function versionHasText(version: Chapter["translations"][number]) {
+  return Boolean(version.hasText || version.text.trim());
+}
+
 function StyleSelect({
   label,
   value,
@@ -273,7 +277,7 @@ export default function NovelPage() {
   }
 
   function requestPublishChapter(chapter: Chapter) {
-    const versions = chapter.translations.filter((version) => version.text.trim());
+    const versions = chapter.translations.filter(versionHasText);
     if (versions.length === 0) return;
     const defaultVersion = versions.some((version) => version.version === chapter.currentVersion)
       ? chapter.currentVersion
@@ -639,8 +643,8 @@ export default function NovelPage() {
                       <button
                         type="button"
                         onClick={() => requestPublishChapter(chapter)}
-                        disabled={!chapter.translations.some((version) => version.text.trim())}
-                        title={chapter.translations.some((version) => version.text.trim()) ? "Publish chapter" : "Translate this chapter before publishing."}
+                        disabled={!chapter.translations.some(versionHasText)}
+                        title={chapter.translations.some(versionHasText) ? "Publish chapter" : "Translate this chapter before publishing."}
                         className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Publish
@@ -1019,7 +1023,7 @@ export default function NovelPage() {
             value={publishVersion}
             onChange={setPublishVersion}
             options={(publishingChapter?.translations ?? [])
-              .filter((version) => version.text.trim())
+              .filter(versionHasText)
               .map((version) => ({
                 value: String(version.version),
                 label: `Version ${version.version}${version.version === publishingChapter?.currentVersion ? " (current)" : ""}`,

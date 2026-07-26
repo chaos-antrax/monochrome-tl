@@ -1,4 +1,4 @@
-﻿import { ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 import { decryptSecret, encryptSecret } from "./crypto";
 import { normalizeUserRole, type UserRole } from "./roles";
 import type { Provider } from "./schemas/translation";
@@ -200,6 +200,7 @@ export async function applyWorkspaceMutations(userId: string, mutations: Workspa
       const chapterUpdate = mutation.chapter.published ? { $set: splitChapter(mutation.novelId, mutation.chapter, userId) } : { $set: splitChapter(mutation.novelId, mutation.chapter, userId), $unset: { publishedVersion: "" as const, publishedAt: "" as const } };
       await chaptersCollection.updateOne({ userId, id: mutation.chapter.id }, chapterUpdate, { upsert: true });
       for (const version of mutation.chapter.translations) {
+        if (!version.text.trim()) continue;
         await versionsCollection.updateOne({ userId, chapterId: mutation.chapter.id, version: version.version }, { $set: splitVersion(mutation.novelId, mutation.chapter.id, version, userId) }, { upsert: true });
       }
     }

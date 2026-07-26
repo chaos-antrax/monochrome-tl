@@ -10,6 +10,7 @@ import type { GlossaryCategory, Provider } from "@/lib/schemas/translation";
 export type TranslationVersion = {
   version: number;
   text: string;
+  hasText?: boolean;
   model: string;
   provider: Provider;
   tokensUsed: Tokens;

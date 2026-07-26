@@ -63,7 +63,20 @@ export function splitJob(job: Job, userId: string): StoredJob {
 }
 
 export function splitVersion(novelId: string, chapterId: string, version: TranslationVersion, userId: string): StoredTranslationVersion {
-  return { ...version, userId, novelId, chapterId, updatedAt: new Date() };
+  return {
+    version: version.version,
+    text: version.text,
+    model: version.model,
+    provider: version.provider,
+    tokensUsed: version.tokensUsed,
+    estimatedCost: version.estimatedCost,
+    createdAt: version.createdAt,
+    rawTextHash: version.rawTextHash,
+    userId,
+    novelId,
+    chapterId,
+    updatedAt: new Date(),
+  };
 }
 
 export function toChapter(chapter: StoredChapter, versions: TranslationVersion[], mode: ReadMode): Chapter {
@@ -101,6 +114,7 @@ export function toVersion(version: StoredTranslationVersion, mode: ReadMode): Tr
   return {
     version: version.version,
     text: mode === "full" ? version.text : "",
+    hasText: mode === "summary" ? true : Boolean(version.text?.trim()),
     model: version.model,
     provider: version.provider,
     tokensUsed: version.tokensUsed,

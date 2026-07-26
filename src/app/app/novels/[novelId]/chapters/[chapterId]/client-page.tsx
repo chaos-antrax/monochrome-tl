@@ -32,6 +32,10 @@ type ConfirmAction = {
 const FONT_SIZE_OPTIONS = [16, 18, 19, 20, 22, 24, 26];
 const LINE_HEIGHT_OPTIONS = [1.4, 1.5, 1.65, 1.8, 1.95, 2.1];
 
+function versionHasText(version: Chapter["translations"][number]) {
+  return Boolean(version.hasText || version.text.trim());
+}
+
 function getTextareaCaretMetrics(textarea: HTMLTextAreaElement, offset: number) {
   const computed = window.getComputedStyle(textarea);
   const mirror = document.createElement("div");
@@ -335,7 +339,7 @@ export default function ReaderPage() {
   }
 
   function requestPublishChapter() {
-    const versions = currentChapter.translations.filter((version) => version.text.trim());
+    const versions = currentChapter.translations.filter(versionHasText);
     if (versions.length === 0) return;
     const defaultVersion = versions.some((version) => version.version === currentChapter.currentVersion)
       ? currentChapter.currentVersion
@@ -763,7 +767,7 @@ export default function ReaderPage() {
             value={publishVersion}
             onChange={setPublishVersion}
             options={(publishingChapter?.translations ?? [])
-              .filter((version) => version.text.trim())
+              .filter(versionHasText)
               .map((version) => ({
                 value: String(version.version),
                 label: `Version ${version.version}${version.version === publishingChapter?.currentVersion ? " (current)" : ""}`,

@@ -241,7 +241,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (!chapter) return;
     if (values.published) {
       const version = values.version ?? chapter.currentVersion;
-      const hasVersion = chapter.translations.some((entry) => entry.version === version && entry.text.trim());
+      const hasVersion = chapter.translations.some((entry) => entry.version === version && (entry.hasText || entry.text.trim()));
       if (!hasVersion) return;
       const nextChapter: Chapter = {
         ...chapter,
