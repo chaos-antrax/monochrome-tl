@@ -26,6 +26,8 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
+const userTableGrid = "md:grid-cols-[minmax(18rem,1fr)_8.5rem_12rem_10rem]";
+
 export function UsersClient() {
   const { setMessage } = useToast();
   const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -103,20 +105,20 @@ export function UsersClient() {
         ) : users.length === 0 ? (
           <Empty title="No users found" body="Users will appear here after they sign up." />
         ) : (
-          <div className="overflow-hidden rounded-lg border border-foreground/10">
-            <div className="hidden grid-cols-[minmax(0,1fr)_140px_190px_150px] border-b border-foreground/10 bg-foreground/[0.025] px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-foreground/55 md:grid">
-              <span>User</span>
-              <span>Role</span>
-              <span>Updated</span>
-              <span className="text-right">Writer access</span>
+          <div className="overflow-hidden border border-foreground/10">
+            <div className={`hidden ${userTableGrid} border-b border-foreground/10 bg-foreground/[0.025] px-4 py-3 text-xs font-light uppercase tracking-[0.16em] text-foreground/55 md:grid md:items-center`}>
+              <span className="min-w-0">User</span>
+              <span className="min-w-0">Role</span>
+              <span className="min-w-0">Updated</span>
+              <span className="min-w-0 text-right">Writer access</span>
             </div>
             <div className="divide-y divide-foreground/10">
               {users.map((user) => {
                 const isAdmin = user.role === "admin";
                 const isWriter = user.role === "writer";
                 return (
-                  <div key={user.id} className="grid gap-4 px-4 py-4 md:grid-cols-[minmax(0,1fr)_140px_190px_150px] md:items-center">
-                    <div className="min-w-0">
+                  <div key={user.id} className={`grid gap-3 px-4 py-4 md:min-h-[5.25rem] md:gap-0 ${userTableGrid} md:items-center`}>
+                    <div className="min-w-0 md:pr-5">
                       <div className="flex items-center gap-2">
                         {isAdmin ? <ShieldCheck aria-hidden="true" className="h-4 w-4 text-foreground" /> : <UserCog aria-hidden="true" className="h-4 w-4 text-foreground/40" />}
                         <p className="truncate font-semibold text-foreground">{user.username || "Unnamed user"}</p>
@@ -124,9 +126,11 @@ export function UsersClient() {
                       <p className="mt-1 truncate text-xs text-foreground/55">{user.email}</p>
                       <p className="mt-1 text-xs text-foreground/55">Joined {formatDate(user.createdAt)}</p>
                     </div>
-                    <Badge active={user.role === "admin"}>{user.role}</Badge>
-                    <span className="text-sm text-foreground/55">{formatDate(user.updatedAt)}</span>
-                    <div className="flex justify-start md:justify-end">
+                    <div className="flex min-w-0 items-center">
+                      <Badge active={user.role === "admin"}>{user.role}</Badge>
+                    </div>
+                    <span className="min-w-0 text-sm font-light text-foreground/55">{formatDate(user.updatedAt)}</span>
+                    <div className="flex min-w-0 justify-start md:justify-end">
                       <LoadingButton
                         type="button"
                         loading={updatingId === user.id}
@@ -148,6 +152,7 @@ export function UsersClient() {
     </div>
   );
 }
+
 
 
 
