@@ -8,6 +8,7 @@ import {
   BarChart3,
   Download,
   FileText,
+  Handshake,
   Library,
   Menu,
   PanelLeftClose,
@@ -118,7 +119,7 @@ function Sidebar({
   const pathname = usePathname();
   const { novels, jobs } = useLibrary();
   const { account } = useAuth();
-  const nav = account.role === "admin" ? [...baseNav, { href: "/app/admin/users", label: "Users", Icon: ShieldCheck }] : baseNav;
+  const nav = account.role === "admin" ? [...baseNav, { href: "/app/contributions", label: "Contributions", Icon: Handshake }, { href: "/app/admin/users", label: "Users", Icon: ShieldCheck }] : baseNav;
   const activeJobs = jobs.filter(
     (job) => job.status === "queued" || job.status === "processing",
   ).length;
@@ -418,6 +419,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </WorkspaceProvider>
   );
 }
+
 
 
 

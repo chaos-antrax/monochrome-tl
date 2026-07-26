@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { ShieldCheck, UserCog } from "lucide-react";
@@ -9,6 +9,7 @@ import { useToast } from "../../../workspace/state";
 type ManagedUser = {
   id: string;
   email: string;
+  username?: string;
   role: UserRole;
   createdAt: string;
   updatedAt: string;
@@ -118,8 +119,9 @@ export function UsersClient() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         {isAdmin ? <ShieldCheck aria-hidden="true" className="h-4 w-4 text-neutral-950" /> : <UserCog aria-hidden="true" className="h-4 w-4 text-neutral-400" />}
-                        <p className="truncate font-semibold text-neutral-950">{user.email}</p>
+                        <p className="truncate font-semibold text-neutral-950">{user.username || "Unnamed user"}</p>
                       </div>
+                      <p className="mt-1 truncate text-xs text-neutral-500">{user.email}</p>
                       <p className="mt-1 text-xs text-neutral-500">Joined {formatDate(user.createdAt)}</p>
                     </div>
                     <span className="w-fit rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-neutral-600">{user.role}</span>
@@ -146,5 +148,7 @@ export function UsersClient() {
     </div>
   );
 }
+
+
 
 

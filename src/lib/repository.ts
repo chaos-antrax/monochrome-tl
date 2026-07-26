@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb";
+﻿import { ObjectId } from "mongodb";
 import { decryptSecret, encryptSecret } from "./crypto";
 import { normalizeUserRole, type UserRole } from "./roles";
 import type { Provider } from "./schemas/translation";
@@ -238,11 +238,12 @@ export async function applyWorkspaceMutations(userId: string, mutations: Workspa
 export async function listUsersForAdmin() {
   const users = await (await usersCollection()).find(
     {},
-    { projection: { email: 1, role: 1, createdAt: 1, updatedAt: 1 }, sort: { createdAt: -1 } },
+    { projection: { email: 1, username: 1, role: 1, createdAt: 1, updatedAt: 1 }, sort: { createdAt: -1 } },
   ).toArray();
   return users.map((user) => ({
     id: user._id?.toHexString() ?? "",
     email: user.email,
+    username: typeof user.username === "string" ? user.username : undefined,
     role: normalizeUserRole(user.role),
     createdAt: user.createdAt?.toISOString?.() ?? new Date().toISOString(),
     updatedAt: user.updatedAt?.toISOString?.() ?? new Date().toISOString(),
@@ -276,6 +277,8 @@ export async function getProviderConfig(userId: string) {
     apiKey: decryptSecret(user.encryptedApiKey),
   };
 }
+
+
 
 
 
