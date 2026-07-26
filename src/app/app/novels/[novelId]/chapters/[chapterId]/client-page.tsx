@@ -82,9 +82,13 @@ export default function ReaderPage() {
     chapterId: string;
   }>();
   const router = useRouter();
-  const { getNovel, getChapter, deleteChapter, editChapter, editChapterContent, setChapterPublished, addTerm, editTerm, setTermStatus, deleteTerm } = useLibrary();
+  const { getNovel, getChapter, deleteChapter, editChapter, editChapterContent, setChapterPublished, addTerm, editTerm, setTermStatus, deleteTerm, loadNovel } = useLibrary();
   const { translateChapter, translationProgress, revertVersion, loadChapter } = useReader();
   const novel = getNovel(novelId);
+  useEffect(() => {
+    if (!novel || novel.isFull) return;
+    void loadNovel(novel.id);
+  }, [loadNovel, novel]);
   const chapter = getChapter(novelId, chapterId);
   const [mode, setMode] = useState<ReaderMode>("translated");
   const [fontSize, setFontSize] = useState(16);
@@ -120,14 +124,22 @@ export default function ReaderPage() {
   const translatedEditorRef = useRef<HTMLTextAreaElement | null>(null);
   const editorBodyRef = useRef<HTMLDivElement | null>(null);
   const cursorIndicatorTimerRef = useRef<number | null>(null);
+  const loadingChapterRef = useRef<string | null>(null);
 
 
   useEffect(() => {
     let cancelled = false;
     if (!chapter || chapter.rawText || chapterLoadError?.chapterId === chapterId) return;
-    void loadChapter(novelId, chapterId).catch((error) => {
-      if (!cancelled) setChapterLoadError({ chapterId, message: error instanceof Error ? error.message : "Unable to load chapter." });
-    });
+    const loadKey = `${novelId}:${chapterId}`;
+    if (loadingChapterRef.current === loadKey) return;
+    loadingChapterRef.current = loadKey;
+    void loadChapter(novelId, chapterId)
+      .catch((error) => {
+        if (!cancelled) setChapterLoadError({ chapterId, message: error instanceof Error ? error.message : "Unable to load chapter." });
+      })
+      .finally(() => {
+        if (loadingChapterRef.current === loadKey) loadingChapterRef.current = null;
+      });
     return () => { cancelled = true; };
   }, [chapter, chapterId, chapterLoadError?.chapterId, loadChapter, novelId]);
   useEffect(() => {

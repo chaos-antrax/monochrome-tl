@@ -62,6 +62,9 @@ export type Novel = {
   styleGuideId?: string;
   published?: boolean;
   publishedAt?: string;
+  isFull?: boolean;
+  glossaryCount?: number;
+  pendingGlossaryCount?: number;
   glossary: GlossaryTerm[];
   chapters: Chapter[];
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { DragEvent, FormEvent, useRef, useState } from "react";
+import { DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, Edit2, Globe2, GlobeLock, GripVertical, LoaderCircle, Search, Trash2, X } from "lucide-react";
 import { DEFAULT_MAX_CHAPTER_CHARACTERS } from "@/lib/constants";
@@ -77,10 +77,14 @@ export default function NovelPage() {
   const { novelId } = useParams<{ novelId: string }>();
   const router = useRouter();
   const { account } = useAuth();
-  const { jobs, getNovel, editNovel, deleteNovel, setNovelPublished, addChapter, deleteChapter, reorderChapter, setChapterPublished, addTerm, editTerm, setTermStatus, deleteTerm } = useLibrary();
+  const { jobs, getNovel, editNovel, deleteNovel, setNovelPublished, addChapter, deleteChapter, reorderChapter, setChapterPublished, addTerm, editTerm, setTermStatus, deleteTerm, loadNovel } = useLibrary();
   const { translationProgress, translateDescription } = useReader();
   const { styles, getStyle } = useSettings();
   const novel = getNovel(novelId);
+  useEffect(() => {
+    if (!novel || novel.isFull) return;
+    void loadNovel(novel.id);
+  }, [loadNovel, novel]);
   const [mainTab, setMainTab] = useState<MainTab>("chapters");
   const [chapterSortOrder, setChapterSortOrder] = useState<ChapterSortOrder>("desc");
   const [isChapterSortAnimating, setIsChapterSortAnimating] = useState(false);

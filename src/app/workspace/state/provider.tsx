@@ -7,7 +7,7 @@ import { cleanPastedChapterText, estimate, hashText, normalizeTranslatedText } f
 import type { Account, Chapter, ExportFormat, GlossaryStatus, GlossaryTerm, Job, NewTerm, Novel, StyleGuide, TranslationProgress, TranslationVersion } from "../types";
 import { bootstrapWorkspace, loadFullChapterRequest, loadFullNovelRequest, persistWorkspaceMutationsRequest, saveProviderRequest, signOutRequest, submitAuthRequest, translateChapterRequest, translateDescriptionRequest } from "./api";
 import { AuthContext, LibraryContext, ReaderContext, SettingsContext, ToastContext } from "./contexts";
-import type { AuthContextValue, LibraryContextValue, ReaderContextValue, SettingsContextValue, ToastContextValue, WorkspaceMutation } from "./types";
+import type { AuthContextValue, BootstrapResponse, LibraryContextValue, ReaderContextValue, SettingsContextValue, ToastContextValue, WorkspaceMutation } from "./types";
 import { calculateUsage } from "./usage";
 
 
@@ -27,18 +27,45 @@ function isUsableProviderTerm(term: NewTerm, sourceText: string) {
   if (!/[A-Za-z]/.test(translation)) return false;
   return true;
 }
-export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const [account, setAccount] = useState<Account>(() => ({ email: "", role: "reader", sessionExpiresAt: "", provider: "deepseek", selectedModel: PROVIDER_DEFAULTS.deepseek.defaultModel, verified: false }));
-  const [isPersistReady, setIsPersistReady] = useState(false);
+function defaultAccount(): Account {
+  return {
+    email: "",
+    role: "reader",
+    sessionExpiresAt: "",
+    provider: "deepseek",
+    selectedModel: PROVIDER_DEFAULTS.deepseek.defaultModel,
+    verified: false,
+  };
+}
+
+function accountFromBootstrap(data?: BootstrapResponse | null): Account {
+  const base = defaultAccount();
+  if (!data?.user) return base;
+  return {
+    ...base,
+    email: data.user.email ?? base.email,
+    role: data.user.role ?? base.role,
+    provider: data.user.provider ?? base.provider,
+    selectedModel: data.user.selectedModel ?? base.selectedModel,
+    apiKeyMasked: data.user.hasApiKey ? "stored securely" : undefined,
+    verified: Boolean(data.user.hasApiKey),
+    sessionExpiresAt: new Date(Date.now() + 604800000).toISOString(),
+  };
+}
+
+export function WorkspaceProvider({ children, initialBootstrap = null }: { children: ReactNode; initialBootstrap?: BootstrapResponse | null }) {
+  const [account, setAccount] = useState<Account>(() => accountFromBootstrap(initialBootstrap));
+  const [isPersistReady, setIsPersistReady] = useState(Boolean(initialBootstrap));
   const persistenceErrorShownRef = useRef(false);
-  const [novels, setNovels] = useState(novelSeed);
-  const [styles, setStyles] = useState(styleSeed);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [novels, setNovels] = useState(() => initialBootstrap?.appState?.novels ?? novelSeed);
+  const [styles, setStyles] = useState(() => initialBootstrap?.appState?.styles ?? styleSeed);
+  const [jobs, setJobs] = useState<Job[]>(() => initialBootstrap?.appState?.jobs ?? []);
   const [translationProgress, setTranslationProgress] = useState<TranslationProgress | null>(null);
   const [message, setMessage] = useState("");
   const progressTimersRef = useRef<number[]>([]);
 
   useEffect(() => {
+    if (initialBootstrap) return;
     let cancelled = false;
     async function loadPersistedState() {
       try {
@@ -60,7 +87,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
     void loadPersistedState();
     return () => { cancelled = true; };
-  }, []);
+  }, [initialBootstrap]);
 
   const persistWorkspaceMutations = useCallback((mutations: WorkspaceMutation[]) => {
     if (!account.email || mutations.length === 0) return;
@@ -414,6 +441,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const current = getChapter(novelId, chapterId);
     if (current?.rawText && current.translations.every((version) => version.text || version.version !== current.currentVersion)) return;
     const chapter = await loadFullChapterRequest(novelId, chapterId);
+    if (!chapter.rawText.trim()) throw new Error("Chapter source text is unavailable. Re-save the chapter source text before reading or translating it.");
     updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((entry) => entry.id === chapterId ? chapter : entry) }));
   }, [getChapter, updateNovel]);
 
@@ -505,7 +533,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   
   }, []);
 
-  const loadFullNovel = useCallback(async (novelId: string) => {
+  const loadNovel = useCallback(async (novelId: string) => {
     const novel = await loadFullNovelRequest(novelId);
     setNovels((current) => current.map((entry) => entry.id === novelId ? novel : entry));
     return novel;
@@ -514,7 +542,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const exportNovel = useCallback((novelId: string, format: ExportFormat) => {
     void (async () => {
       try {
-        const novel = await loadFullNovel(novelId);
+        const novel = await loadNovel(novelId);
         const { buildEpubExport, buildExport, buildHtmlExport, downloadFile, downloadText, exportFileName } = await import("../export-utils");
         if (format === "txt") downloadText(exportFileName(novel.title, "txt"), "text/plain;charset=utf-8", buildExport(novel));
         if (format === "html") downloadText(exportFileName(novel.title, "html"), "text/html;charset=utf-8", buildHtmlExport(novel));
@@ -523,21 +551,21 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setMessage(error instanceof Error ? error.message : "Unable to export novel.");
       }
     })();
-  }, [loadFullNovel]);
+  }, [loadNovel]);
 
   const printNovel = useCallback((novelId: string) => {
     void (async () => {
       try {
-        const novel = await loadFullNovel(novelId);
+        const novel = await loadNovel(novelId);
         const { buildHtmlExport, printHtml } = await import("../export-utils");
         printHtml(buildHtmlExport(novel));
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Unable to print novel.");
       }
     })();
-  }, [loadFullNovel]);
+  }, [loadNovel]);
   const authValue = useMemo<AuthContextValue>(() => ({ isBooting: !isPersistReady, account, setAccount, submitAuth, signOut, saveProvider }), [isPersistReady, account, submitAuth, signOut, saveProvider]);
-  const libraryValue = useMemo<LibraryContextValue>(() => ({ novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, setNovelPublished, addChapter, editChapter, editChapterContent, setChapterPublished, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel }), [novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, setNovelPublished, addChapter, editChapter, editChapterContent, setChapterPublished, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel]);
+  const libraryValue = useMemo<LibraryContextValue>(() => ({ novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, setNovelPublished, addChapter, editChapter, editChapterContent, setChapterPublished, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel, loadNovel }), [novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, setNovelPublished, addChapter, editChapter, editChapterContent, setChapterPublished, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel, loadNovel]);
   const readerValue = useMemo<ReaderContextValue>(() => ({ translationProgress, translateChapter, translateDescription, revertVersion, loadChapter }), [translationProgress, translateChapter, translateDescription, revertVersion, loadChapter]);
   const settingsValue = useMemo<SettingsContextValue>(() => ({ styles, getStyle, addStyle, editStyle, deleteStyle }), [styles, getStyle, addStyle, editStyle, deleteStyle]);
   const toastValue = useMemo<ToastContextValue>(() => ({ message, setMessage }), [message]);

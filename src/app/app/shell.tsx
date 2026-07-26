@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   Download,
@@ -19,7 +19,9 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { WorkspaceProvider, useAuth, useLibrary, useToast } from "../workspace/state";
+import { WorkspaceProvider, useAuth, useLibrary, useToast, type Account } from "../workspace/state";
+import { ToastContext } from "../workspace/state/contexts";
+import type { BootstrapResponse } from "../workspace/state/types";
 
 const baseNav: Array<{ href: string; label: string; Icon: LucideIcon }> = [
   { href: "/app/library", label: "Library", Icon: Library },
@@ -264,6 +266,113 @@ function Sidebar({
   );
 }
 
+function AdminSidebar({
+  account,
+  compact = false,
+  alignRight = false,
+  closing = false,
+  onNavigate,
+}: {
+  account: Account;
+  compact?: boolean;
+  alignRight?: boolean;
+  closing?: boolean;
+  onNavigate?: () => void;
+}) {
+  const pathname = usePathname();
+  const nav = [...baseNav, { href: "/app/contributions", label: "Contributions", Icon: Handshake }, { href: "/app/admin/users", label: "Users", Icon: ShieldCheck }];
+  const rowAlign = alignRight && !compact ? "flex-row-reverse justify-start gap-3 text-right" : compact ? "justify-center gap-0" : "gap-3";
+  const rowAnimation = alignRight ? closing ? "animate-menu-row-out" : "animate-menu-row" : "";
+  const shellWidth = alignRight ? "w-fit min-w-[15rem]" : "w-full min-w-0";
+
+  return (
+    <div className={`flex h-full ${shellWidth} flex-col border border-foreground/10 bg-[var(--surface)] p-3 shadow-none transition-all duration-300 ease-out ${compact ? "items-center" : ""} ${alignRight ? "items-end text-right" : ""}`}>
+      <Link href="/" onClick={onNavigate} className={`block w-full border-b border-foreground/10 pb-4 transition-all duration-300 ${compact ? "text-center" : ""} ${alignRight ? "text-right" : ""}`} title="Home">
+        <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">{compact ? "MT" : "Monochrome"}</p>
+        <h1 className={`mt-1 overflow-hidden font-serif text-2xl font-semibold transition-all duration-300 ${compact ? "max-h-0 translate-y-1 opacity-0" : "max-h-10 translate-y-0 opacity-100"}`}>Translation Desk</h1>
+      </Link>
+
+      <nav className="mt-5 grid w-full gap-1">
+        {nav.map(({ href, label, Icon }, index) => {
+          const active = pathname.startsWith(href);
+          return (
+            <Link key={href} href={href} onClick={onNavigate} title={label} aria-label={label} style={alignRight ? { animationDelay: `${index * 35}ms` } : undefined} className={`group flex min-h-10 items-center rounded-lg px-3 py-2 text-sm font-light transition-all duration-200 ${rowAlign} ${rowAnimation} ${active ? "bg-foreground text-background" : "text-foreground/60 hover:bg-foreground/[0.06] hover:text-foreground"}`}>
+              <Icon aria-hidden="true" className={`h-4 w-4 shrink-0 transition duration-200 ${active ? "text-background" : "text-foreground/55 group-hover:text-foreground"}`} />
+              <SidebarLabel compact={compact} alignRight={alignRight}>{label}</SidebarLabel>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className={`mt-auto w-full border-t border-foreground/10 pt-4 text-xs text-foreground/55 transition-all duration-300 ${compact ? "text-center" : ""} ${alignRight ? "text-right" : ""}`}>
+        <Link href="/app/account" onClick={onNavigate} title={account.email || "Account"} style={alignRight ? { animationDelay: `${nav.length * 35}ms` } : undefined} className={`flex min-h-10 items-center rounded-lg bg-foreground/[0.06] px-3 py-2 font-light text-foreground/70 transition hover:text-foreground ${rowAlign} ${rowAnimation}`}>
+          <User aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <SidebarLabel compact={compact} alignRight={alignRight}>{account.email || "Account"}</SidebarLabel>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function ToastOnlyProvider({ children }: { children: React.ReactNode }) {
+  const [message, setMessage] = useState("");
+  const toastValue = useMemo(() => ({ message, setMessage }), [message]);
+  return <ToastContext.Provider value={toastValue}>{children}</ToastContext.Provider>;
+}
+
+function AdminShellInner({ children, account }: { children: React.ReactNode; account: Account }) {
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerClosing, setDrawerClosing] = useState(false);
+  const drawerVisible = drawerOpen || drawerClosing;
+
+  useEffect(() => {
+    if (!drawerClosing) return;
+    const timeout = window.setTimeout(() => setDrawerClosing(false), 260);
+    return () => window.clearTimeout(timeout);
+  }, [drawerClosing]);
+
+  function openDrawer() {
+    setDrawerClosing(false);
+    setDrawerOpen(true);
+  }
+
+  function closeDrawer() {
+    if (!drawerOpen || drawerClosing) return;
+    setDrawerOpen(false);
+    setDrawerClosing(true);
+  }
+
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="sticky top-0 z-40 border-b border-foreground/10 bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="flex items-center justify-between">
+          <Link href="/app/contributions" className="font-serif text-xl font-light">Monochrome</Link>
+          <MobileMenuButton open={drawerOpen} onClick={drawerVisible ? closeDrawer : openDrawer} />
+        </div>
+      </div>
+
+      <div className={`grid min-h-screen w-full gap-5 px-4 py-4 transition-[grid-template-columns] duration-300 ease-out sm:px-6 lg:px-8 ${desktopCollapsed ? "lg:grid-cols-[76px_minmax(0,1fr)]" : "lg:grid-cols-[280px_minmax(0,1fr)]"}`}>
+        <aside className="relative hidden transition-all duration-300 lg:sticky lg:top-4 lg:block lg:h-[calc(100vh-2rem)]">
+          <CollapseButton compact={desktopCollapsed} onClick={() => setDesktopCollapsed((value) => !value)} />
+          <AdminSidebar account={account} compact={desktopCollapsed} />
+        </aside>
+
+        {drawerVisible ? (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <button type="button" aria-label="Close navigation" className={`absolute inset-0 bg-foreground/30 backdrop-blur-sm ${drawerClosing ? "animate-mobile-backdrop-out" : "animate-mobile-backdrop"}`} onClick={closeDrawer} />
+            <aside className={`absolute right-0 top-0 h-full w-fit max-w-[calc(100vw-1.5rem)] p-3 ${drawerClosing ? "animate-mobile-drawer-out" : "animate-mobile-drawer"}`}>
+              <AdminSidebar account={account} alignRight closing={drawerClosing} onNavigate={closeDrawer} />
+            </aside>
+          </div>
+        ) : null}
+
+        <section className="animate-page min-w-0 pb-10">{children}</section>
+      </div>
+      <ToastLayer />
+    </main>
+  );
+}
 function LoadingOverlay() {
   return (
     <div
@@ -412,17 +521,33 @@ function ShellInner({ children }: { children: React.ReactNode }) {
     </main>
   );
 }
-export function AppShell({ children }: { children: React.ReactNode }) {
+function accountFromBootstrap(initialBootstrap?: BootstrapResponse | null): Account {
+  return {
+    email: initialBootstrap?.user?.email ?? "",
+    role: initialBootstrap?.user?.role ?? "reader",
+    sessionExpiresAt: "",
+    provider: initialBootstrap?.user?.provider ?? "deepseek",
+    selectedModel: initialBootstrap?.user?.selectedModel ?? "deepseek-chat",
+    apiKeyMasked: initialBootstrap?.user?.hasApiKey ? "stored securely" : undefined,
+    verified: Boolean(initialBootstrap?.user?.hasApiKey),
+  };
+}
+
+export function AppShell({ children, initialBootstrap = null }: { children: React.ReactNode; initialBootstrap?: BootstrapResponse | null }) {
+  const pathname = usePathname();
+  const isAdminRoute = pathname.startsWith("/app/admin") || pathname.startsWith("/app/contributions");
+
+  if (isAdminRoute) {
+    return (
+      <ToastOnlyProvider>
+        <AdminShellInner account={accountFromBootstrap(initialBootstrap)}>{children}</AdminShellInner>
+      </ToastOnlyProvider>
+    );
+  }
+
   return (
-    <WorkspaceProvider>
+    <WorkspaceProvider initialBootstrap={initialBootstrap}>
       <ShellInner>{children}</ShellInner>
     </WorkspaceProvider>
   );
 }
-
-
-
-
-
-
-

@@ -19,6 +19,7 @@ export function ContributionChatClient({ request }: { request: AdminContribution
   const [refreshing, setRefreshing] = useState(false);
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const messagesRef = useRef<AdminContributionMessage[]>([]);
 
   const loadMessages = useCallback(async (background = false) => {
     if (background) {
@@ -27,10 +28,23 @@ export function ContributionChatClient({ request }: { request: AdminContribution
       setLoading(true);
     }
     try {
-      const response = await fetch(`/api/admin/contributions/${request.id}/messages`);
+      const currentMessages = messagesRef.current;
+      const lastMessage = background ? currentMessages[currentMessages.length - 1] : undefined;
+      const params = lastMessage ? `?after=${encodeURIComponent(lastMessage.createdAt)}` : "";
+      const response = await fetch(`/api/admin/contributions/${request.id}/messages${params}`);
       const payload = (await response.json()) as { messages?: AdminContributionMessage[]; error?: string };
       if (!response.ok || !payload.messages) throw new Error(payload.error || "Failed to load messages.");
-      setMessages(payload.messages);
+      setMessages((current) => {
+        if (!background) {
+          messagesRef.current = payload.messages!;
+          return payload.messages!;
+        }
+        if (!payload.messages!.length) return current;
+        const seen = new Set(current.map((message) => message.id));
+        const next = [...current, ...payload.messages!.filter((message) => !seen.has(message.id))];
+        messagesRef.current = next;
+        return next;
+      });
     } catch (error) {
       if (!background) setMessage(error instanceof Error ? error.message : "Failed to load messages.");
     } finally {
@@ -54,7 +68,11 @@ export function ContributionChatClient({ request }: { request: AdminContribution
       });
       const payload = (await response.json()) as { message?: AdminContributionMessage; error?: string };
       if (!response.ok || !payload.message) throw new Error(payload.error || "Failed to send message.");
-      setMessages((current) => [...current, payload.message!]);
+      setMessages((current) => {
+        const next = [...current, payload.message!];
+        messagesRef.current = next;
+        return next;
+      });
       setBody("");
       window.setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 30);
     } catch (error) {

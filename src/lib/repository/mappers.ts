@@ -96,7 +96,7 @@ export function toChapter(chapter: StoredChapter, versions: TranslationVersion[]
   };
 }
 
-export function toNovel(novel: StoredNovel, chapters: Chapter[], glossary: GlossaryTerm[]): Novel {
+export function toNovel(novel: StoredNovel, chapters: Chapter[], glossary: GlossaryTerm[], options: { isFull?: boolean; glossaryCount?: number; pendingGlossaryCount?: number } = {}): Novel {
   return {
     id: novel.id,
     title: novel.title,
@@ -105,6 +105,9 @@ export function toNovel(novel: StoredNovel, chapters: Chapter[], glossary: Gloss
     styleGuideId: novel.styleGuideId,
     published: novel.published,
     publishedAt: novel.publishedAt,
+    isFull: options.isFull,
+    glossaryCount: options.glossaryCount ?? glossary.length,
+    pendingGlossaryCount: options.pendingGlossaryCount ?? glossary.filter((term) => term.status === "pending").length,
     glossary,
     chapters: chapters.sort((a, b) => a.order - b.order),
   };

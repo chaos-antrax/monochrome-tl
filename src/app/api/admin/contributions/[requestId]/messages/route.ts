@@ -8,11 +8,13 @@ const MessageSchema = z.object({ body: z.string().trim().min(1, "Message cannot 
 
 type RouteContext = { params: Promise<{ requestId: string }> };
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   try {
     const { user } = await requireAdminUser();
     const { requestId } = await context.params;
-    const messages = await listAdminContributionMessages(requestId, user.id);
+    const afterParam = new URL(request.url).searchParams.get("after");
+    const afterDate = afterParam ? new Date(afterParam) : undefined;
+    const messages = await listAdminContributionMessages(requestId, user.id, afterDate && Number.isFinite(afterDate.getTime()) ? afterDate : undefined);
     return NextResponse.json({ messages });
   } catch (error) {
     return apiErrorResponse(error, "Failed to load contribution messages.");

@@ -42,14 +42,30 @@ async function hasStructuredWorkspace(userId: string) {
 }
 
 export async function getStructuredAppState(userId: string, mode: ReadMode = "full"): Promise<WorkspaceState> {
-  const [novels, chapters, terms, styles, versions, jobs] = await Promise.all([
+  const [novels, chapters, styles, versions, jobs] = await Promise.all([
     (await collection<StoredNovel>("novels")).find({ userId }).sort({ updatedAt: -1 }).toArray(),
     (await collection<StoredChapter>("chapters")).find({ userId }, mode === "summary" ? { projection: { rawText: 0 } } : undefined).sort({ order: 1 }).toArray(),
-    (await collection<StoredGlossaryTerm>("glossaryTerms")).find({ userId }).toArray(),
     (await collection<StoredStyleGuide>("styleGuides")).find({ userId }).sort({ updatedAt: -1 }).toArray(),
     (await collection<StoredTranslationVersion>("translationVersions")).find({ userId }, mode === "summary" ? { projection: { text: 0 } } : undefined).sort({ version: 1 }).toArray(),
     (await collection<StoredJob>("jobs")).find({ userId }).sort({ createdAt: -1 }).toArray(),
   ]);
+
+  const termsCollection = await collection<StoredGlossaryTerm>("glossaryTerms");
+  const terms = mode === "full" ? await termsCollection.find({ userId }).toArray() : [];
+  const summaryTermCounts = mode === "summary"
+    ? await termsCollection.aggregate<{ _id: string; total: number; pending: number }>([
+        { $match: { userId } },
+        {
+          $group: {
+            _id: "$novelId",
+            total: { $sum: 1 },
+            pending: { $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] } },
+          },
+        },
+      ]).toArray()
+    : [];
+
+  const termCountsByNovel = new Map(summaryTermCounts.map((entry) => [entry._id, { total: entry.total, pending: entry.pending }]));
 
   const versionsByChapter = new Map<string, TranslationVersion[]>();
   versions.forEach((version) => {
@@ -73,7 +89,15 @@ export async function getStructuredAppState(userId: string, mode: ReadMode = "fu
   });
 
   return {
-    novels: novels.map((novel) => toNovel(novel, chaptersByNovel.get(novel.id) ?? [], termsByNovel.get(novel.id) ?? [])),
+    novels: novels.map((novel) => {
+      const glossary = termsByNovel.get(novel.id) ?? [];
+      const counts = termCountsByNovel.get(novel.id);
+      return toNovel(novel, chaptersByNovel.get(novel.id) ?? [], glossary, {
+        isFull: mode === "full",
+        glossaryCount: counts?.total ?? glossary.length,
+        pendingGlossaryCount: counts?.pending ?? glossary.filter((term) => term.status === "pending").length,
+      });
+    }),
     styles: styles.map(toStyle),
     jobs: jobs.map(toJob),
   };
@@ -163,6 +187,7 @@ export async function getFullNovel(userId: string, novelId: string) {
     novel,
     chapters.map((chapter) => toChapter(chapter, versionsByChapter.get(chapter.id) ?? [], "full")),
     terms.map(toTerm),
+    { isFull: true },
   );
 }
 
@@ -197,7 +222,9 @@ export async function applyWorkspaceMutations(userId: string, mutations: Workspa
       ]);
     }
     if (mutation.type === "chapter:upsert") {
-      const chapterUpdate = mutation.chapter.published ? { $set: splitChapter(mutation.novelId, mutation.chapter, userId) } : { $set: splitChapter(mutation.novelId, mutation.chapter, userId), $unset: { publishedVersion: "" as const, publishedAt: "" as const } };
+      const chapterDocument = splitChapter(mutation.novelId, mutation.chapter, userId);
+      if (!mutation.chapter.rawText.trim()) delete (chapterDocument as Partial<StoredChapter>).rawText;
+      const chapterUpdate = mutation.chapter.published ? { $set: chapterDocument } : { $set: chapterDocument, $unset: { publishedVersion: "" as const, publishedAt: "" as const } };
       await chaptersCollection.updateOne({ userId, id: mutation.chapter.id }, chapterUpdate, { upsert: true });
       for (const version of mutation.chapter.translations) {
         if (!version.text.trim()) continue;

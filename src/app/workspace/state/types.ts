@@ -65,10 +65,11 @@ export type WorkspaceContextValue = {
   saveProvider: (provider: Provider, apiKey: string, model: string) => Promise<boolean>;
   exportNovel: (novelId: string, format: ExportFormat) => void;
   printNovel: (novelId: string) => void;
+  loadNovel: (novelId: string) => Promise<Novel>;
 };
 
 export type AuthContextValue = Pick<WorkspaceContextValue, "isBooting" | "account" | "setAccount" | "submitAuth" | "signOut" | "saveProvider">;
-export type LibraryContextValue = Pick<WorkspaceContextValue, "novels" | "jobs" | "usage" | "getNovel" | "getChapter" | "addNovel" | "editNovel" | "deleteNovel" | "setNovelPublished" | "addChapter" | "editChapter" | "editChapterContent" | "setChapterPublished" | "deleteChapter" | "moveChapter" | "reorderChapter" | "addTerm" | "editTerm" | "setTermStatus" | "deleteTerm" | "exportNovel" | "printNovel">;
+export type LibraryContextValue = Pick<WorkspaceContextValue, "novels" | "jobs" | "usage" | "getNovel" | "getChapter" | "addNovel" | "editNovel" | "deleteNovel" | "setNovelPublished" | "addChapter" | "editChapter" | "editChapterContent" | "setChapterPublished" | "deleteChapter" | "moveChapter" | "reorderChapter" | "addTerm" | "editTerm" | "setTermStatus" | "deleteTerm" | "exportNovel" | "printNovel" | "loadNovel">;
 export type ReaderContextValue = Pick<WorkspaceContextValue, "translationProgress" | "translateChapter" | "translateDescription" | "revertVersion" | "loadChapter">;
 export type SettingsContextValue = Pick<WorkspaceContextValue, "styles" | "getStyle" | "addStyle" | "editStyle" | "deleteStyle">;
 export type ToastContextValue = Pick<WorkspaceContextValue, "message" | "setMessage">;

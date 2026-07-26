@@ -1,4 +1,4 @@
-﻿import type { Filter, Sort, UpdateFilter } from "mongodb";
+import type { Filter, Sort, UpdateFilter } from "mongodb";
 import crypto from "node:crypto";
 import { AuthError } from "@/lib/auth";
 import { collection, rawCollection } from "@/lib/repository/indexes";
@@ -215,14 +215,15 @@ export async function decideContributionRequest(requestId: string, currentAdminI
   return detail;
 }
 
-export async function listAdminContributionMessages(requestId: string, currentAdminId: string): Promise<AdminContributionMessage[]> {
+export async function listAdminContributionMessages(requestId: string, currentAdminId: string, after?: Date): Promise<AdminContributionMessage[]> {
   const request = await (await contributionRequestsCollection()).findOne({ id: requestId });
   if (!request) throw new AuthError(404, "Contribution request not found");
   if (request.status !== "accepted" || request.adminId !== currentAdminId) {
     throw new AuthError(403, "You are not assigned to this chat");
   }
 
-  const messages = await (await contributionMessagesCollection()).find({ requestId }).sort({ createdAt: 1 }).toArray();
+  const messageFilter: Filter<ContributionMessage> = after ? { requestId, createdAt: { $gt: after } } : { requestId };
+  const messages = await (await contributionMessagesCollection()).find(messageFilter).sort({ createdAt: 1 }).toArray();
   const senderSummaries = await findUserSummaries(messages.map((message) => message.senderId));
   return messages.map((message) => mapContributionMessage(message, senderSummaries.get(message.senderId)));
 }
