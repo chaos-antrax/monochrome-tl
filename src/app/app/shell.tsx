@@ -1,6 +1,7 @@
 "use client";
 
 import { ThemeLogo } from "../theme/theme-logo";
+import { ThemeToggle } from "../theme/theme-toggle";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -149,7 +150,7 @@ function Sidebar({
         title="Home"
       >
         <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">
-          {compact ? "MT" : "Monochrome"}
+          {compact ? "MT" : "monochrome - tl"}
         </p>
         <h1
           className={`mt-1 overflow-hidden font-serif text-2xl font-semibold transition-all duration-300 ${compact ? "max-h-0 translate-y-1 opacity-0" : "max-h-10 translate-y-0 opacity-100"}`}
@@ -288,7 +289,7 @@ function AdminSidebar({
   return (
     <div className={`flex h-full ${shellWidth} flex-col border border-foreground/10 bg-[var(--surface)] p-3 shadow-none transition-all duration-300 ease-out ${compact ? "items-center" : ""} ${alignRight ? "items-end text-right" : ""}`}>
       <Link href="/" onClick={onNavigate} className={`block w-full border-b border-foreground/10 pb-4 transition-all duration-300 ${compact ? "text-center" : ""} ${alignRight ? "text-right" : ""}`} title="Home">
-        <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">{compact ? "MT" : "Monochrome"}</p>
+        <p className="text-xs uppercase tracking-[0.22em] text-foreground/55">{compact ? "MT" : "monochrome - tl"}</p>
         <h1 className={`mt-1 overflow-hidden font-serif text-2xl font-semibold transition-all duration-300 ${compact ? "max-h-0 translate-y-1 opacity-0" : "max-h-10 translate-y-0 opacity-100"}`}>Translation Desk</h1>
       </Link>
 
@@ -347,8 +348,8 @@ function AdminShellInner({ children, account }: { children: React.ReactNode; acc
     <main className="min-h-screen bg-background text-foreground">
       <div className="sticky top-0 z-40 border-b border-foreground/10 bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
         <div className="flex items-center justify-between">
-          <Link href="/app/contributions" className="font-serif text-xl font-light">Monochrome</Link>
-          <MobileMenuButton open={drawerOpen} onClick={drawerVisible ? closeDrawer : openDrawer} />
+          <Link href="/app/contributions" aria-label="Contributions home" className="inline-flex items-center transition hover:opacity-75"><ThemeLogo alt="Monochrome Translations" width={40} height={40} className="h-10 w-10 object-contain" /></Link>
+          <div className="flex items-center gap-2"><ThemeToggle variant="inline" /><MobileMenuButton open={drawerOpen} onClick={drawerVisible ? closeDrawer : openDrawer} /></div>
         </div>
       </div>
 
@@ -470,14 +471,18 @@ function ShellInner({ children }: { children: React.ReactNode }) {
         <div className="flex items-center justify-between">
           <Link
             href="/app/library"
-            className="font-serif text-xl font-light"
+            aria-label="Library home"
+            className="inline-flex items-center transition hover:opacity-75"
           >
-            Monochrome
+            <ThemeLogo alt="Monochrome Translations" width={40} height={40} className="h-10 w-10 object-contain" />
           </Link>
-          <MobileMenuButton
-            open={drawerOpen}
-            onClick={drawerVisible ? closeDrawer : openDrawer}
-          />
+          <div className="flex items-center gap-2">
+            <ThemeToggle variant="inline" />
+            <MobileMenuButton
+              open={drawerOpen}
+              onClick={drawerVisible ? closeDrawer : openDrawer}
+            />
+          </div>
         </div>
       </div>
 

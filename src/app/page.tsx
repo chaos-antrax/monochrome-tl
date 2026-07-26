@@ -64,14 +64,14 @@ export default async function Home() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href={canOpenPortal ? "/app/library" : "/login"}
-                className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-5 py-2.5 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
+                className="inline-flex h-10 items-center justify-center whitespace-nowrap border border-foreground bg-foreground px-5 font-inter text-xs font-light leading-none text-background transition hover:bg-foreground/90"
               >
                 {canOpenPortal ? "Continue translating" : "Portal login"}
               </Link>
               {canOpenPortal ? (
                 <Link
                   href="/app/library"
-                  className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
+                  className="inline-flex h-10 items-center justify-center whitespace-nowrap border border-foreground/15 bg-transparent px-5 font-inter text-xs font-light leading-none text-foreground transition hover:bg-foreground/[0.04]"
                 >
                   View library
                 </Link>
