@@ -84,7 +84,7 @@ export function toChapter(chapter: StoredChapter, versions: TranslationVersion[]
     id: chapter.id,
     title: chapter.title,
     order: chapter.order,
-    rawText: mode === "full" ? chapter.rawText : "",
+    rawText: mode === "full" ? chapter.rawText ?? "" : "",
     rawTextHash: chapter.rawTextHash,
     status: chapter.status,
     translations: versions.sort((a, b) => a.version - b.version),

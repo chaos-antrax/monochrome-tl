@@ -263,9 +263,20 @@ export function WorkspaceProvider({ children, initialBootstrap = null }: { child
     updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((entry) => entry.id === chapterId ? nextChapter : entry) }));
     persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: nextChapter }]);
   }, [getChapter, persistWorkspaceMutations, updateNovel]);
-  const setChapterPublished = useCallback((novelId: string, chapterId: string, values: { published: boolean; version?: number }) => {
-    const chapter = getChapter(novelId, chapterId);
+  const setChapterPublished = useCallback(async (novelId: string, chapterId: string, values: { published: boolean; version?: number }) => {
+    let chapter = getChapter(novelId, chapterId);
     if (!chapter) return;
+    if (!chapter.rawText.trim()) {
+      try {
+        const fullChapter = await loadFullChapterRequest(novelId, chapterId);
+        if (fullChapter.rawText.trim()) {
+          chapter = fullChapter;
+          updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((entry) => entry.id === chapterId ? fullChapter : entry) }));
+        }
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Unable to load full chapter before changing publish state.");
+      }
+    }
     if (values.published) {
       const version = values.version ?? chapter.currentVersion;
       const hasVersion = chapter.translations.some((entry) => entry.version === version && (entry.hasText || entry.text.trim()));
@@ -283,7 +294,7 @@ export function WorkspaceProvider({ children, initialBootstrap = null }: { child
     const nextChapter: Chapter = { ...chapter, published: false, publishedVersion: undefined, publishedAt: undefined };
     updateNovel(novelId, (novel) => ({ ...novel, chapters: novel.chapters.map((entry) => entry.id === chapterId ? nextChapter : entry) }));
     persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: nextChapter }]);
-  }, [getChapter, persistWorkspaceMutations, updateNovel]);
+  }, [getChapter, persistWorkspaceMutations, setMessage, updateNovel]);
   const deleteChapter = useCallback((novelId: string, chapterId: string) => {
     const novel = getNovel(novelId);
     const nextChapters = novel?.chapters.filter((chapter) => chapter.id !== chapterId).map((chapter, index) => ({ ...chapter, order: index + 1 })) ?? [];
