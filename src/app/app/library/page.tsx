@@ -41,6 +41,7 @@ export default function LibraryPage() {
   const { styles, getStyle } = useSettings();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [descriptionTranslated, setDescriptionTranslated] = useState("");
   const [styleGuideId, setStyleGuideId] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deletingNovelId, setDeletingNovelId] = useState<string | null>(null);
@@ -49,9 +50,10 @@ export default function LibraryPage() {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!title.trim()) return;
-    addNovel(title, description, styleGuideId || undefined);
+    addNovel(title, description, styleGuideId || undefined, descriptionTranslated);
     setTitle("");
     setDescription("");
+    setDescriptionTranslated("");
     setStyleGuideId("");
     setIsCreateOpen(false);
   }
@@ -59,6 +61,7 @@ export default function LibraryPage() {
   function openCreate() {
     setTitle("");
     setDescription("");
+    setDescriptionTranslated("");
     setStyleGuideId("");
     setIsCreateOpen(true);
   }
@@ -193,6 +196,12 @@ export default function LibraryPage() {
             label="Raw Chinese description"
             value={description}
             onChange={setDescription}
+            rows={6}
+          />
+          <Textarea
+            label="English description"
+            value={descriptionTranslated}
+            onChange={setDescriptionTranslated}
             rows={6}
           />
           <div className="flex justify-end gap-2">

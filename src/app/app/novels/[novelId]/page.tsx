@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { DragEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, Edit2, Globe2, GlobeLock, GripVertical, LoaderCircle, Search, Trash2, X } from "lucide-react";
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Clipboard, Edit2, Globe2, GlobeLock, GripVertical, LoaderCircle, Search, Trash2, Upload, X } from "lucide-react";
 import { DEFAULT_MAX_CHAPTER_CHARACTERS } from "@/lib/constants";
 import {
   GlossaryCategorySchema,
@@ -11,6 +11,7 @@ import {
 } from "@/lib/schemas/translation";
 import {
   useAuth,
+  useToast,
   useLibrary,
   useReader,
   useSettings,
@@ -49,6 +50,50 @@ function versionHasText(version: Chapter["translations"][number]) {
   return Boolean(version.hasText || version.text.trim());
 }
 
+const GLOSSARY_SAMPLE_JSON = JSON.stringify(
+  [
+    {
+      sourceTerm: "Chinese source term",
+      translation: "Mo Hua",
+      category: "character",
+      pinyin: "Mo Hua",
+      notes: "Protagonist.",
+      status: "approved",
+    },
+    {
+      sourceTerm: "Chinese source term 2",
+      translation: "Dao Stele",
+      category: "item",
+      notes: "Important cultivation artifact.",
+    },
+  ],
+  null,
+  2,
+);
+
+function parseGlossaryUploadJson(input: string): Array<Omit<GlossaryTerm, "id">> {
+  const parsed = JSON.parse(input) as unknown;
+  if (!Array.isArray(parsed)) throw new Error("Glossary JSON must be an array of term objects.");
+  return parsed.map((entry, index) => {
+    if (!entry || typeof entry !== "object") throw new Error(`Glossary item ${index + 1} must be an object.`);
+    const item = entry as Record<string, unknown>;
+    const sourceTerm = typeof item.sourceTerm === "string" ? item.sourceTerm.trim() : "";
+    const translation = typeof item.translation === "string" ? item.translation.trim() : "";
+    const categoryResult = GlossaryCategorySchema.safeParse(item.category);
+    const status = item.status === "pending" || item.status === "rejected" || item.status === "approved" ? item.status : "approved";
+    if (!sourceTerm || !translation) throw new Error(`Glossary item ${index + 1} needs sourceTerm and translation.`);
+    if (!categoryResult.success) throw new Error(`Glossary item ${index + 1} has an invalid category.`);
+    return {
+      sourceTerm,
+      translation,
+      category: categoryResult.data,
+      pinyin: typeof item.pinyin === "string" && item.pinyin.trim() ? item.pinyin.trim() : undefined,
+      notes: typeof item.notes === "string" && item.notes.trim() ? item.notes.trim() : undefined,
+      status,
+    };
+  });
+}
+
 function StyleSelect({
   label,
   value,
@@ -77,9 +122,10 @@ export default function NovelPage() {
   const { novelId } = useParams<{ novelId: string }>();
   const router = useRouter();
   const { account } = useAuth();
-  const { jobs, getNovel, editNovel, deleteNovel, setNovelPublished, addChapter, deleteChapter, reorderChapter, setChapterPublished, addTerm, editTerm, setTermStatus, deleteTerm, loadNovel } = useLibrary();
+  const { jobs, getNovel, editNovel, deleteNovel, setNovelPublished, addChapter, deleteChapter, reorderChapter, setChapterPublished, addTerm, importTerms, editTerm, setTermStatus, deleteTerm, loadNovel } = useLibrary();
   const { translationProgress, translateDescription } = useReader();
   const { styles, getStyle } = useSettings();
+  const { setMessage } = useToast();
   const novel = getNovel(novelId);
   useEffect(() => {
     if (!novel || novel.isFull) return;
@@ -89,6 +135,7 @@ export default function NovelPage() {
   const [chapterSortOrder, setChapterSortOrder] = useState<ChapterSortOrder>("desc");
   const [isChapterSortAnimating, setIsChapterSortAnimating] = useState(false);
   const chapterSortAnimationTimerRef = useRef<number | null>(null);
+  const glossaryFileInputRef = useRef<HTMLInputElement | null>(null);
   const [descriptionMode, setDescriptionMode] =
     useState<DescriptionMode>("english");
   const [isEditNovelOpen, setIsEditNovelOpen] = useState(false);
@@ -102,6 +149,7 @@ export default function NovelPage() {
   const [publishVersion, setPublishVersion] = useState("");
   const [chapterTitle, setChapterTitle] = useState("");
   const [rawText, setRawText] = useState("");
+  const [translatedChapterText, setTranslatedChapterText] = useState("");
   const [draggedChapterId, setDraggedChapterId] = useState<string | null>(null);
   const [dragOverChapterId, setDragOverChapterId] = useState<string | null>(
     null,
@@ -309,10 +357,12 @@ export default function NovelPage() {
       currentNovel.id,
       chapterTitle,
       rawText,
+      translatedChapterText,
     );
     if (chapterId) {
       setChapterTitle("");
       setRawText("");
+      setTranslatedChapterText("");
       setIsAddChapterOpen(false);
     }
   }
@@ -385,6 +435,37 @@ export default function NovelPage() {
     setIsAddTermOpen(false);
   }
 
+
+  async function copyGlossarySample() {
+    try {
+      await navigator.clipboard.writeText(GLOSSARY_SAMPLE_JSON);
+      setMessage("Glossary JSON sample copied to clipboard.");
+    } catch {
+      setMessage("Unable to copy the sample JSON. Try again from a secure browser context.");
+    }
+  }
+
+  async function uploadGlossaryFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (currentNovel.glossary.length > 0) {
+      setMessage("Glossary upload is only available before any terms are added.");
+      return;
+    }
+    if (!file.name.toLowerCase().endsWith(".json")) {
+      setMessage("Upload a JSON file using the sample glossary structure.");
+      return;
+    }
+    try {
+      const terms = parseGlossaryUploadJson(await file.text());
+      const imported = importTerms(currentNovel.id, terms);
+      setMessage(imported > 0 ? `Imported ${imported} glossary term${imported === 1 ? "" : "s"}.` : "No glossary terms were imported.");
+      if (imported > 0) setGlossaryTab("approved");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Glossary JSON could not be imported.");
+    }
+  }
   function openEditTerm(term: GlossaryTerm) {
     setEditingTerm(term);
     setEditTranslation(term.translation);
@@ -727,6 +808,27 @@ export default function NovelPage() {
                   </button>
                 ) : null}
               </label>
+              {currentNovel.glossary.length === 0 ? (
+                <div className="flex flex-wrap gap-2 sm:items-end">
+                  <button
+                    type="button"
+                    onClick={copyGlossarySample}
+                    className="inline-flex min-h-10 items-center justify-center gap-2 border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
+                  >
+                    <Clipboard aria-hidden="true" className="h-4 w-4" />
+                    Copy sample
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => glossaryFileInputRef.current?.click()}
+                    className="inline-flex min-h-10 items-center justify-center gap-2 border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
+                  >
+                    <Upload aria-hidden="true" className="h-4 w-4" />
+                    Upload JSON
+                  </button>
+                  <input ref={glossaryFileInputRef} type="file" accept="application/json,.json" onChange={uploadGlossaryFile} className="hidden" />
+                </div>
+              ) : null}
             </div>
             <div className="grid gap-3">
               {terms.map((term) => (
@@ -838,19 +940,12 @@ export default function NovelPage() {
             rows={6}
             className="font-serif leading-7"
           />
-          {currentNovel.descriptionTranslated !== undefined ? (
-            <Textarea
-              label="Translated description"
-              value={editNovelTranslatedDescription}
-              onChange={setEditNovelTranslatedDescription}
-              rows={6}
-            />
-          ) : (
-            <p className="rounded-lg bg-foreground/[0.06] px-3 py-2 text-sm text-foreground/55">
-              Translate the description once to make the English version
-              editable here.
-            </p>
-          )}
+          <Textarea
+            label="English description"
+            value={editNovelTranslatedDescription}
+            onChange={setEditNovelTranslatedDescription}
+            rows={6}
+          />
           <div className="flex justify-end gap-2">
             <button
               type="button"
@@ -900,6 +995,12 @@ export default function NovelPage() {
             onChange={setRawText}
             rows={12}
             className="font-serif leading-7"
+          />
+          <Textarea
+            label="Translated English"
+            value={translatedChapterText}
+            onChange={setTranslatedChapterText}
+            rows={12}
           />
           <div className="text-sm text-foreground/55">
             {rawText.length.toLocaleString()} /{" "}

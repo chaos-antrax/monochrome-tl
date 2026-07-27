@@ -158,12 +158,14 @@ export function WorkspaceProvider({ children, initialBootstrap = null }: { child
   
   }, [clearTranslationProgressTimers]);
 
-  const addNovel = useCallback((title: string, description: string, styleGuideId?: string) => {
-    const next: Novel = { id: id("novel"), title: title.trim(), description: description.trim(), styleGuideId: styleGuideId || undefined, published: false, glossary: [], chapters: [] };
+  const addNovel = useCallback((title: string, description: string, styleGuideId?: string, descriptionTranslated?: string) => {
+    const translated = descriptionTranslated ? normalizeTranslatedText(descriptionTranslated) : undefined;
+    const next: Novel = { id: id("novel"), title: title.trim(), description: description.trim(), descriptionTranslated: translated || undefined, styleGuideId: styleGuideId || undefined, published: false, glossary: [], chapters: [] };
     setNovels((current) => [next, ...current]);
     persistWorkspaceMutations([{ type: "novel:upsert", novel: next }]);
     return next.id;
   }, [persistWorkspaceMutations]);
+
 
   const editNovel = useCallback((novelId: string, values: { title: string; description: string; descriptionTranslated?: string; styleGuideId?: string }) => {
     const currentNovel = getNovel(novelId);
@@ -198,15 +200,21 @@ export function WorkspaceProvider({ children, initialBootstrap = null }: { child
     persistWorkspaceMutations([{ type: "novel:upsert", novel: nextNovel }]);
   }, [getNovel, persistWorkspaceMutations, updateNovel]);
 
-  const addChapter = useCallback((novelId: string, title: string, rawText: string) => {
+  const addChapter = useCallback((novelId: string, title: string, rawText: string, translatedText?: string) => {
     const novel = getNovel(novelId);
     const trimmed = cleanPastedChapterText(rawText);
+    const translated = translatedText ? normalizeTranslatedText(translatedText) : "";
     if (!novel || !trimmed || trimmed.length > DEFAULT_MAX_CHAPTER_CHARACTERS) return null;
-    const next: Chapter = { id: id("chapter"), title: title.trim() || `Chapter ${novel.chapters.length + 1}`, order: novel.chapters.length + 1, rawText: trimmed, rawTextHash: hashText(trimmed), status: "untranslated", translations: [], currentVersion: 0, published: false };
+    const rawTextHash = hashText(trimmed);
+    const translations: TranslationVersion[] = translated
+      ? [{ version: 1, text: translated, model: "manual", provider: account.provider, tokensUsed: { input: 0, output: 0 }, estimatedCost: 0, createdAt: now(), rawTextHash }]
+      : [];
+    const next: Chapter = { id: id("chapter"), title: title.trim() || `Chapter ${novel.chapters.length + 1}`, order: novel.chapters.length + 1, rawText: trimmed, rawTextHash, status: translated ? "translated" : "untranslated", translations, currentVersion: translated ? 1 : 0, published: false };
     updateNovel(novelId, (item) => ({ ...item, chapters: [...item.chapters, next] }));
     persistWorkspaceMutations([{ type: "chapter:upsert", novelId, chapter: next }]);
     return next.id;
-  }, [getNovel, persistWorkspaceMutations, updateNovel]);
+  }, [account.provider, getNovel, persistWorkspaceMutations, updateNovel]);
+
 
   const editChapter = useCallback((novelId: string, chapterId: string, values: { title?: string; rawText?: string }) => {
     const chapter = getChapter(novelId, chapterId);
@@ -465,6 +473,24 @@ export function WorkspaceProvider({ children, initialBootstrap = null }: { child
     persistWorkspaceMutations([{ type: "term:upsert", novelId, term: nextTerm }]);
   }, [getNovel, persistWorkspaceMutations, updateNovel]);
 
+  const importTerms = useCallback((novelId: string, terms: Array<Omit<GlossaryTerm, "id">>) => {
+    const novel = getNovel(novelId);
+    if (!novel || novel.glossary.length > 0) return 0;
+    const seen = new Set<string>();
+    const nextTerms = terms.flatMap((term) => {
+      const sourceTerm = term.sourceTerm.trim();
+      const translation = term.translation.trim();
+      if (!sourceTerm || !translation || seen.has(sourceTerm)) return [];
+      seen.add(sourceTerm);
+      return [{ ...term, id: id("term"), sourceTerm, translation, status: term.status ?? "approved" } satisfies GlossaryTerm];
+    });
+    if (nextTerms.length === 0) return 0;
+    updateNovel(novelId, (item) => ({ ...item, glossary: nextTerms }));
+    persistWorkspaceMutations(nextTerms.map((term): WorkspaceMutation => ({ type: "term:upsert", novelId, term })));
+    return nextTerms.length;
+  }, [getNovel, persistWorkspaceMutations, updateNovel]);
+
+
   const editTerm = useCallback((novelId: string, termId: string, values: Partial<GlossaryTerm>) => {
     const novel = getNovel(novelId);
     const currentTerm = novel?.glossary.find((entry) => entry.id === termId);
@@ -576,7 +602,7 @@ export function WorkspaceProvider({ children, initialBootstrap = null }: { child
     })();
   }, [loadNovel]);
   const authValue = useMemo<AuthContextValue>(() => ({ isBooting: !isPersistReady, account, setAccount, submitAuth, signOut, saveProvider }), [isPersistReady, account, submitAuth, signOut, saveProvider]);
-  const libraryValue = useMemo<LibraryContextValue>(() => ({ novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, setNovelPublished, addChapter, editChapter, editChapterContent, setChapterPublished, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel, loadNovel }), [novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, setNovelPublished, addChapter, editChapter, editChapterContent, setChapterPublished, deleteChapter, moveChapter, reorderChapter, addTerm, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel, loadNovel]);
+  const libraryValue = useMemo<LibraryContextValue>(() => ({ novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, setNovelPublished, addChapter, editChapter, editChapterContent, setChapterPublished, deleteChapter, moveChapter, reorderChapter, addTerm, importTerms, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel, loadNovel }), [novels, jobs, usage, getNovel, getChapter, addNovel, editNovel, deleteNovel, setNovelPublished, addChapter, editChapter, editChapterContent, setChapterPublished, deleteChapter, moveChapter, reorderChapter, addTerm, importTerms, editTerm, setTermStatus, deleteTerm, exportNovel, printNovel, loadNovel]);
   const readerValue = useMemo<ReaderContextValue>(() => ({ translationProgress, translateChapter, translateDescription, revertVersion, loadChapter }), [translationProgress, translateChapter, translateDescription, revertVersion, loadChapter]);
   const settingsValue = useMemo<SettingsContextValue>(() => ({ styles, getStyle, addStyle, editStyle, deleteStyle }), [styles, getStyle, addStyle, editStyle, deleteStyle]);
   const toastValue = useMemo<ToastContextValue>(() => ({ message, setMessage }), [message]);
