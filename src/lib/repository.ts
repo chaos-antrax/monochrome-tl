@@ -275,6 +275,134 @@ export async function setUserWriterRole(userId: string, enabled: boolean) {
   await users.updateOne({ _id }, { $set: { role, updatedAt: new Date() } });
   return { id: userId, role };
 }
+
+
+type ReaderDiscussionDocument = {
+  id: string;
+  userId: string;
+  novelId: string;
+  chapterId?: string;
+  parentId?: string;
+  topLevel?: boolean;
+  body: string;
+  rating?: number;
+  createdAt: Date;
+  updatedAt?: Date;
+};
+
+export type AdminUserActivityItem = {
+  id: string;
+  kind: "review" | "review-reply" | "comment" | "comment-reply";
+  body: string;
+  rating?: number;
+  novelId: string;
+  novelTitle: string;
+  chapterId?: string;
+  chapterTitle?: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type AdminUserActivity = {
+  user: {
+    id: string;
+    email: string;
+    username?: string;
+    role: UserRole;
+  };
+  summary: {
+    reviews: number;
+    reviewReplies: number;
+    comments: number;
+    commentReplies: number;
+    total: number;
+    latestActivityAt?: string;
+  };
+  items: AdminUserActivityItem[];
+};
+
+async function countReaderDiscussions(collectionName: "readerReviews" | "readerComments", userId: string) {
+  const discussionCollection = await collection<ReaderDiscussionDocument>(collectionName);
+  const [topLevel, replies] = await Promise.all([
+    discussionCollection.countDocuments({ userId, topLevel: true }),
+    discussionCollection.countDocuments({ userId, topLevel: false }),
+  ]);
+  return { topLevel, replies };
+}
+
+export async function getAdminUserActivity(userId: string, limit = 50): Promise<AdminUserActivity | null> {
+  const users = await usersCollection();
+  const user = await users.findOne(
+    { _id: new ObjectId(userId) },
+    { projection: { email: 1, username: 1, role: 1 } },
+  );
+  if (!user) return null;
+
+  const boundedLimit = Math.max(1, Math.min(limit, 100));
+  const projection = { _id: 0, id: 1, userId: 1, novelId: 1, chapterId: 1, parentId: 1, topLevel: 1, body: 1, rating: 1, createdAt: 1, updatedAt: 1 };
+  const [reviews, comments, reviewCounts, commentCounts] = await Promise.all([
+    (await collection<ReaderDiscussionDocument>("readerReviews")).find({ userId }, { projection }).sort({ createdAt: -1 }).limit(boundedLimit).toArray(),
+    (await collection<ReaderDiscussionDocument>("readerComments")).find({ userId }, { projection }).sort({ createdAt: -1 }).limit(boundedLimit).toArray(),
+    countReaderDiscussions("readerReviews", userId),
+    countReaderDiscussions("readerComments", userId),
+  ]);
+
+  const latestItems = [...reviews, ...comments]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, boundedLimit);
+
+  const novelIds = [...new Set(latestItems.map((item) => item.novelId).filter(Boolean))];
+  const chapterIds = [...new Set(latestItems.map((item) => item.chapterId).filter((value): value is string => Boolean(value)))];
+  const [novels, chapters] = await Promise.all([
+    novelIds.length
+      ? (await collection<{ id: string; title: string }>("novels")).find({ id: { $in: novelIds } }, { projection: { _id: 0, id: 1, title: 1 } }).toArray()
+      : Promise.resolve([]),
+    chapterIds.length
+      ? (await collection<{ id: string; title: string }>("chapters")).find({ id: { $in: chapterIds } }, { projection: { _id: 0, id: 1, title: 1 } }).toArray()
+      : Promise.resolve([]),
+  ]);
+
+  const novelTitles = new Map(novels.map((novel) => [novel.id, novel.title]));
+  const chapterTitles = new Map(chapters.map((chapter) => [chapter.id, chapter.title]));
+  const reviewIds = new Set(reviews.map((review) => review.id));
+
+  const items = latestItems.map((item): AdminUserActivityItem => {
+    const isReview = reviewIds.has(item.id);
+    const isReply = item.topLevel === false || Boolean(item.parentId);
+    return {
+      id: item.id,
+      kind: isReview ? (isReply ? "review-reply" : "review") : (isReply ? "comment-reply" : "comment"),
+      body: item.body,
+      ...(typeof item.rating === "number" ? { rating: item.rating } : {}),
+      novelId: item.novelId,
+      novelTitle: novelTitles.get(item.novelId) ?? "Unavailable novel",
+      ...(item.chapterId ? { chapterId: item.chapterId, chapterTitle: chapterTitles.get(item.chapterId) ?? "Unavailable chapter" } : {}),
+      createdAt: item.createdAt.toISOString(),
+      ...(item.updatedAt ? { updatedAt: item.updatedAt.toISOString() } : {}),
+    };
+  });
+
+  const latestActivityAt = items[0]?.createdAt;
+
+  return {
+    user: {
+      id: userId,
+      email: user.email,
+      username: typeof user.username === "string" ? user.username : undefined,
+      role: normalizeUserRole(user.role),
+    },
+    summary: {
+      reviews: reviewCounts.topLevel,
+      reviewReplies: reviewCounts.replies,
+      comments: commentCounts.topLevel,
+      commentReplies: commentCounts.replies,
+      total: reviewCounts.topLevel + reviewCounts.replies + commentCounts.topLevel + commentCounts.replies,
+      ...(latestActivityAt ? { latestActivityAt } : {}),
+    },
+    items,
+  };
+}
+
 export async function saveProviderConfig(userId: string, provider: Provider, apiKey: string, selectedModel: string) {
   await (await usersCollection()).updateOne(
     { _id: new ObjectId(userId) },

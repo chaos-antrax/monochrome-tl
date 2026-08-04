@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ShieldCheck, UserCog } from "lucide-react";
+import { Activity, MessageCircle, ShieldCheck, Star, UserCog } from "lucide-react";
 import type { UserRole } from "@/lib/roles";
-import { Badge, Card, Empty, LoadingButton } from "../../../workspace/ui";
+import { Badge, Card, Empty, LoadingButton, Modal, secondaryButton } from "../../../workspace/ui";
 import { useToast } from "../../../workspace/state";
 
 type ManagedUser = {
@@ -15,24 +15,64 @@ type ManagedUser = {
   updatedAt: string;
 };
 
+type UserActivityItem = {
+  id: string;
+  kind: "review" | "review-reply" | "comment" | "comment-reply";
+  body: string;
+  rating?: number;
+  novelTitle: string;
+  chapterTitle?: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+type UserActivity = {
+  user: {
+    id: string;
+    email: string;
+    username?: string;
+    role: UserRole;
+  };
+  summary: {
+    reviews: number;
+    reviewReplies: number;
+    comments: number;
+    commentReplies: number;
+    total: number;
+    latestActivityAt?: string;
+  };
+  items: UserActivityItem[];
+};
+
 async function readError(response: Response, fallback: string) {
   const data = (await response.json().catch(() => null)) as { error?: string } | null;
   return data?.error ?? fallback;
 }
 
-function formatDate(value: string) {
+function formatDate(value?: string) {
+  if (!value) return "Unknown";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown";
   return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
-const userTableGrid = "md:grid-cols-[minmax(18rem,1fr)_8.5rem_12rem_10rem]";
+function activityLabel(kind: UserActivityItem["kind"]) {
+  if (kind === "review") return "Review";
+  if (kind === "review-reply") return "Review reply";
+  if (kind === "comment") return "Comment";
+  return "Comment reply";
+}
+
+const userTableGrid = "md:grid-cols-[minmax(18rem,1fr)_8.5rem_12rem_10rem_9rem]";
 
 export function UsersClient() {
   const { setMessage } = useToast();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [activityUser, setActivityUser] = useState<ManagedUser | null>(null);
+  const [activity, setActivity] = useState<UserActivity | null>(null);
+  const [activityLoading, setActivityLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,6 +97,27 @@ export function UsersClient() {
     writers: users.filter((user) => user.role === "writer").length,
     readers: users.filter((user) => user.role === "reader").length,
   }), [users]);
+
+  async function loadActivity(user: ManagedUser) {
+    setActivityUser(user);
+    setActivity(null);
+    setActivityLoading(true);
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}/activity?limit=50`);
+      if (!response.ok) throw new Error(await readError(response, "Unable to load user activity."));
+      setActivity((await response.json()) as UserActivity);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to load user activity.");
+    } finally {
+      setActivityLoading(false);
+    }
+  }
+
+  function closeActivity() {
+    setActivityUser(null);
+    setActivity(null);
+    setActivityLoading(false);
+  }
 
   async function setWriter(user: ManagedUser, writer: boolean) {
     if (user.role === "admin" || updatingId) return;
@@ -111,6 +172,7 @@ export function UsersClient() {
               <span className="min-w-0">Role</span>
               <span className="min-w-0">Updated</span>
               <span className="min-w-0 text-right">Writer access</span>
+              <span className="min-w-0 text-right">Activity</span>
             </div>
             <div className="divide-y divide-foreground/10">
               {users.map((user) => {
@@ -142,6 +204,20 @@ export function UsersClient() {
                         {isAdmin ? "Protected" : isWriter ? "Remove writer" : "Make writer"}
                       </LoadingButton>
                     </div>
+                    <div className="flex min-w-0 justify-start md:justify-end">
+                      <LoadingButton
+                        type="button"
+                        loading={activityLoading && activityUser?.id === user.id}
+                        loadingLabel="Loading ..."
+                        onClick={() => void loadActivity(user)}
+                        className="inline-flex min-h-10 min-w-28 items-center justify-center gap-2 border border-foreground/15 bg-transparent px-4 py-2 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <Activity aria-hidden="true" className="h-3.5 w-3.5" />
+                          Activity
+                        </span>
+                      </LoadingButton>
+                    </div>
                   </div>
                 );
               })}
@@ -149,11 +225,86 @@ export function UsersClient() {
           </div>
         )}
       </Card>
+
+      <Modal title="Reader activity" open={Boolean(activityUser)} onClose={closeActivity}>
+        {activityLoading ? (
+          <div className="flex min-h-72 items-center justify-center text-center">
+            <div>
+              <span aria-hidden="true" className="mx-auto block h-8 w-8 animate-spin rounded-full border border-foreground/20 border-t-foreground" />
+              <p className="mt-4 text-xs uppercase tracking-[0.18em] text-foreground/55">Loading activity</p>
+            </div>
+          </div>
+        ) : activity ? (
+          <div className="space-y-5">
+            <div className="flex flex-col gap-3 border-b border-foreground/10 pb-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <p className="truncate font-serif text-2xl font-light text-foreground">{activity.user.username || "Unnamed user"}</p>
+                <p className="mt-1 truncate text-sm font-light text-foreground/55">{activity.user.email}</p>
+              </div>
+              <Badge active={activity.user.role === "admin"}>{activity.user.role}</Badge>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <ActivityCount label="Reviews" value={activity.summary.reviews} />
+              <ActivityCount label="Review replies" value={activity.summary.reviewReplies} />
+              <ActivityCount label="Comments" value={activity.summary.comments} />
+              <ActivityCount label="Comment replies" value={activity.summary.commentReplies} />
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs font-light uppercase tracking-[0.16em] text-foreground/55">
+                {activity.summary.total} total item{activity.summary.total === 1 ? "" : "s"}
+                {activity.summary.latestActivityAt ? ` / Latest ${formatDate(activity.summary.latestActivityAt)}` : ""}
+              </p>
+              {activityUser ? (
+                <button type="button" onClick={() => void loadActivity(activityUser)} className={secondaryButton}>
+                  Refresh
+                </button>
+              ) : null}
+            </div>
+
+            {activity.items.length === 0 ? (
+              <Empty title="No reader activity" body="This user has not posted reviews, comments, or replies yet." />
+            ) : (
+              <div className="max-h-[42vh] space-y-3 overflow-y-auto pr-1">
+                {activity.items.map((item) => <ActivityRow key={`${item.kind}-${item.id}`} item={item} />)}
+              </div>
+            )}
+          </div>
+        ) : (
+          <Empty title="Activity unavailable" body="The activity request did not return any data." />
+        )}
+      </Modal>
     </div>
   );
 }
 
+function ActivityCount({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="border border-foreground/10 bg-foreground/[0.025] p-3">
+      <p className="font-serif text-2xl font-light text-foreground">{value}</p>
+      <p className="mt-1 text-[10px] font-light uppercase tracking-[0.14em] text-foreground/50">{label}</p>
+    </div>
+  );
+}
 
-
-
-
+function ActivityRow({ item }: { item: UserActivityItem }) {
+  const isReview = item.kind.startsWith("review");
+  return (
+    <article className="grid grid-cols-[auto_1fr] gap-3 border border-foreground/10 bg-[var(--surface)] p-4">
+      <span className="mt-0.5 text-foreground/65">
+        {isReview ? <Star aria-hidden="true" className="h-4 w-4" fill={typeof item.rating === "number" ? "currentColor" : "none"} /> : <MessageCircle aria-hidden="true" className="h-4 w-4" />}
+      </span>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-light uppercase tracking-[0.16em] text-foreground/50">
+          <span>{activityLabel(item.kind)}</span>
+          {typeof item.rating === "number" ? <span>{item.rating}/5</span> : null}
+          <time>{formatDate(item.createdAt)}</time>
+        </div>
+        <h3 className="mt-2 truncate font-serif text-lg font-light text-foreground">{item.chapterTitle || item.novelTitle}</h3>
+        {item.chapterTitle ? <p className="mt-1 truncate text-xs font-light text-foreground/45">{item.novelTitle}</p> : null}
+        <p className="mt-3 line-clamp-4 whitespace-pre-wrap text-sm font-light leading-6 text-foreground/65">{item.body}</p>
+      </div>
+    </article>
+  );
+}
