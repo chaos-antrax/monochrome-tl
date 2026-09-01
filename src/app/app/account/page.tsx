@@ -92,6 +92,7 @@ export default function AccountPage() {
               options={[
                 { value: "deepseek", label: "DeepSeek" },
                 { value: "openrouter", label: "OpenRouter" },
+                { value: "zai", label: "Z.ai" },
               ]}
             />
             <Input label="Model" value={model} onChange={setModel} />

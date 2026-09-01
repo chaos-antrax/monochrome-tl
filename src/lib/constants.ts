@@ -15,6 +15,12 @@ export const PROVIDER_DEFAULTS = {
     defaultModel: "openai/gpt-4o-mini",
     maxChapterCharacters: DEFAULT_MAX_CHAPTER_CHARACTERS,
   },
+  zai: {
+    label: "Z.ai",
+    baseUrl: "https://api.z.ai/api/paas/v4/",
+    defaultModel: "glm-5.3-flash",
+    maxChapterCharacters: DEFAULT_MAX_CHAPTER_CHARACTERS,
+  },
 } as const;
 
 export const TRANSLATION_SYSTEM_PROMPT =

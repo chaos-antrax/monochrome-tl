@@ -11,7 +11,7 @@ export const GlossaryCategorySchema = z.enum([
   "other",
 ]);
 
-export const ProviderSchema = z.enum(["deepseek", "openrouter"]);
+export const ProviderSchema = z.enum(["deepseek", "openrouter", "zai"]);
 
 export const TranslationRequestSchema = z.object({
   systemPrompt: z.string().min(1),
