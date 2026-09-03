@@ -58,6 +58,9 @@ export type WorkspaceContextValue = {
   editTerm: (novelId: string, termId: string, values: Partial<GlossaryTerm>) => void;
   setTermStatus: (novelId: string, termId: string, status: GlossaryStatus) => void;
   deleteTerm: (novelId: string, termId: string) => void;
+  upsertLexiconEntry: (novelId: string, principleWord: string, secondaryWords: string[]) => void;
+  deleteLexiconEntry: (novelId: string, entryId: string) => void;
+  reinforceChapterTerms: (novelId: string, chapterId: string) => number;
   addStyle: (name: string, content: string) => void;
   editStyle: (styleId: string, name: string, content: string) => void;
   deleteStyle: (styleId: string) => void;
@@ -70,7 +73,7 @@ export type WorkspaceContextValue = {
 };
 
 export type AuthContextValue = Pick<WorkspaceContextValue, "isBooting" | "account" | "setAccount" | "submitAuth" | "signOut" | "saveProvider">;
-export type LibraryContextValue = Pick<WorkspaceContextValue, "novels" | "jobs" | "usage" | "getNovel" | "getChapter" | "addNovel" | "editNovel" | "deleteNovel" | "setNovelPublished" | "addChapter" | "editChapter" | "editChapterContent" | "setChapterPublished" | "deleteChapter" | "moveChapter" | "reorderChapter" | "addTerm" | "importTerms" | "editTerm" | "setTermStatus" | "deleteTerm" | "exportNovel" | "printNovel" | "loadNovel">;
+export type LibraryContextValue = Pick<WorkspaceContextValue, "novels" | "jobs" | "usage" | "getNovel" | "getChapter" | "addNovel" | "editNovel" | "deleteNovel" | "setNovelPublished" | "addChapter" | "editChapter" | "editChapterContent" | "setChapterPublished" | "deleteChapter" | "moveChapter" | "reorderChapter" | "addTerm" | "importTerms" | "editTerm" | "setTermStatus" | "deleteTerm" | "upsertLexiconEntry" | "deleteLexiconEntry" | "reinforceChapterTerms" | "exportNovel" | "printNovel" | "loadNovel">;
 export type ReaderContextValue = Pick<WorkspaceContextValue, "translationProgress" | "translateChapter" | "translateDescription" | "revertVersion" | "loadChapter">;
 export type SettingsContextValue = Pick<WorkspaceContextValue, "styles" | "getStyle" | "addStyle" | "editStyle" | "deleteStyle">;
 export type ToastContextValue = Pick<WorkspaceContextValue, "message" | "setMessage">;

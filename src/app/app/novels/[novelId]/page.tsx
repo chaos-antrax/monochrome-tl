@@ -35,7 +35,7 @@ import {
   TranslationProgressOverlay,
 } from "../../../workspace/ui";
 
-type MainTab = "chapters" | "glossary";
+type MainTab = "chapters" | "glossary" | "lexicon";
 type DescriptionMode = "english" | "chinese";
 type ChapterSortOrder = "asc" | "desc";
 type ConfirmAction = {
@@ -48,6 +48,13 @@ type ConfirmAction = {
 
 function versionHasText(version: Chapter["translations"][number]) {
   return Boolean(version.hasText || version.text.trim());
+}
+
+function splitLexiconWords(value: string) {
+  return value
+    .split(/[\n,]+/)
+    .map((word) => word.trim())
+    .filter(Boolean);
 }
 
 const GLOSSARY_SAMPLE_JSON = JSON.stringify(
@@ -122,7 +129,7 @@ export default function NovelPage() {
   const { novelId } = useParams<{ novelId: string }>();
   const router = useRouter();
   const { account } = useAuth();
-  const { jobs, getNovel, editNovel, deleteNovel, setNovelPublished, addChapter, deleteChapter, reorderChapter, setChapterPublished, addTerm, importTerms, editTerm, setTermStatus, deleteTerm, loadNovel } = useLibrary();
+  const { jobs, getNovel, editNovel, deleteNovel, setNovelPublished, addChapter, deleteChapter, reorderChapter, setChapterPublished, addTerm, importTerms, editTerm, setTermStatus, deleteTerm, upsertLexiconEntry, deleteLexiconEntry, loadNovel } = useLibrary();
   const { translationProgress, translateDescription } = useReader();
   const { styles, getStyle } = useSettings();
   const { setMessage } = useToast();
@@ -168,6 +175,9 @@ export default function NovelPage() {
   const [editingTerm, setEditingTerm] = useState<GlossaryTerm | null>(null);
   const [editTranslation, setEditTranslation] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [isAddLexiconOpen, setIsAddLexiconOpen] = useState(false);
+  const [lexiconPrincipleWord, setLexiconPrincipleWord] = useState("");
+  const [lexiconSecondaryWords, setLexiconSecondaryWords] = useState("");
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(
     null,
   );
@@ -505,6 +515,35 @@ export default function NovelPage() {
     });
   }
 
+
+  function resetLexiconForm() {
+    setLexiconPrincipleWord("");
+    setLexiconSecondaryWords("");
+    setIsAddLexiconOpen(false);
+  }
+
+  function submitLexiconEntry(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const principleWord = lexiconPrincipleWord.trim();
+    const secondaryWords = splitLexiconWords(lexiconSecondaryWords);
+    if (!principleWord || secondaryWords.length === 0) return;
+    upsertLexiconEntry(currentNovel.id, principleWord, secondaryWords);
+    resetLexiconForm();
+  }
+
+  function requestDeleteLexiconEntry(entryId: string, principleWord: string) {
+    setConfirmAction({
+      title: "Delete lexicon entry?",
+      body: `Delete the lexicon entry for "${principleWord}".`,
+      confirmLabel: "Delete entry",
+      destructive: true,
+      onConfirm: () => {
+        deleteLexiconEntry(currentNovel.id, entryId);
+        setConfirmAction(null);
+      },
+    });
+  }
+
   function requestTermStatus(term: GlossaryTerm, status: GlossaryStatus) {
     setConfirmAction({
       title: `${status === "approved" ? "Approve" : "Reject"} term?`,
@@ -545,7 +584,8 @@ export default function NovelPage() {
               <span>
                 Style: {getStyle(currentNovel)?.name ?? "Plain"} /{" "}
                 {currentNovel.chapters.length} chapters /{" "}
-                {currentNovel.glossary.length} terms
+                {currentNovel.glossary.length} terms /{" "}
+                {(currentNovel.lexicon ?? []).length} lexicon
               </span>
               <Badge active={Boolean(currentNovel.published)}>{currentNovel.published ? "Published" : "Draft"}</Badge>
             </p>
@@ -634,7 +674,7 @@ export default function NovelPage() {
       <Card>
         <div className="flex flex-col gap-3 border-b border-foreground/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <Mode
-            modes={["chapters", "glossary"]}
+            modes={["chapters", "glossary", "lexicon"]}
             value={mainTab}
             onChange={(value) => setMainTab(value as MainTab)}
           />
@@ -658,13 +698,21 @@ export default function NovelPage() {
                 Add chapter
               </button>
             </div>
-          ) : (
+          ) : mainTab === "glossary" ? (
             <button
               type="button"
               onClick={() => setIsAddTermOpen(true)}
               className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
             >
               Add term
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsAddLexiconOpen(true)}
+              className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
+            >
+              Add lexicon entry
             </button>
           )}
         </div>
@@ -764,7 +812,7 @@ export default function NovelPage() {
               ) : null}
             </div>
           </>
-        ) : (
+        ) : mainTab === "glossary" ? (
           <div className="mt-4">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <Mode
@@ -912,6 +960,43 @@ export default function NovelPage() {
                 />
               ) : null}
             </div>
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-3">
+            {(currentNovel.lexicon ?? []).map((entry) => (
+              <div key={entry.id} className="rounded-lg border border-foreground/10 bg-[var(--surface)] p-4 shadow-sm transition hover:border-foreground/25">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <h3 className="font-serif text-2xl font-semibold text-foreground">{entry.principleWord}</h3>
+                    <p className="mt-2 text-sm leading-6 text-foreground/60">
+                      {entry.secondaryWords.length ? entry.secondaryWords.join(", ") : "No secondary words yet."}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => requestDeleteLexiconEntry(entry.id, entry.principleWord)}
+                    className="inline-flex min-h-10 items-center justify-center border border-transparent px-4 py-2 font-inter text-xs font-light text-foreground/60 transition hover:bg-foreground/[0.04] hover:text-foreground"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+            {(currentNovel.lexicon ?? []).length === 0 ? (
+              <Empty
+                title="No lexicon entries"
+                body="Add principle words with their secondary variants, then reinforce a translated chapter from the reader."
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setIsAddLexiconOpen(true)}
+                    className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90"
+                  >
+                    Add lexicon entry
+                  </button>
+                }
+              />
+            ) : null}
           </div>
         )}
       </Card>
@@ -1109,6 +1194,43 @@ export default function NovelPage() {
               className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40"
             >
               Save changes
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        title="Add lexicon entry"
+        open={isAddLexiconOpen}
+        onClose={resetLexiconForm}
+      >
+        <form onSubmit={submitLexiconEntry} className="space-y-4">
+          <Input
+            label="Principle word"
+            value={lexiconPrincipleWord}
+            onChange={setLexiconPrincipleWord}
+          />
+          <Textarea
+            label="Secondary words"
+            value={lexiconSecondaryWords}
+            onChange={setLexiconSecondaryWords}
+            placeholder="Separate words with commas or line breaks"
+            rows={5}
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={resetLexiconForm}
+              className="inline-flex min-h-10 items-center justify-center border border-foreground/15 bg-transparent px-5 py-2.5 font-inter text-xs font-light text-foreground transition hover:bg-foreground/[0.04]"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!lexiconPrincipleWord.trim() || splitLexiconWords(lexiconSecondaryWords).length === 0}
+              className="inline-flex min-h-10 items-center justify-center border border-foreground bg-foreground px-4 py-2 font-inter text-xs font-light text-background transition hover:bg-foreground/90 disabled:bg-foreground/10 disabled:text-foreground/40"
+            >
+              Save entry
             </button>
           </div>
         </form>

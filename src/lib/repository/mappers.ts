@@ -27,6 +27,7 @@ export function splitNovel(novel: Novel, userId: string): StoredNovel {
     styleGuideId: novel.styleGuideId,
     published: novel.published,
     publishedAt: novel.publishedAt,
+    lexicon: novel.lexicon ?? [],
     updatedAt: new Date(),
   });
 }
@@ -109,6 +110,7 @@ export function toNovel(novel: StoredNovel, chapters: Chapter[], glossary: Gloss
     glossaryCount: options.glossaryCount ?? glossary.length,
     pendingGlossaryCount: options.pendingGlossaryCount ?? glossary.filter((term) => term.status === "pending").length,
     glossary,
+    lexicon: novel.lexicon ?? [],
     chapters: chapters.sort((a, b) => a.order - b.order),
   };
 }

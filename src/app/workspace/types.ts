@@ -1,5 +1,6 @@
 export type ChapterStatus = "untranslated" | "queued" | "translating" | "translated" | "failed";
 export type GlossaryStatus = "approved" | "pending" | "rejected";
+export type LexiconEntry = { id: string; principleWord: string; secondaryWords: string[] };
 export type JobStatus = "queued" | "processing" | "completed" | "failed";
 export type ReaderMode = "raw" | "translated" | "diff";
 export type Tokens = { input: number; output: number };
@@ -66,6 +67,7 @@ export type Novel = {
   glossaryCount?: number;
   pendingGlossaryCount?: number;
   glossary: GlossaryTerm[];
+  lexicon: LexiconEntry[];
   chapters: Chapter[];
 };
 
