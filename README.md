@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Monochrome TL
 
-## Getting Started
+Monochrome TL is a private translation portal for managing Chinese web novel translation workflows. It is built for writers, editors, and admins who need to organize novels, translate chapters with AI providers, maintain terminology, and prepare translated content for a separate reader-facing application.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Writer/admin authentication** with role-based access control.
+- **Novel library management** for creating, editing, publishing, and deleting novels.
+- **Chapter management** with ordering, publishing controls, raw Chinese text, translated text, and translation versions.
+- **AI-assisted translation** for novel descriptions and chapters.
+- **Provider support** for DeepSeek, OpenRouter, and Z.ai through OpenAI-compatible APIs.
+- **Glossary management** with categories, approval states, search, import support, and reader/editor access.
+- **Lexicon support** for reinforcing preferred English terminology across translated chapters.
+- **Style guides** for reusable translation tone and prose preferences.
+- **Reader workspace** with adjustable font size, line height, raw/translated/diff views, and inline editing.
+- **Export tools** for TXT, HTML, EPUB, and print/PDF-oriented output.
+- **Publishing workflow** for marking novels and specific chapter versions as visible to the reader app.
+- **Contribution dashboard** for reviewing reader translation/contribution requests and chatting with accepted contributors.
+- **Admin user management** for granting or removing writer access and checking reader activity.
+- **Light/dark theme** with a minimal monochrome interface.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Next.js
+- React
+- TypeScript
+- MongoDB
+- Tailwind CSS
+- Zod
+- OpenAI-compatible provider SDK
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Notes
 
-## Learn More
+This app is intended to be used as the translation/admin portal. Published novels and chapter versions are stored in the shared MongoDB database so a separate reader app can display only approved public content.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Provider API keys are saved from the Account page and encrypted before storage.
